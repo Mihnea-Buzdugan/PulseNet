@@ -23,14 +23,14 @@ function Navbar() {
     }, []);
 
     useEffect(() => {
-        fetch('http://localhost:8000/api/user/', { credentials: 'include' })
+        fetch('http://localhost:8000/accounts/user/', { credentials: 'include' })
             .then((res) => res.json())
             .then((data) => setUser(data))
             .catch(console.error);
     }, []);
 
     const handleLogout = async () => {
-        await fetch('http://localhost:8000/api/logout/', { method: 'POST', credentials: 'include' });
+        await fetch('http://localhost:8000/accounts/logout/', { method: 'POST', credentials: 'include' });
         localStorage.removeItem('auth-token');
         localStorage.removeItem('token-expiration');
         setIsAuthenticated(false);
