@@ -1,189 +1,253 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Background */
 .body {
-    @apply min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900;
+    background: #e9e6e6;
+    color: black;
+    margin: 0;
+    padding: 0;
+}
+
+/* Main container */
+.mainContainer {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
 .container {
-    @apply max-w-7xl mx-auto px-6 py-10 space-y-10;
+    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8;
 }
 
-/* HEADER */
-.header {
-    @apply flex flex-col lg:flex-row justify-between items-start gap-8;
+/* COVER & HEADER CARD */
+.coverPhoto {
+    @apply h-40 sm:h-48 w-full rounded-t-3xl bg-red-700 from-indigo-500 via-purple-500 to-pink-500 object-cover shadow-sm;
 }
 
-.title {
-    @apply text-4xl font-extrabold tracking-tight;
+.headerCard {
+    @apply bg-white rounded-b-3xl shadow-sm border-x border-b border-slate-200 px-6 sm:px-10 pb-10 relative mb-8;
 }
 
-.email {
-    @apply text-gray-500 mt-1 text-sm;
+.headerLayout {
+    @apply flex flex-col sm:flex-row gap-8 items-start;
 }
 
-.bio {
-    @apply mt-4 text-gray-700 max-w-xl leading-relaxed;
-}
-
-.verified {
-    @apply inline-block mt-2 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700;
-}
-
-/* AVATAR */
+/* AVATAR & TRUST */
 .avatarSection {
-    @apply flex flex-col items-center gap-4;
+    @apply flex flex-col items-center gap-4 -mt-16 sm:-mt-20 z-10 shrink-0;
+}
+
+.avatarWrapper {
+    @apply rounded-full p-1.5 bg-white shadow-md;
 }
 
 .avatar {
-    @apply w-28 h-28 rounded-full bg-gray-200 shadow-lg border-4 border-white transition-transform duration-300 hover:scale-105;
+    @apply w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-slate-200 border-4 border-slate-50 shadow-inner bg-cover bg-center;
+    /* Optional: background-image: url('/your-default-avatar.jpg'); */
 }
 
-.trustBox {
-    @apply bg-white shadow rounded-2xl px-6 py-4 text-center w-full;
+.trustBadge {
+    @apply flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-full shadow-sm;
 }
 
-.trustLabel {
-    @apply text-xs text-gray-400 uppercase tracking-wide;
+.trustIcon {
+    @apply text-lg;
 }
 
 .trustValue {
-    @apply text-2xl font-bold text-indigo-600;
+    @apply text-sm font-bold text-indigo-700 tracking-wide;
 }
 
-/* TABS */
+/* PROFILE INFO */
+.profileInfo {
+    @apply pt-4 sm:pt-6 flex-1 w-full;
+}
+
+.infoContent {
+    @apply flex flex-col items-start;
+}
+
+.titleRow {
+    @apply flex items-center gap-3 mb-1;
+}
+
+.title {
+    @apply text-3xl font-extrabold text-slate-900 tracking-tight;
+}
+
+.verified {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700;
+}
+
+.username {
+    @apply text-slate-500 font-medium text-sm mb-4;
+}
+
+.bio {
+    @apply text-slate-700 max-w-2xl leading-relaxed mb-6 text-base;
+}
+
+.editProfileBtn {
+    @apply px-5 py-2.5 bg-white border border-slate-300 text-slate-700 font-semibold rounded-full hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm focus:ring-2 focus:ring-slate-200 outline-none;
+}
+
+/* TABS (SEGMENTED CONTROL) */
+.tabsContainer {
+    @apply flex justify-center sm:justify-start mb-8;
+}
+
 .tabs {
-    @apply flex gap-4 border-b pb-2 overflow-x-auto;
+    @apply flex gap-1 bg-slate-200/60 p-1.5 rounded-2xl w-full sm:w-auto overflow-x-auto;
 }
 
 .tab {
-    @apply px-4 py-2 text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors duration-200;
+    @apply flex-1 sm:flex-none px-6 py-2.5 text-sm font-medium text-slate-600 rounded-xl hover:text-slate-900 hover:bg-slate-200/50 transition-all whitespace-nowrap;
 }
 
 .activeTab {
-    @apply px-4 py-2 text-sm font-semibold text-indigo-600 border-b-2 border-indigo-600 transition-all duration-200;
+    @apply flex-1 sm:flex-none px-6 py-2.5 text-sm font-bold text-indigo-700 bg-white shadow-sm rounded-xl transition-all whitespace-nowrap;
 }
 
-/* CARDS */
+/* CONTENT AREAS */
+.contentArea {
+    @apply w-full;
+}
+
 .card {
-    @apply bg-white rounded-3xl shadow-xl p-8 transition-all duration-300;
+    @apply bg-white rounded-3xl shadow-sm border border-slate-200 p-8;
 }
 
 .sectionTitle {
-    @apply text-2xl font-bold mb-6;
+    @apply text-xl font-extrabold text-slate-900 mb-6;
 }
 
-/* GRID SYSTEMS */
-.gridTwo {
-    @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+/* OVERVIEW STATS */
+.statsGrid {
+    @apply grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6;
 }
 
 .statBox {
-    @apply bg-gray-50 rounded-2xl p-6 text-center text-lg font-semibold shadow-sm hover:shadow-md transition-shadow;
+    @apply bg-white border border-slate-100 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1;
 }
 
+.statLabel {
+    @apply text-xs font-bold text-slate-400 uppercase tracking-wider mb-2;
+}
+
+.statValue {
+    @apply text-3xl font-black text-slate-800;
+}
+
+/* SKILLS */
 .skillGrid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6;
+    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4;
 }
 
 .skillCard {
-    @apply bg-gray-50 rounded-2xl p-5 flex justify-between items-center shadow-sm hover:shadow-md transition-all;
+    @apply bg-slate-50 border border-slate-100 rounded-2xl p-4 flex justify-between items-center hover:border-indigo-200 transition-colors;
+}
+
+.skillName {
+    @apply font-semibold text-slate-800;
 }
 
 .skillLevel {
-    @apply text-xs uppercase px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-medium;
+    @apply text-xs uppercase px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-600 font-bold shadow-sm;
 }
 
 /* OBJECTS */
 .objectGrid {
-    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6;
 }
 
 .objectCard {
-    @apply bg-white rounded-2xl shadow-md overflow-hidden transition-transform duration-300 hover:-translate-y-1;
+    @apply bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-lg;
 }
 
 .objectImage {
-    @apply h-40 bg-gray-200;
+    @apply h-48 bg-slate-100 flex items-center justify-center border-b border-slate-100 group-hover:bg-slate-200 transition-colors;
+}
+
+.imagePlaceholder {
+    @apply text-4xl opacity-50;
 }
 
 .objectInfo {
-    @apply p-4 space-y-2;
+    @apply p-5 flex flex-col flex-1;
+}
+
+.objectName {
+    @apply text-lg font-bold text-slate-900 mb-3;
+}
+
+.objectMeta {
+    @apply mt-auto flex items-center justify-between;
 }
 
 .price {
-    @apply text-sm text-gray-500;
+    @apply text-sm font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg;
 }
 
 .availableBadge {
-    @apply inline-block px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-semibold;
+    @apply px-3 py-1 text-xs rounded-full bg-emerald-100 text-emerald-800 font-bold;
 }
 
 .unavailableBadge {
-    @apply inline-block px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-semibold;
+    @apply px-3 py-1 text-xs rounded-full bg-rose-100 text-rose-800 font-bold;
+}
+
+/* EDIT FORM */
+.editForm {
+    @apply w-full max-w-2xl bg-slate-50 border border-slate-100 p-6 sm:p-8 rounded-3xl shadow-inner mt-2;
+}
+
+.editGrid {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6;
+}
+
+.inputGroup {
+    @apply flex flex-col gap-1.5 mb-4;
+}
+
+.inputLabel {
+    @apply text-xs font-bold uppercase tracking-wider text-slate-500 ml-1;
+}
+
+.editInput {
+    @apply w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm;
+}
+
+.editTextarea {
+    @apply w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm min-h-[120px] resize-y;
+}
+
+.editActions {
+    @apply flex flex-wrap gap-3 mt-8 pt-4 border-t border-slate-200;
+}
+
+.saveButton {
+    @apply px-6 py-2.5 rounded-full bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-colors shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
+}
+
+.cancelButton {
+    @apply px-6 py-2.5 rounded-full bg-white border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-slate-500;
 }
 
 /* ANALYTICS */
 .analyticsBox {
-    @apply bg-gray-50 rounded-2xl p-6 shadow-sm;
+    @apply bg-slate-50 border border-slate-100 rounded-2xl p-6;
 }
 
 .analyticsRow {
-    @apply text-sm font-medium mb-4 text-gray-600;
+    @apply text-sm font-bold uppercase tracking-wide mb-4 text-slate-500;
 }
 
 .analyticsPlaceholder {
-    @apply h-64 bg-white rounded-xl flex items-center justify-center text-gray-400 border border-dashed;
+    @apply h-72 bg-white rounded-xl flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 shadow-inner font-medium;
 }
 
-.editButton {
-    @apply mt-4 px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow-md transition-all duration-300 hover:bg-indigo-700 hover:scale-105;
-}
-
-/* MODAL */
-
-.modalOverlay {
-    @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50;
-}
-
-.modalBox {
-    @apply bg-white w-full max-w-lg rounded-3xl shadow-2xl p-8 space-y-5 animate-fadeIn;
-}
-
-/* Inputs */
-
-.inputLabel {
-    @apply text-sm font-medium text-gray-600 block mb-1;
-}
-
-.input {
-    @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200;
-}
-
-/* Modal Buttons */
-
-.modalActions {
-    @apply flex justify-end gap-3 pt-4;
-}
-
-.saveBtn {
-    @apply px-5 py-2 rounded-xl bg-indigo-600 text-white font-semibold shadow-md transition-all duration-300 hover:bg-indigo-700 hover:scale-105;
-}
-
-.cancelBtn {
-    @apply px-5 py-2 rounded-xl bg-gray-200 text-gray-700 font-medium transition-all duration-300 hover:bg-gray-300 hover:scale-105;
-}
-
-/* Animation */
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fadeIn {
-    animation: fadeIn 0.25s ease-out;
-}
