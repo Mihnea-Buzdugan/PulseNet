@@ -10,6 +10,8 @@ import json
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
+from .decorators import api_login_required
+from .models import Skill, UserObject
 
 @ensure_csrf_cookie
 def csrf_token(request):
@@ -196,3 +198,61 @@ def user(request):
         }}, status=200)
     else:
         return JsonResponse({'message': 'Method not allowed'}, status=405)
+
+
+@login_required
+def profile(request):
+    if request.method == "GET":
+        user = request.user
+
+        skills = Skill.objects.filter(user=user)
+        objects = UserObject.objects.filter(owner=user)
+
+        skills_data = [
+            {
+                "id": skill.id,
+                "name": skill.name,
+                "category": skill.category,
+                "proficiency_level": skill.proficiency_level,
+                "years_of_experience": skill.years_of_experience,
+                "added_at": skill.added_at,
+            }
+            for skill in skills
+        ]
+
+        objects_data = [
+            {
+                "id": obj.id,
+                "name": obj.name,
+                "description": obj.description,
+                "category": obj.category,
+                "condition": obj.condition,
+                "is_available": obj.is_available,
+                "price_per_day": obj.price_per_day,
+                "image": request.build_absolute_uri(obj.image.url) if obj.image else None,
+                "created_at": obj.created_at,
+            }
+            for obj in objects
+        ]
+
+        user_data = {
+            "id": user.id,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "username": user.username,
+            "profile_picture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
+            "biography": user.biography,
+            "location": user.location,
+            "distance_radius": user.distance_radius,
+            "quiet_hours_start": user.quiet_hours_start,
+            "quiet_hours_end": user.quiet_hours_end,
+            "trust_score": user.trust_score,
+            "is_verified": user.is_verified,
+            "skills": skills_data,
+            "objects": objects_data,
+        }
+
+        return JsonResponse({"user": user_data})
+
+    return JsonResponse({"error": "Method not allowed"}, status=405)

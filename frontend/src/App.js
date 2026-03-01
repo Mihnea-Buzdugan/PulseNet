@@ -14,7 +14,7 @@ function App() {
 
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/user/', { credentials: 'include' })
+    fetch('http://localhost:8000/accounts/user/', { credentials: 'include' })
         .then(response => response.json())
         .then(data => {
           console.log("User Data:", data);
