@@ -1,18 +1,16 @@
-// ProfilePage.jsx
 import React, { useState, useMemo } from "react";
 import Navbar from "../components/Navbar";
 import styles from "../styles/profile.module.css";
 
 export default function Profile() {
     const [tab, setTab] = useState("overview");
-    const [editing, setEditing] = useState(false);
 
     const [user, setUser] = useState({
         firstName: "John",
         lastName: "Doe",
         username: "johndoe",
         email: "john@example.com",
-        bio: "Profile bio here with extended description and achievements.",
+        bio: "Creative developer and tech enthusiast. Building tools that help people connect and share resources efficiently.",
         trustScore: 87,
         verified: true,
         stats: {
@@ -26,14 +24,15 @@ export default function Profile() {
             { id: 3, name: "Tailwind", level: "expert" },
         ],
         objects: [
-            { id: 1, name: "Drill", price: 10, available: true },
-            { id: 2, name: "Camera", price: 15, available: false },
-            { id: 3, name: "Projector", price: 20, available: true },
+            { id: 1, name: "Makita Power Drill", price: 10, available: true },
+            { id: 2, name: "Sony A7III Camera", price: 45, available: false },
+            { id: 3, name: "4K Home Projector", price: 20, available: true },
         ],
     });
 
-    // form state for editing
-    const [form, setForm] = useState({
+    const [editMode, setEditMode] = useState(false);
+
+    const [editForm, setEditForm] = useState({
         firstName: user.firstName,
         lastName: user.lastName,
         username: user.username,
@@ -41,125 +40,145 @@ export default function Profile() {
         bio: user.bio,
     });
 
-    // Keep form synced when opening editor (in case user state changed)
-    function openEdit() {
-        setForm({
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            username: user.username || "",
-            email: user.email || "",
-            bio: user.bio || "",
-        });
-        setEditing(true);
-    }
-
-    function saveProfile() {
-        // Basic validation example
-        if (!form.firstName.trim() || !form.lastName.trim() || !form.username.trim()) {
-            alert("First name, last name and username are required.");
-            return;
-        }
-
-        setUser((u) => ({
-            ...u,
-            firstName: form.firstName.trim(),
-            lastName: form.lastName.trim(),
-            username: form.username.trim(),
-            email: form.email.trim(),
-            bio: form.bio,
-        }));
-
-        setEditing(false);
-    }
-
     const filteredObjects = useMemo(() => {
         return user.objects;
     }, [user.objects]);
 
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setEditForm((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const handleSave = () => {
+        setUser((prev) => ({ ...prev, ...editForm }));
+        setEditMode(false);
+    };
+
     return (
         <div className={styles.body}>
+            <div className={styles.mainContainer}>
             <Navbar />
 
             <div className={styles.container}>
-                {/* Header */}
-                <div className={styles.header}>
-                    <div>
-                        <h1 className={styles.title}>
-                            {user.firstName} {user.lastName}
-                        </h1>
-                        <p className={styles.email}>@{user.username}</p>
-                        <p className={styles.email}>{user.email}</p>
-                        {user.verified && <span className={styles.verified}>Verified</span>}
-                        <p className={styles.bio}>{user.bio}</p>
+                {/* NEW: Cover Photo */}
+                <div className={styles.coverPhoto}></div>
 
-                        <div style={{ marginTop: "1rem" }}>
-                            <button onClick={openEdit} className={styles.editButton}>
-                                Edit Profile
-                            </button>
+                {/* HEADER CARD */}
+                <div className={styles.headerCard}>
+                    <div className={styles.headerLayout}>
+                        {/* Avatar & Trust Score */}
+                        <div className={styles.avatarSection}>
+                            <div className={styles.avatarWrapper}>
+                                <div className={styles.avatar} />
+                            </div>
+                            <div className={styles.trustBadge}>
+                                <span className={styles.trustIcon}>🛡️</span>
+                                <span className={styles.trustValue}>{user.trustScore}% Trust</span>
+                            </div>
                         </div>
-                    </div>
 
-                    <div className={styles.avatarSection}>
-                        <div className={styles.avatar} />
-                        <div className={styles.trustBox}>
-                            <span className={styles.trustLabel}>Trust Score</span>
-                            <span className={styles.trustValue}>{user.trustScore}%</span>
+                        {/* Profile Info / Edit Form */}
+                        <div className={styles.profileInfo}>
+                            {editMode ? (
+                                <div className={styles.editForm}>
+                                    <div className={styles.editGrid}>
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.inputLabel}>First Name</label>
+                                            <input name="firstName" className={styles.editInput} value={editForm.firstName} onChange={handleChange} />
+                                        </div>
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.inputLabel}>Last Name</label>
+                                            <input name="lastName" className={styles.editInput} value={editForm.lastName} onChange={handleChange} />
+                                        </div>
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.inputLabel}>Username</label>
+                                            <input name="username" className={styles.editInput} value={editForm.username} onChange={handleChange} />
+                                        </div>
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.inputLabel}>Email</label>
+                                            <input name="email" className={styles.editInput} value={editForm.email} onChange={handleChange} />
+                                        </div>
+                                    </div>
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.inputLabel}>Bio</label>
+                                        <textarea name="bio" className={styles.editTextarea} value={editForm.bio} onChange={handleChange} />
+                                    </div>
+                                    <div className={styles.editActions}>
+                                        <button onClick={handleSave} className={styles.saveButton}>Save Changes</button>
+                                        <button onClick={() => setEditMode(false)} className={styles.cancelButton}>Cancel</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className={styles.infoContent}>
+                                    <div className={styles.titleRow}>
+                                        <h1 className={styles.title}>
+                                            {user.firstName} {user.lastName}
+                                        </h1>
+                                        {user.verified && <span className={styles.verified}>✓ Verified</span>}
+                                    </div>
+                                    <p className={styles.username}>@{user.username} • {user.email}</p>
+                                    <p className={styles.bio}>{user.bio}</p>
+                                    <button onClick={() => setEditMode(true)} className={styles.editProfileBtn}>
+                                        Edit Profile
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Tabs */}
-                <div className={styles.tabs}>
-                    {[
-                        { key: "overview", label: "Overview" },
-                        { key: "skills", label: "Skills" },
-                        { key: "objects", label: "Objects" },
-                        { key: "analytics", label: "Analytics" },
-                    ].map((t) => (
-                        <button
-                            key={t.key}
-                            className={tab === t.key ? styles.activeTab : styles.tab}
-                            onClick={() => setTab(t.key)}
-                        >
-                            {t.label}
-                        </button>
-                    ))}
+                {/* SEGMENTED TABS */}
+                <div className={styles.tabsContainer}>
+                    <div className={styles.tabs}>
+                        {[
+                            { key: "overview", label: "Overview" },
+                            { key: "skills", label: "Skills" },
+                            { key: "objects", label: "My Objects" },
+                        ].map((t) => (
+                            <button
+                                key={t.key}
+                                className={tab === t.key ? styles.activeTab : styles.tab}
+                                onClick={() => setTab(t.key)}
+                            >
+                                {t.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* TAB CONTENT */}
-                <div className={styles.card}>
+                <div className={styles.contentArea}>
                     {tab === "overview" && (
-                        <div className={styles.gridTwo}>
+                        <div className={styles.statsGrid}>
                             <div className={styles.statBox}>
-                                Items
-                                <br />
-                                {user.stats.items}
+                                <span className={styles.statLabel}>Items Listed</span>
+                                <span className={styles.statValue}>{user.stats.items}</span>
                             </div>
                             <div className={styles.statBox}>
-                                Loans
-                                <br />
-                                {user.stats.loans}
+                                <span className={styles.statLabel}>Active Loans</span>
+                                <span className={styles.statValue}>{user.stats.loans}</span>
                             </div>
                             <div className={styles.statBox}>
-                                Endorsements
-                                <br />
-                                {user.stats.endorsements}
+                                <span className={styles.statLabel}>Endorsements</span>
+                                <span className={styles.statValue}>{user.stats.endorsements}</span>
                             </div>
                             <div className={styles.statBox}>
-                                Trust
-                                <br />
-                                {user.trustScore}%
+                                <span className={styles.statLabel}>Trust Score</span>
+                                <span className={styles.statValue}>{user.trustScore}%</span>
                             </div>
                         </div>
                     )}
 
                     {tab === "skills" && (
-                        <div>
-                            <h2 className={styles.sectionTitle}>Skills</h2>
+                        <div className={styles.card}>
+                            <h2 className={styles.sectionTitle}>Skills & Expertise</h2>
                             <div className={styles.skillGrid}>
                                 {user.skills.map((skill) => (
                                     <div key={skill.id} className={styles.skillCard}>
-                                        <span>{skill.name}</span>
+                                        <span className={styles.skillName}>{skill.name}</span>
                                         <span className={styles.skillLevel}>{skill.level}</span>
                                     </div>
                                 ))}
@@ -168,99 +187,32 @@ export default function Profile() {
                     )}
 
                     {tab === "objects" && (
-                        <div>
-                            <h2 className={styles.sectionTitle}>My Objects</h2>
+                        <div className={styles.card}>
+                            <h2 className={styles.sectionTitle}>Available Objects</h2>
                             <div className={styles.objectGrid}>
                                 {filteredObjects.map((obj) => (
                                     <div key={obj.id} className={styles.objectCard}>
-                                        <div className={styles.objectImage} />
+                                        <div className={styles.objectImage}>
+                                            {/* Placeholder for actual image */}
+                                            <span className={styles.imagePlaceholder}>📸</span>
+                                        </div>
                                         <div className={styles.objectInfo}>
-                                            <h3>{obj.name}</h3>
-                                            <span className={styles.price}>${obj.price}/day</span>
-                                            <span
-                                                className={
-                                                    obj.available ? styles.availableBadge : styles.unavailableBadge
-                                                }
-                                            >
-                        {obj.available ? "Available" : "Unavailable"}
-                      </span>
+                                            <h3 className={styles.objectName}>{obj.name}</h3>
+                                            <div className={styles.objectMeta}>
+                                                <span className={styles.price}>${obj.price}/day</span>
+                                                <span className={obj.available ? styles.availableBadge : styles.unavailableBadge}>
+                                                    {obj.available ? "Available" : "In Use"}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
-
-                    {tab === "analytics" && (
-                        <div>
-                            <h2 className={styles.sectionTitle}>Profile Analytics</h2>
-                            <div className={styles.analyticsBox}>
-                                <div className={styles.analyticsRow}>Activity Growth Chart</div>
-                                <div className={styles.analyticsPlaceholder}>Chart will be rendered here</div>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
-
-            {/* Edit Modal */}
-            {editing && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modalBox} role="dialog" aria-modal="true">
-                        <h2 className={styles.sectionTitle}>Edit Profile</h2>
-
-                        <label className={styles.inputLabel}>First name</label>
-                        <input
-                            className={styles.input}
-                            placeholder="First name"
-                            value={form.firstName}
-                            onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                        />
-
-                        <label className={styles.inputLabel}>Last name</label>
-                        <input
-                            className={styles.input}
-                            placeholder="Last name"
-                            value={form.lastName}
-                            onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                        />
-
-                        <label className={styles.inputLabel}>Username</label>
-                        <input
-                            className={styles.input}
-                            placeholder="Username"
-                            value={form.username}
-                            onChange={(e) => setForm({ ...form, username: e.target.value })}
-                        />
-
-                        <label className={styles.inputLabel}>Email</label>
-                        <input
-                            className={styles.input}
-                            placeholder="Email"
-                            value={form.email}
-                            onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        />
-
-                        <label className={styles.inputLabel}>Bio</label>
-                        <textarea
-                            className={styles.input}
-                            rows={4}
-                            placeholder="Short bio"
-                            value={form.bio}
-                            onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                        />
-
-                        <div className={styles.modalActions}>
-                            <button onClick={() => setEditing(false)} className={styles.cancelBtn}>
-                                Cancel
-                            </button>
-                            <button onClick={saveProfile} className={styles.saveBtn}>
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            </div>
         </div>
     );
 }
