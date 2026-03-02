@@ -16,6 +16,7 @@ urlpatterns = [
     path("remove_object/<int:object_id>/", views.remove_object),
     path('add_skill/', views.add_skill, name='add_skill'),
     path('add_object/', views.add_object, name='add_object'),
+    path('get_pulses/', views.get_pulses, name='get_pulses'),
     path("search-users/", views.search_users, name="search-users"),
     path("follow/<int:user_id>/", views.follow_user),
     path("follow-requests/accept/<int:request_id>/", views.accept_follow_request),
