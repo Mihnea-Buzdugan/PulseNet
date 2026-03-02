@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.core.paginator import Paginator
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie, csrf_protect
 import os
@@ -305,6 +306,65 @@ def update_profile(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+#adauga skill in profile page
+@login_required
+@require_http_methods(["POST"])
+@csrf_protect
+def add_skill(request):
+    try:
+        data = json.loads(request.body)
+
+        skill = Skill.objects.create(
+            user=request.user,
+            name=data.get('name'),
+            proficiency_level=data.get('level', 'beginner'),
+            years_of_experience=data.get('years_of_experience', 0)
+        )
+
+        return JsonResponse({
+            "success": True,
+            "skill": {
+                "id": skill.id,
+                "name": skill.name,
+                "proficiency_level": skill.proficiency_level,
+                "category": skill.category,
+                "years_of_experience": skill.years_of_experience,
+                "added_at": skill.added_at.strftime("%Y-%m-%d %H:%M:%S") if skill.added_at else None
+            }
+        }, status=201)
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+#adauga obiect in profile page
+@login_required
+@require_http_methods(["POST"])
+@csrf_protect
+def add_object(request):
+    try:
+        data = json.loads(request.body)
+
+        obj = UserObject.objects.create(
+            owner=request.user,
+            name=data.get('name'),
+            price_per_day=data.get('price', 0),
+            is_available=data.get('available', True),
+        )
+
+        return JsonResponse({
+            "success": True,
+            "object": {
+                "id": obj.id,
+                "name": obj.name,
+                "description": obj.description,
+                "price_per_day": float(obj.price_per_day),
+                "isAvailable": obj.is_available,
+                "created_at": obj.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            }
+        }, status=201)
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 @login_required
 def remove_skill(request, skill_id):
@@ -327,8 +387,6 @@ def remove_skill(request, skill_id):
             {"success": False, "error": str(e)},
             status=400
         )
-
-
 
 @login_required
 def remove_object(request, object_id):
@@ -353,3 +411,4 @@ def remove_object(request, object_id):
             {"success": False, "error": str(e)},
             status=400
         )
+

@@ -63,7 +63,7 @@ export default function Profile() {
     }, []);
 
     const [newSkill, setNewSkill] = useState({name: "", level: "beginner"});
-    const [newObject, setNewObject] = useState({name: "", price: "", available: true});
+    const [newObject, setNewObject] = useState({name: "", price: "", isAvailable: true});
 
     // 3. Protect useMemo from null user
     const filteredObjects = useMemo(() => {
@@ -106,12 +106,38 @@ export default function Profile() {
         }
     };
 
-    const addSkill = () => {
+    const addSkill = async () => {
         if (!newSkill.name.trim()) return;
-        const skill = {id: Date.now(), name: newSkill.name.trim(), level: newSkill.level};
-        setUser((prev) => ({...prev, skills: [...prev.skills, skill]}));
-        setNewSkill({name: "", level: "beginner"});
+
+        try {
+            const response = await fetch("http://localhost:8000/accounts/add_skill/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    name: newSkill.name.trim(),
+                    level: newSkill.level
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Adăugăm în state-ul local obiectul returnat de Django (care are ID-ul real)
+                setUser((prev) => ({
+                    ...prev,
+                    skills: [...prev.skills, data.skill]
+                }));
+                setNewSkill({ name: "", level: "beginner" });
+            }
+        } catch (error) {
+            console.error("Error adding skill:", error);
+        }
     };
+
+
 
     const removeSkill = async (id) => {
         try {
@@ -142,19 +168,35 @@ export default function Profile() {
         }
     };
 
-    const addObject = () => {
+    const addObject = async () => {
         if (!newObject.name.trim() || !newObject.price) return;
-        const object = {
-            id: Date.now(),
-            name: newObject.name.trim(),
-            price: parseFloat(newObject.price),
-            available: !!newObject.available,
-        };
-        setUser((prev) => ({
-            ...prev,
-            objects: [...prev.objects, object],
-        }));
-        setNewObject({name: "", price: "", available: true});
+
+        try {
+            const response = await fetch("http://localhost:8000/accounts/add_object/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    name: newObject.name.trim(),
+                    price: parseFloat(newObject.price),
+                    available: !!newObject.isAvailable, // am corectat cheia conform state-ului tău
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setUser((prev) => ({
+                    ...prev,
+                    objects: [...prev.objects, data.object],
+                }));
+                setNewObject({ name: "", price: "", available: true });
+            }
+        } catch (error) {
+            console.error("Error adding object:", error);
+        }
     };
 
     const removeObject = async (id) => {

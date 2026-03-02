@@ -12,4 +12,7 @@ urlpatterns = [
     path('update_profile/', views.update_profile, name='update_profile'),
     path("remove_skill/<int:skill_id>/", views.remove_skill),
     path("remove_object/<int:object_id>/", views.remove_object),
+
+    path('add_skill/', views.add_skill, name='add_skill'),
+    path('add_object/', views.add_object, name='add_object'),
 ]

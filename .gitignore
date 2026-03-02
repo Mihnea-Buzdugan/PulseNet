@@ -5,3 +5,5 @@
 /backend/.env
 /backend/idea/
 .env
+**/__pycache__/
+*.pyc
