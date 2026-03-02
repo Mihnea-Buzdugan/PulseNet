@@ -15,7 +15,7 @@ from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
 from .decorators import api_login_required
-from .models import Skill, UserObject
+from .models import Skill, UserObject, PendingFollow
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
@@ -532,10 +532,21 @@ def search_users(request):
         Q(username__icontains=query) |
         Q(first_name__icontains=query) |
         Q(last_name__icontains=query)
-    ).exclude(id=request.user.id)[:20]  # don't show yourself
+    ).exclude(id=request.user.id)[:20]
 
-    results = [
-        {
+    from .models import Follow, PendingFollow, Friendship
+
+    results = []
+
+    for user in users:
+
+        # Friendship check (sorted IDs like your model)
+        is_friend = Friendship.objects.filter(
+            user1_id=min(request.user.id, user.id),
+            user2_id=max(request.user.id, user.id),
+        ).exists()
+
+        results.append({
             "id": user.id,
             "username": user.username,
             "first_name": user.first_name,
@@ -543,12 +554,20 @@ def search_users(request):
             "profile_picture": (
                 user.profile_picture.url if user.profile_picture else None
             ),
-            "is_following": request.user.following.filter(
+            "private_account": user.private_account,
+
+            "is_following": Follow.objects.filter(
+                follower=request.user,
                 following=user
             ).exists(),
-        }
-        for user in users
-    ]
+
+            "pending_follow": PendingFollow.objects.filter(
+                requester=request.user,
+                target=user
+            ).exists(),
+
+            "is_friend": is_friend,
+        })
 
     return JsonResponse({"users": results})
 
@@ -584,32 +603,42 @@ def follow_user(request, user_id):
     return JsonResponse({"status": "follow_created"})
 
 
-@csrf_exempt
 @login_required
 def unfollow_user(request, user_id):
     from .models import Follow, Friendship
 
     target = User.objects.get(id=user_id)
 
-    friendship = Friendship.objects.get(user1_id=min(request.user.id, target.id),
-        user2_id=max(request.user.id, target.id),)
+    # Try to get friendship safely
+    friendship = Friendship.objects.filter(
+        user1_id=min(request.user.id, target.id),
+        user2_id=max(request.user.id, target.id),
+    ).first()
 
     if friendship:
-        Follow.objects.filter(
-            follower=target,
-            following=request.user
-        ).create()
-
+        # If friendship exists → delete it
         friendship.delete()
 
+        # Optional: recreate follow from target → user
+        Follow.objects.get_or_create(
+            follower=target,
+            following=request.user
+        )
+
     else:
+        # No friendship → just remove follow
         Follow.objects.filter(
             follower=request.user,
             following=target
-        )
+        ).delete()
 
+        PendingFollow.objects.filter(
+            requester=request.user,
+            target=target
+        ).delete()
 
     return JsonResponse({"success": True})
+
 
 @csrf_exempt
 @login_required
