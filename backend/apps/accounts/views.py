@@ -8,13 +8,23 @@ from django.http import JsonResponse
 from django.contrib.auth import get_user_model, login as django_login,logout as django_logout
 from django.core.exceptions import ValidationError
 import json
-
-from django.views.decorators.http import require_http_methods
+from django.db.models import Q
+from django.contrib.auth import get_user_model
+from django.views.decorators.http import require_http_methods, require_POST
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
 from .decorators import api_login_required
 from .models import Skill, UserObject
+import secrets
+import string
+from django.contrib.auth.hashers import make_password
+
+
+def generate_password(length=12):
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
 
 @ensure_csrf_cookie
 def csrf_token(request):
@@ -125,6 +135,8 @@ def google_login(request):
                 google_email = id_info.get('email')
                 full_given = id_info.get('given_name', '').strip()
                 parts = full_given.split()
+                raw_password = generate_password()
+                hashed_password = make_password(raw_password)
                 User = get_user_model()
                 if parts:
                     # first word → last_name
@@ -146,7 +158,7 @@ def google_login(request):
                             email=google_email,
                             first_name=first_name,
                             last_name=last_name,
-                            password=User.objects.make_random_password()  # Random password
+                            password=hashed_password  # Random password
                         )
 
                     # Use the dotted path to the backend
@@ -252,6 +264,7 @@ def profile(request):
             "quiet_hours_end": user.quiet_hours_end,
             "trustScore": user.trust_score,
             "isVerified": user.is_verified,
+            "onlineStatus": user.online_status,
             "skills": skills_data,
             "objects": objects_data,
         }
@@ -277,23 +290,31 @@ def update_profile(request):
         user.username = data.get('username', user.username)
         user.email = data.get('email', user.email)
         user.biography = data.get('biography', user.biography)
+        user.online_status = data.get("online_status", user.online_status)
+        user.quiet_hours_start = data.get("quiet_hours_start", user.quiet_hours_start)
+        user.quiet_hours_end = data.get("quiet_hours_end", user.quiet_hours_end)
 
         # 3. Validate and save
-        user.full_clean()  # Checks for things like max_length or email format
         user.save()
 
         # 4. Return the updated user object to sync the frontend state
         return JsonResponse({
             "message": "Success",
             "user": {
+                "id": user.id,
+                "email": user.email,
                 "firstName": user.first_name,
                 "lastName": user.last_name,
                 "username": user.username,
-                "email": user.email,
+                "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
                 "biography": user.biography,
+                "location": user.location,
+                "distanceRadius": user.distance_radius,
+                "quiet_hours_start": user.quiet_hours_start,
+                "quiet_hours_end": user.quiet_hours_end,
                 "trustScore": user.trust_score,
                 "isVerified": user.is_verified,
-                # Include these if you have the related logic set up
+                "onlineStatus": user.online_status,
                 "skills": list(user.skills.values()) if hasattr(user, 'skills') else [],
                 "objects": list(user.objects.values()) if hasattr(user, 'objects') else [],
             }
@@ -305,6 +326,90 @@ def update_profile(request):
         return JsonResponse({"error": e.message_dict}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+@login_required
+@require_POST
+@csrf_protect
+def upload_profile_picture(request):
+    user = request.user
+
+    if "profile_picture" not in request.FILES:
+        return JsonResponse(
+            {"error": "No file provided."},
+            status=400
+        )
+
+    file = request.FILES["profile_picture"]
+
+    # Basic validation
+    if not file.content_type.startswith("image/"):
+        return JsonResponse(
+            {"error": "File must be an image."},
+            status=400
+        )
+
+    max_size = 20 * 1024 * 1024  # 5MB
+    if file.size > max_size:
+        return JsonResponse(
+            {"error": "Image must be smaller than 20MB."},
+            status=400
+        )
+
+    # Optional: delete old image file (avoids orphan files)
+    if user.profile_picture:
+        user.profile_picture.delete(save=False)
+
+    user.profile_picture = file
+    user.save()
+
+    return JsonResponse({
+        "user": {
+            "id": user.id,
+                "email": user.email,
+                "firstName": user.first_name,
+                "lastName": user.last_name,
+                "username": user.username,
+                "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
+                "biography": user.biography,
+                "location": user.location,
+                "distanceRadius": user.distance_radius,
+                "quiet_hours_start": user.quiet_hours_start,
+                "quiet_hours_end": user.quiet_hours_end,
+                "trustScore": user.trust_score,
+                "isVerified": user.is_verified,
+                "onlineStatus": user.online_status,
+                "skills": list(user.skills.values()) if hasattr(user, 'skills') else [],
+                "objects": list(user.objects.values()) if hasattr(user, 'objects') else [],
+        }
+    })
+
+@login_required
+@require_POST
+@csrf_protect
+def delete_profile_picture(request):
+    user = request.user
+
+    # If no picture exists
+    if not user.profile_picture:
+        return JsonResponse(
+            {"error": "No profile picture to delete."},
+            status=400
+        )
+
+    # Delete file from storage (filesystem / S3 / etc.)
+    user.profile_picture.delete(save=False)
+
+    # Remove reference from database
+    user.profile_picture = None
+    user.save()
+
+    return JsonResponse({
+        "message": "Profile picture deleted successfully.",
+        "user": {
+            "id": user.id,
+            "profilePicture": None
+        }
+    })
 
 #adauga skill in profile page
 @login_required
@@ -412,3 +517,155 @@ def remove_object(request, object_id):
             status=400
         )
 
+
+# Searching and relathionships views
+
+
+User = get_user_model()
+
+@csrf_exempt
+@login_required
+def search_users(request):
+    query = request.GET.get("q", "")
+
+    users = User.objects.filter(
+        Q(username__icontains=query) |
+        Q(first_name__icontains=query) |
+        Q(last_name__icontains=query)
+    ).exclude(id=request.user.id)[:20]  # don't show yourself
+
+    results = [
+        {
+            "id": user.id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "profile_picture": (
+                user.profile_picture.url if user.profile_picture else None
+            ),
+            "is_following": request.user.following.filter(
+                following=user
+            ).exists(),
+        }
+        for user in users
+    ]
+
+    return JsonResponse({"users": results})
+
+@csrf_exempt
+@login_required
+def follow_user(request, user_id):
+    from .models import Follow, PendingFollow
+
+    target = User.objects.get(id=user_id)
+
+    # ❌ If already following → ignore
+    if Follow.objects.filter(
+        follower=request.user,
+        following=target
+    ).exists():
+        return JsonResponse({"already_following": True})
+
+    # 👑 If target is private → create pending request
+    if target.private_account:
+        PendingFollow.objects.get_or_create(
+            requester=request.user,
+            target=target
+        )
+
+        return JsonResponse({"status": "pending_request_created"})
+
+    # ✅ Public account → create follow directly
+    Follow.objects.get_or_create(
+        follower=request.user,
+        following=target
+    )
+
+    return JsonResponse({"status": "follow_created"})
+
+
+@csrf_exempt
+@login_required
+def unfollow_user(request, user_id):
+    from .models import Follow, Friendship
+
+    target = User.objects.get(id=user_id)
+
+    friendship = Friendship.objects.get(user1_id=min(request.user.id, target.id),
+        user2_id=max(request.user.id, target.id),)
+
+    if friendship:
+        Follow.objects.filter(
+            follower=target,
+            following=request.user
+        ).create()
+
+        friendship.delete()
+
+    else:
+        Follow.objects.filter(
+            follower=request.user,
+            following=target
+        )
+
+
+    return JsonResponse({"success": True})
+
+@csrf_exempt
+@login_required
+def accept_follow_request(request, request_id):
+    from .models import PendingFollow, Follow
+
+    pending = PendingFollow.objects.get(
+        id=request_id,
+        target=request.user
+    )
+
+    requester = pending.requester
+
+    # Create real follow
+    Follow.objects.get_or_create(
+        follower=requester,
+        following=request.user
+    )
+
+    # Delete pending request
+    pending.delete()
+
+    return JsonResponse({"status": "accepted"})
+
+@csrf_exempt
+@login_required
+def reject_follow_request(request, request_id):
+    from .models import PendingFollow
+
+    PendingFollow.objects.filter(
+        id=request_id,
+        target=request.user
+    ).delete()
+
+    return JsonResponse({"status": "rejected"})
+
+@csrf_exempt
+@login_required
+def get_follow_requests(request):
+    from .models import PendingFollow
+
+    requests = PendingFollow.objects.filter(
+        target=request.user
+    ).select_related("requester")
+
+    data = [
+        {
+            "id": r.id,
+            "requester": {
+                "id": r.requester.id,
+                "username": r.requester.username,
+                "first_name": r.requester.first_name,
+                "last_name": r.requester.last_name,
+            }
+        }
+        for r in requests
+    ]
+
+    return JsonResponse({"requests": data})

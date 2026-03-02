@@ -39,16 +39,42 @@
 
 /* AVATAR & TRUST */
 .avatarSection {
-    @apply flex flex-col items-center gap-4 -mt-16 sm:-mt-20 z-10 shrink-0;
+    @apply flex flex-col items-center gap-4 -mt-16 mx-auto sm:-mt-20 z-10 shrink-0;
 }
 
 .avatarWrapper {
-    @apply rounded-full p-1.5 bg-white shadow-md;
+    /* Ensure this is relative so the button can be absolute */
+    @apply relative rounded-full p-1.5 bg-white shadow-md;
+}
+
+.editButton {
+    @apply absolute bottom-2 right-2
+    w-10 h-10
+    bg-white text-indigo-600
+    rounded-full shadow-lg border-2 border-slate-50
+    flex items-center justify-center
+    transition-all duration-200
+    hover:scale-110 hover:bg-indigo-50 active:scale-95
+    cursor-pointer z-20;
+}
+
+.deleteButton {
+    @apply absolute top-2 right-3
+    w-8 h-8
+    bg-red-200 text-white
+    rounded-full shadow-md
+    flex items-center justify-center
+    hover:bg-red-600 active:scale-95
+    transition-all duration-200
+    cursor-pointer z-20;
+}
+
+.editIcon {
+    @apply w-5 h-5;
 }
 
 .avatar {
     @apply w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-slate-200 border-4 border-slate-50 shadow-inner bg-cover bg-center;
-    /* Optional: background-image: url('/your-default-avatar.jpg'); */
 }
 
 .trustBadge {
@@ -91,6 +117,47 @@
 .biography {
     @apply text-slate-700 max-w-2xl leading-relaxed mb-6 text-base;
 }
+
+.statusBottomRight {
+    @apply absolute bottom-4 right-4;
+}
+
+.statusRowInline {
+    @apply flex items-center gap-3;
+}
+
+.statusRow {
+    @apply flex items-center gap-4 mt-3 flex-wrap;
+}
+
+.statusItem {
+    @apply flex items-center gap-2;
+}
+
+.statusText {
+    @apply text-sm font-medium capitalize text-gray-700;
+}
+
+.statusOnline {
+    @apply text-green-500 text-lg;
+}
+
+.statusAway {
+    @apply text-yellow-500 text-lg;
+}
+
+.statusDnd {
+    @apply text-red-500 text-lg;
+}
+
+.statusOffline {
+    @apply text-gray-400 text-lg;
+}
+
+.sleepingBadge {
+    @apply bg-indigo-100 text-indigo-700 text-xs px-3 py-1 rounded-full font-medium;
+}
+
 
 .editProfileBtn {
     @apply px-5 py-2.5 bg-white border border-slate-300 text-slate-700 font-semibold rounded-full hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm focus:ring-2 focus:ring-slate-200 outline-none;
@@ -285,4 +352,37 @@
 
 .inlineLabel {
     @apply inline-flex mx-2 items-center gap-2 font-bold text-slate-700;
+}
+
+.modalOverlay {
+    @apply fixed inset-0 bg-black bg-opacity-40
+    flex items-center justify-center
+    z-50 backdrop-blur-sm;
+}
+
+.modal {
+    @apply bg-white rounded-2xl shadow-xl
+    w-full max-w-md p-6;
+}
+
+.modalTitle {
+    @apply text-lg font-semibold text-slate-800 mb-2;
+}
+
+.modalText {
+    @apply text-sm text-slate-600 mb-6;
+}
+
+.modalActions {
+    @apply flex justify-end gap-3;
+}
+
+.modalCancel {
+    @apply px-4 py-2 rounded-lg bg-slate-200
+    hover:bg-slate-300 transition;
+}
+
+.modalDelete {
+    @apply px-4 py-2 rounded-lg bg-red-500 text-white
+    hover:bg-red-600 transition;
 }

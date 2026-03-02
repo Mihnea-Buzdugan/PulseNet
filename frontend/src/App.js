@@ -7,6 +7,8 @@ const Index = React.lazy(() => import('./pages/Index.js'));
 const SignUp = React.lazy(() => import('./pages/SignUp.js'));
 const Login = React.lazy(() => import('./pages/Login.js'));
 const Profile = React.lazy(() => import('./pages/Profile.js'));
+const SearchUsers = React.lazy(() => import('./pages/SearchUsers.js'));
+const FollowRequests = React.lazy(() => import('./pages/FollowRequests.js'));
 
 function App() {
   const [user, setUser] = useState(null);
@@ -33,6 +35,8 @@ function App() {
               <Route path="/signup" element={<SignUp />} />
               <Route path="/login" element={<Login />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/search-users" element={<SearchUsers />} />
+              <Route path="/follow-requests" element={<FollowRequests />} />
           </Routes>
         </Suspense>
       </div>

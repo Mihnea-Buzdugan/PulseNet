@@ -20,11 +20,25 @@ class User(AbstractUser):
 
     distance_radius = models.IntegerField(default=0)
 
+    ONLINE_STATUS_CHOICES = [
+        ("online", "Online"),
+        ("away", "Away"),
+        ("do_not_disturb", "Do Not Disturb"),
+        ("offline", "Offline"),
+    ]
+
+    online_status = models.CharField(
+        max_length=20,
+        choices=ONLINE_STATUS_CHOICES,
+        default="offline",
+    )
+
     quiet_hours_start = models.TimeField(null=True, blank=True)
     quiet_hours_end = models.TimeField(null=True, blank=True)
 
     trust_score = models.FloatField(default=0)
     is_verified = models.BooleanField(default=False)
+    private_account = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name", "username"]
@@ -116,3 +130,95 @@ class UserObject(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.owner.email})"
+
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="following"
+    )
+
+    following = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="followers"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("follower", "following")
+
+
+class PendingFollow(models.Model):
+    requester = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="pending_requests_sent"
+    )
+
+    target = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="pending_requests_received"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("requester", "target")
+
+    def __str__(self):
+        return f"{self.requester} → {self.target} (pending)"
+
+
+class Friendship(models.Model):
+    user1 = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="friendships_initiated"
+    )
+
+    user2 = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="friendships_received"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user1", "user2")
+
+
+class Conversation(models.Model):
+    participants = models.ManyToManyField(
+        User,
+        related_name="conversations"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Conversation {self.id}"
+
+
+class Message(models.Model):
+    conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.CASCADE,
+        related_name="messages"
+    )
+
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+
+    content = models.TextField()
+
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    is_read = models.BooleanField(default=False)
