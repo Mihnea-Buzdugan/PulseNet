@@ -9,6 +9,7 @@ const Login = React.lazy(() => import('./pages/Login.js'));
 const Profile = React.lazy(() => import('./pages/Profile.js'));
 const SearchUsers = React.lazy(() => import('./pages/SearchUsers.js'));
 const FollowRequests = React.lazy(() => import('./pages/FollowRequests.js'));
+const PulseDetails = React.lazy(() => import('./pages/PulseDetails.js'));
 
 function App() {
   const [user, setUser] = useState(null);
@@ -37,6 +38,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/search-users" element={<SearchUsers />} />
               <Route path="/follow-requests" element={<FollowRequests />} />
+              <Route path="pulse/:type/:id" element={<PulseDetails />} />
           </Routes>
         </Suspense>
       </div>

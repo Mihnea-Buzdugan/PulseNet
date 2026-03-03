@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import Navbar from "../components/Navbar";
 import styles from "../styles/index.module.css";
+import {useNavigate} from "react-router-dom";
 
 const quotes = [
     "Success is built one step at a time.",
@@ -20,6 +21,11 @@ function Index() {
     const [hasNext, setHasNext] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    const navigate = useNavigate();
+
+    const handlePulseClick = (type, id) => {
+        navigate(`/pulse/${type}/${id}`);
+    }
     const fetchPulses = async (pageNum) => {
         if (loading) return; // Evităm cereri multiple simultane
 
@@ -80,6 +86,8 @@ function Index() {
                             <div
                                 key={`${pulse.type}-${pulse.id}-${index}`}
                                 className={styles.tweetCard}
+                                onClick={() => handlePulseClick(pulse.type, pulse.id)}
+                                style={{cursor: "pointer"}}
                             >
                                 {/* Left: Avatar */}
                                 <div className={styles.leftSide}>
