@@ -523,6 +523,67 @@ def remove_object(request, object_id):
 
 # Searching and relathionships views
 
+@csrf_protect
+@login_required
+@require_http_methods(["GET"])
+def get_pulses(request):
+
+    page_number = request.GET.get('page')
+    per_page = 15
+
+    try:
+        skills = Skill.objects.select_related("user").all()
+        user_objects = UserObject.objects.select_related("owner").all()
+
+        combined_list = []
+        # Procesăm Skill-urile
+        for s in skills:
+            combined_list.append({
+                "id": s.id,
+                "type": "skill",
+                "user": s.user.username,
+                # Construim URL-ul complet pentru poza de profil a userului
+                "user_avatar": request.build_absolute_uri(
+                    s.user.profile_picture.url) if s.user.profile_picture else None,
+                "name": s.name,
+                "level": s.proficiency_level,  # <--- Adăugat
+                "timestamp": s.added_at
+            })
+
+        # Procesăm Obiectele
+        for obj in user_objects:
+            combined_list.append({
+                "id": obj.id,
+                "type": "object",
+                "user": obj.owner.username,
+                "user_avatar": request.build_absolute_uri(
+                    obj.owner.profile_picture.url) if obj.owner.profile_picture else None,
+                "name": obj.name,
+                "price": float(obj.price_per_day),
+                "is_available": obj.is_available,
+                "timestamp": obj.created_at
+            })
+
+        # Sortăm cronologic invers (cele mai noi sus)
+        combined_list.sort(key=lambda x: x['timestamp'], reverse=True)
+
+        paginator = Paginator(combined_list, per_page)
+        page_obj = paginator.get_page(page_number)
+
+        final_data = []
+        for item in page_obj:
+            # Formatăm data pentru JSON
+            item['timestamp'] = item['timestamp'].strftime("%Y-%m-%d %H:%M")
+            final_data.append(item)
+
+        return JsonResponse({
+            "success": True,
+            "pulses": final_data,
+            "has_next": page_obj.has_next(),
+            "next_page": page_obj.next_page_number() if page_obj.has_next() else None
+        })
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 User = get_user_model()
 
