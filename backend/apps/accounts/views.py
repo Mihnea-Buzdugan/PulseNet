@@ -15,7 +15,7 @@ from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
 from .decorators import api_login_required
-from .models import PendingFollow, Pulse, Friendship
+from .models import PendingFollow, Pulse, Friendship, Follow
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
@@ -574,38 +574,25 @@ def user_profile(request, user_id):
     if request.method == "GET":
         user = User.objects.get(id=user_id)
 
-        skills = Skill.objects.filter(user=user)
-        objects = UserObject.objects.filter(owner=user)
         is_friend = Friendship.objects.filter(
             user1_id=min(request.user.id, user.id),
             user2_id=max(request.user.id, user.id),
         ).exists()
 
-        skills_data = [
-            {
-                "id": skill.id,
-                "name": skill.name,
-                "category": skill.category,
-                "proficiency_level": skill.proficiency_level,
-                "years_of_experience": skill.years_of_experience,
-                "added_at": skill.added_at,
-            }
-            for skill in skills
-        ]
+        pulses = Pulse.objects.filter(user=user).prefetch_related('images')
 
-        objects_data = [
+        pulses_data = [
             {
-                "id": obj.id,
-                "name": obj.name,
-                "description": obj.description,
-                "category": obj.category,
-                "condition": obj.condition,
-                "isAvailable": obj.is_available,
-                "price_per_day": obj.price_per_day,
-                "image": request.build_absolute_uri(obj.image.url) if obj.image else None,
-                "created_at": obj.created_at,
-            }
-            for obj in objects
+                "id": p.id,
+                "title": p.title,
+                "pulseType": p.pulse_type,
+                "category": p.category,
+                "price": float(p.price),
+                "currencyType": p.currencyType,
+                "description": p.description,
+                "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
+                "phone_number": p.phone_number,
+            } for p in pulses
         ]
 
         user_data = {
@@ -635,8 +622,7 @@ def user_profile(request, user_id):
             ).exists(),
 
             "is_friend": is_friend,
-            "skills": skills_data,
-            "objects": objects_data,
+            "pulses": pulses_data,
         }
 
         return JsonResponse({"user": user_data})
