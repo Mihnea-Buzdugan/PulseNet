@@ -98,6 +98,15 @@ function Navbar() {
         navigate('/Login');
     };
 
+    const navItems = isAuthenticated
+        ? [
+            'Home',
+            'Profile',
+            'Add Pulse',
+            'Logout',
+
+        ]
+        : ['Home', 'Login'];
     const handleUserAction = async (e, targetUser, action) => {
         e.stopPropagation(); // Don't trigger the parent div's navigate
         const csrf = getCookie("csrftoken");
@@ -135,15 +144,17 @@ function Navbar() {
 
     const toggleMenu = () => setMenuActive(!menuActive);
 
-    const navItems = isAuthenticated ? ['Home', 'Profile', 'Logout'] : ['Home', 'Login'];
 
     const renderNavItem = (item, index) => {
+        if (!item) return null;
+
         const handlers = {
             Logout: handleLogout,
             Profile: () => navigate('/profile'),
             Login: () => navigate('/login'),
             Home: () => navigate('/'),
         };
+
         return (
             <div key={index} className={styles.sus} onClick={handlers[item] || null}>
                 {item}

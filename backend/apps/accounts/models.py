@@ -20,6 +20,7 @@ class User(AbstractUser):
 
     distance_radius = models.IntegerField(default=0)
 
+
     ONLINE_STATUS_CHOICES = [
         ("online", "Online"),
         ("away", "Away"),
@@ -46,82 +47,34 @@ class User(AbstractUser):
     def __str__(self):
         return self.email
 
-
-
-class Skill(models.Model):
+class Pulse(models.Model):
     user = models.ForeignKey(
         "User",
         on_delete=models.CASCADE,
-        related_name="skills",
-        null=True,
-        blank=True,
+        related_name="pulses"
     )
 
-    name = models.CharField(max_length=150)
-    category = models.CharField(max_length=150, blank=True)
-
-    PROFICIENCY_CHOICES = [
-        ("beginner", "Beginner"),
-        ("intermediate", "Intermediate"),
-        ("expert", "Expert"),
-    ]
-
-    proficiency_level = models.CharField(
-        max_length=20,
-        choices=PROFICIENCY_CHOICES,
-        default="beginner",
-    )
-
-    years_of_experience = models.FloatField(default=0)
-
-    added_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-
-    class Meta:
-        unique_together = ("user", "name")
-
-    def __str__(self):
-        return f"{self.name} ({self.user.email})"
-
-
-
-class UserObject(models.Model):
-    owner = models.ForeignKey(
-        "User",
-        on_delete=models.CASCADE,
-        related_name="owned_objects"
-    )
-
-    name = models.CharField(max_length=200)
+    title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 
+    #category in cazu in care adaugam categorii de obiecte pe viitor
     category = models.CharField(max_length=150, blank=True)
 
-    condition = models.CharField(
-        max_length=50,
-        choices=[
-            ("new", "New"),
-            ("good", "Good"),
-            ("used", "Used"),
-            ("damaged", "Damaged"),
-        ],
-        default="good",
+    phone_number = models.CharField(max_length=20, blank=True)
+
+    PULSE_TYPE_CHOICES = [
+        ("servicii", "Servicii / Evenimente"),
+        ("obiecte", "Obiecte / Produse"),
+    ]
+    pulse_type = models.CharField(
+        max_length=20,
+        choices=PULSE_TYPE_CHOICES
     )
+
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    currencyType = models.CharField(max_length=10, default="RON")
 
     is_available = models.BooleanField(default=True)
-
-
-    price_per_day = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0
-    )
-
-    image = models.ImageField(
-        upload_to="object_images/",
-        blank=True,
-        null=True
-    )
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -129,9 +82,17 @@ class UserObject(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.name} ({self.owner.email})"
+        return f"{self.title} ({self.pulse_type})"
 
 
+class PulseImage(models.Model):
+    pulse = models.ForeignKey(
+        Pulse,
+        on_delete=models.CASCADE,
+        related_name="images"
+    )
+    image = models.ImageField(upload_to="pulse_images/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
 class Follow(models.Model):
     follower = models.ForeignKey(

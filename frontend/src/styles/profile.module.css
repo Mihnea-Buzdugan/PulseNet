@@ -11,6 +11,7 @@
     color: black;
     margin: 0;
     padding: 0;
+    min-height: 100vh;
 }
 
 /* Main container */
@@ -18,6 +19,7 @@
     max-width: 1300px;
     margin: 0 auto;
     padding: 20px;
+    min-height: 100vh;
 }
 
 .container {
@@ -263,35 +265,71 @@
 
 /* OBJECTS */
 .objectGrid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6;
+    @apply grid grid-cols-1 gap-4;
 }
 
 .objectCard {
-    @apply bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-lg;
+    @apply bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-row transition-all duration-300 hover:shadow-lg;
+    height: 200px;
+    position: relative;
 }
 
 .objectImage {
-    @apply h-48 bg-slate-100 flex items-center justify-center border-b border-slate-100 group-hover:bg-slate-200 transition-colors;
+    @apply flex items-center justify-center transition-colors flex-shrink-0;
+    width: 280px;
+    height: 100%;
+    padding: 12px;
+}
+
+.pulseImage {
+    @apply w-full h-full rounded-xl;
+    object-fit: cover;
 }
 
 .imagePlaceholder {
-    @apply text-4xl opacity-50;
+    @apply text-5xl opacity-40;
 }
 
 .objectInfo {
     @apply p-5 flex flex-col flex-1;
+    overflow-y: auto;
+    padding-bottom: 50px;
 }
 
 .objectName {
-    @apply text-lg font-bold text-slate-900 mb-3;
+    @apply text-lg font-bold text-slate-900 mb-2;
+}
+
+.pulseDescription {
+    @apply text-sm text-slate-500 mb-2 leading-relaxed;
+}
+
+.pulseCategory {
+    @apply text-sm text-slate-600 mb-2 font-medium;
+}
+
+.pulsePhone {
+    @apply text-sm text-slate-600 mb-2 font-medium;
+}
+
+.pulseDate {
+    @apply text-xs text-slate-400 mb-3 font-medium;
 }
 
 .objectMeta {
-    @apply mt-auto flex items-center justify-between;
+    @apply mt-auto flex items-center justify-between gap-2 flex-wrap;
 }
 
 .price {
-    @apply text-sm font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg;
+    @apply text-sm font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-lg;
+}
+
+.objectActions {
+    @apply absolute bottom-3 right-3;
+}
+
+.removeBtn {
+    @apply px-2.5 py-1 rounded-lg bg-white text-rose-800 border border-rose-100 text-xs font-bold hover:bg-rose-50 transition-transform shadow-sm;
 }
 
 .availableBadge {
@@ -376,13 +414,7 @@
     @apply bg-transparent border-0 text-lg cursor-pointer;
 }
 
-.objectActions {
-    @apply flex gap-2 p-3 border-t border-slate-100 justify-end bg-white;
-}
 
-.removeBtn {
-    @apply px-3 py-1.5 rounded-lg bg-white text-rose-800 border border-rose-100 font-bold hover:bg-rose-50 transition-transform;
-}
 
 .inlineLabel {
     @apply inline-flex mx-2 items-center gap-2 font-bold text-slate-700;
@@ -419,4 +451,19 @@
 .modalDelete {
     @apply px-4 py-2 rounded-lg bg-red-500 text-white
     hover:bg-red-600 transition;
+}
+
+
+.pulsesHeader {
+    @apply flex items-center justify-between mb-6;
+}
+
+.pulseTypeDropdown {
+    @apply px-4 py-2 rounded-xl border border-slate-300 bg-white font-bold text-slate-700
+    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+    transition-all shadow-sm cursor-pointer;
+}
+
+.emptyState {
+    @apply text-slate-400 font-medium text-sm col-span-3 py-8 text-center;
 }

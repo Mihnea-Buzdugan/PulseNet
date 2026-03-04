@@ -10,6 +10,8 @@ const Login = React.lazy(() => import('./pages/Login.js'));
 const Profile = React.lazy(() => import('./pages/Profile.js'));
 const SearchUsers = React.lazy(() => import('./pages/SearchUsers.js'));
 const FollowRequests = React.lazy(() => import('./pages/FollowRequests.js'));
+const PulseDetails = React.lazy(() => import('./pages/PulseDetails.js'));
+const AddPulses = React.lazy(() => import('./pages/AddPulses.js'));
 const UserProfile = React.lazy(() => import('./pages/UserProfile.js'));
 const DirectChat = React.lazy(() => import('./pages/DirectChat.js'));
 
@@ -176,7 +178,8 @@ function App() {
                     <Route path="/follow-requests" element={user ? <FollowRequests user={user} /> : <Navigate to="/login" />} />
                     <Route path="/user-profile/:id" element={user ? <UserProfile user={user} /> : <Navigate to="/login" />} />
                     <Route path="/direct-chat/:id" element={user ? <DirectChat currentUser={user} /> : <Navigate to="/login" />} />
-
+                    <Route path="/add-pulse" element={<AddPulses/>} />
+                    <Route path="pulse/:type/:id" element={<PulseDetails />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </Suspense>
