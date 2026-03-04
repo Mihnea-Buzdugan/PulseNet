@@ -15,7 +15,7 @@ from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
 from .decorators import api_login_required
-from .models import Skill, UserObject, PendingFollow, Pulse, Friendship
+from .models import PendingFollow, Pulse, Friendship
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
