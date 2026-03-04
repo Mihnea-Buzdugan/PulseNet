@@ -220,34 +220,20 @@ def profile(request):
     if request.method == "GET":
         user = request.user
 
-        skills = Skill.objects.filter(user=user)
-        objects = UserObject.objects.filter(owner=user)
+        pulses = Pulse.objects.filter(user=user).prefetch_related('images')
 
-        skills_data = [
+        pulses_data = [
             {
-                "id": skill.id,
-                "name": skill.name,
-                "category": skill.category,
-                "proficiency_level": skill.proficiency_level,
-                "years_of_experience": skill.years_of_experience,
-                "added_at": skill.added_at,
-            }
-            for skill in skills
-        ]
-
-        objects_data = [
-            {
-                "id": obj.id,
-                "name": obj.name,
-                "description": obj.description,
-                "category": obj.category,
-                "condition": obj.condition,
-                "isAvailable": obj.is_available,
-                "price_per_day": obj.price_per_day,
-                "image": request.build_absolute_uri(obj.image.url) if obj.image else None,
-                "created_at": obj.created_at,
-            }
-            for obj in objects
+                "id": p.id,
+                "title": p.title,
+                "pulseType": p.pulse_type,
+                "category": p.category,
+                "price": float(p.price),
+                "currencyType": p.currencyType,
+                "description": p.description,
+                "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
+                "phone_number" : p.phone_number,
+            } for p in pulses
         ]
 
         user_data = {
@@ -265,14 +251,12 @@ def profile(request):
             "trustScore": user.trust_score,
             "isVerified": user.is_verified,
             "onlineStatus": user.online_status,
-            "skills": skills_data,
-            "objects": objects_data,
+            "pulses": pulses_data,
         }
 
         return JsonResponse({"user": user_data})
 
     return JsonResponse({"error": "Method not allowed"}, status=405)
-
 
 
 @login_required
