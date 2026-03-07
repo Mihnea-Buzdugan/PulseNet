@@ -5,17 +5,17 @@ import Loading from './components/Loading';
 import FavoritePulses from "./pages/User_pages/FavoritePulses";
 
 // Lazy loaded pages
-const Index = React.lazy(() => import('./pages/Index.js'));
-const SignUp = React.lazy(() => import('./pages/Authentification/SignUp.js'));
-const Login = React.lazy(() => import('./pages/Authentification/Login.js'));
-const Profile = React.lazy(() => import('./pages/User_pages/Profile.js'));
-const SearchUsers = React.lazy(() => import('./pages/SearchUsers.js'));
-const FollowRequests = React.lazy(() => import('./pages/User_pages/FollowRequests.js'));
-const PulseDetails = React.lazy(() => import('./pages/Pulses_pages/PulseDetails.js'));
-const AddPulses = React.lazy(() => import('./pages/Pulses_pages/AddPulses.js'));
-const UserProfile = React.lazy(() => import('./pages/UserProfile.js'));
-const DirectChat = React.lazy(() => import('./pages/User_pages/DirectChat.js'));
-const Messages = React.lazy(() => import('./pages/User_pages/Messages.js'));
+const Index = React.lazy(() => import('./pages'));
+const SignUp = React.lazy(() => import('./pages/Authentification/SignUp.jsx'));
+const Login = React.lazy(() => import('./pages/Authentification/Login.jsx'));
+const Profile = React.lazy(() => import('./pages/User_pages/Profile.jsx'));
+const SearchUsers = React.lazy(() => import('./pages/SearchUsers.jsx'));
+const FollowRequests = React.lazy(() => import('./pages/User_pages/FollowRequests.jsx'));
+const PulseDetails = React.lazy(() => import('./pages/Pulses_pages/PulseDetails.jsx'));
+const AddPulses = React.lazy(() => import('./pages/Pulses_pages/AddPulses.jsx'));
+const UserProfile = React.lazy(() => import('./pages/UserProfile.jsx'));
+const DirectChat = React.lazy(() => import('./pages/User_pages/DirectChat.jsx'));
+const Messages = React.lazy(() => import('./pages/User_pages/Messages.jsx'));
 
 const NotificationHandler = ({ currentUser }) => {
     const location = useLocation();

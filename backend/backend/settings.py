@@ -36,9 +36,9 @@ ALLOWED_HOSTS = []
 # CORS settings
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    'https://localhost:3000',
-    'http://localhost:3000',
-    'https://192.168.100.79:3000',
+    'https://localhost:5173',
+    'http://localhost:5173',
+    'https://192.168.100.79:5173',
 ]
 
 # Updated cookie settings for local development
@@ -47,9 +47,9 @@ CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'   # Changed from 'None' to 'Lax'
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "https://localhost:3000",
-    "https://192.168.100.79:3000",
+    "http://localhost:5173",
+    "https://localhost:5173",
+    "https://192.168.100.79:5173",
 ]
 
 SESSION_COOKIE_NAME = "session"
@@ -96,7 +96,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-LOGIN_REDIRECT_URL = 'http://localhost:3000/home'
+LOGIN_REDIRECT_URL = 'http://localhost:5173/home'
 SITE_ID = 1
 
 
