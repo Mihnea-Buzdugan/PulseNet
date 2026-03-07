@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import styles from "../styles/index.module.css";
 import { useNavigate } from "react-router-dom";
-
+import {Button} from "@/components/ui/button";
+import {Card} from "@/components/ui/card";
+import {Map, MapControls} from "@/components/ui/map"
+import "../App.css"
 function Index() {
     const [pulses, setPulses] = useState([]);
     const [page, setPage] = useState(1);
@@ -86,6 +89,7 @@ function Index() {
                     >
                         {loading ? "Se încarcă..." : "Vezi mai multe"}
                     </button>
+
                 )}
             </div>
         </div>
