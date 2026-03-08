@@ -16,6 +16,7 @@ django-allauth==65.14.3
 django-cors-headers==4.9.0
 google-auth==2.48.0
 gunicorn==25.1.0
+geopy==2.4.1
 hyperlink==21.0.0
 idna==3.11
 Incremental==24.11.0

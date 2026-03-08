@@ -1,23 +1,27 @@
 import os
+import sys
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
+
+
 from django.core.asgi import get_asgi_application
 
-# 1. Set settings and initialize the sync application first
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django_asgi_app = get_asgi_application()
 
-# 2. Import everything else AFTER get_asgi_application()
-# This prevents premature model loading/database connection hangs
-from channels.auth import AuthMiddlewareStack
-from channels.routing import ProtocolTypeRouter, URLRouter
-import apps.accounts.routing
+try:
+    from channels.auth import AuthMiddlewareStack
+    from channels.routing import ProtocolTypeRouter, URLRouter
+    import apps.accounts.routing
 
-application = ProtocolTypeRouter({
-    # Use the pre-initialized django_asgi_app
-    "http": django_asgi_app,
-
-    "websocket": AuthMiddlewareStack(
-        URLRouter(
-            apps.accounts.routing.websocket_urlpatterns
-        )
-    ),
-})
+    application = ProtocolTypeRouter({
+        "http": django_asgi_app,
+        "websocket": AuthMiddlewareStack(
+            URLRouter(apps.accounts.routing.websocket_urlpatterns)
+        ),
+    })
+except ImportError as e:
+    print(f"EROARE CRITICĂ: Tot nu găsesc folderul 'apps'. Eroarea: {e}")
+    raise e

@@ -1,6 +1,6 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
-from django.db import models
+from django.contrib.gis.db import models
 from django.utils.crypto  import get_random_string
 # Create your models here.
 
@@ -16,7 +16,7 @@ class User(AbstractUser):
 
     biography = models.TextField(blank=True, max_length=500)
 
-    location = models.JSONField(default=dict)
+    location = models.PointField(srid=4326, null=True, blank=True)
 
     distance_radius = models.IntegerField(default=0)
 
@@ -70,7 +70,8 @@ class Pulse(models.Model):
         max_length=20,
         choices=PULSE_TYPE_CHOICES
     )
-    location = models.JSONField(default=dict)
+    location = models.PointField(srid=4326, null=True, blank=True)
+
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     currencyType = models.CharField(max_length=10, default="RON")
 

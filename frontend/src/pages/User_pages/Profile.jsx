@@ -63,6 +63,7 @@ export default function Profile() {
             .then((response) => response.json())
             .then((data) => {
                 if (data.user) {
+                    console.log("User Data Received:", data.user);
                     setUser(data.user);
                     setPreview(data.user.profilePicture || null);
                 }

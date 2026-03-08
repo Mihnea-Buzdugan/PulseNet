@@ -14,7 +14,9 @@ from django.views.decorators.http import require_http_methods, require_POST
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
-
+from django.contrib.gis.geos import Point
+from django.contrib.gis.db.models.functions import Distance
+from django.contrib.gis.measure import D
 from .decorators import api_login_required
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse
 import secrets
@@ -223,8 +225,9 @@ def profile(request):
 
         pulses = Pulse.objects.filter(user=user).prefetch_related('images')
 
-        pulses_data = [
-            {
+        pulses_data = []
+        for p in pulses:
+            pulses_data.append({
                 "id": p.id,
                 "title": p.title,
                 "pulseType": p.pulse_type,
@@ -233,9 +236,9 @@ def profile(request):
                 "currencyType": p.currencyType,
                 "description": p.description,
                 "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
-                "phone_number" : p.phone_number,
-            } for p in pulses
-        ]
+                "phone_number": p.phone_number,
+                "location": json.loads(p.location.geojson) if p.location else None,
+            })
 
         user_data = {
             "id": user.id,
@@ -245,10 +248,10 @@ def profile(request):
             "username": user.username,
             "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
             "biography": user.biography,
-            "location": user.location,
+            "location": json.loads(user.location.geojson) if user.location else None,
             "distanceRadius": user.distance_radius,
-            "quiet_hours_start": user.quiet_hours_start,
-            "quiet_hours_end": user.quiet_hours_end,
+            "quiet_hours_start": user.quiet_hours_start.strftime("%H:%M") if user.quiet_hours_start else None,
+            "quiet_hours_end": user.quiet_hours_end.strftime("%H:%M") if user.quiet_hours_end else None,
             "trustScore": user.trust_score,
             "isVerified": user.is_verified,
             "onlineStatus": user.online_status,
@@ -425,6 +428,13 @@ def add_pulse(request):
     try:
         data = request.POST
 
+        #coordonatele de unde a fost facuta postarea
+        lat = data.get('lat')
+        lng = data.get('lng')
+        location_point = None
+        if lat and lng:
+            location_point = Point(float(lng), float(lat), srid=4326)
+
         pulse = Pulse.objects.create(
             user=request.user,
             title=data.get('title'),
@@ -434,6 +444,7 @@ def add_pulse(request):
             price=data.get('price', 0),
             currencyType=data.get('currencyType', 'RON'),
             phone_number=data.get('phone_number', ''),
+            location=location_point,
             is_available=data.get('is_available', 'true').lower() == 'true'
         )
 
@@ -447,6 +458,7 @@ def add_pulse(request):
                 "id": pulse.id,
                 "title": pulse.title,
                 "pulseType": pulse.pulse_type,
+                "location": json.loads(pulse.location.geojson) if pulse.location else None,
                 "images": [request.build_absolute_uri(i.image.url) for i in pulse.images.all()]
             }
         }, status=201)
@@ -577,6 +589,8 @@ def get_pulse_by_id(request, pulse_id):
     try:
         pulse = Pulse.objects.select_related("user").prefetch_related("images").get(id=pulse_id)
 
+        coords = list(pulse.location.coords) if pulse.location else [27.5766, 47.1585]
+
         images = [
             request.build_absolute_uri(img.image.url)
             for img in pulse.images.all()
@@ -592,6 +606,7 @@ def get_pulse_by_id(request, pulse_id):
             "description": pulse.description,
             "price": float(pulse.price),
             "currency": pulse.currencyType,
+            "location": coords,
             "timestamp": pulse.created_at.strftime("%Y-%m-%d %H:%M"),
             "is_favorite": FavoritePulse.objects.filter(
                             pulse=pulse,

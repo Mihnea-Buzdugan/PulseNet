@@ -43,15 +43,45 @@ function AddPulses() {
             return;
         }
 
+        const getAutomaticLocation = () => {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    console.warn("Browserul nu suportă Geolocation.");
+                    resolve(null);
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        resolve({
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        });
+                    },
+                    (error) => {
+                        console.error("Eroare la obținerea locației:", error.message);
+                        resolve(null);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            });
+        };
+
         try {
+            const location = await getAutomaticLocation();
+
             const formData = new FormData();
             formData.append("title", title.trim());
             formData.append("description", description.trim());
-            formData.append("pulse_type", pulseType); // Django așteaptă pulse_type
+            formData.append("pulse_type", pulseType);
             formData.append("price", price || 0);
             formData.append("currencyType", currencyType);
             formData.append("phone_number", phone.trim());
             formData.append("is_available", "true");
+
+            if (location) {
+                formData.append("lat", location.lat);
+                formData.append("lng", location.lng);
+            }
 
             const fileInput = document.querySelector('input[type="file"]');
             if (fileInput.files.length > 0) {

@@ -24,16 +24,16 @@
 
 :root{
     --bg: #f6f7f9;
-    --card: #ffffff;
-    --muted: #6b7280;
-    --text: #0f1724;
-    --accent: #2563eb;      /* primary blue */
-    --accent-2: #f59e0b;    /* warm amber for price */
-    --danger: #ef4444;
-    --glass-border: rgba(15,23,36,0.06);
-    --shadow-sm: 0 6px 18px rgba(15,23,36,0.08);
-    --shadow-xs: 0 4px 10px rgba(15,23,36,0.06);
-    --radius-lg: 16px;
+    --pn-card: #ffffff;
+    --pn-muted: #6b7280;
+    --pn-text: #0f1724;
+    --pn-accent: #2563eb;      /* primary blue */
+    --pn-accent-2: #f59e0b;    /* warm amber for price */
+    --pn-danger: #ef4444;
+    --pn-glass-border: rgba(15,23,36,0.06);
+    --pn-shadow-sm: 0 6px 18px rgba(15,23,36,0.08);
+    --pn-shadow-xs: 0 4px 10px rgba(15,23,36,0.06);
+    --pn-radius-lg: 16px;
 }
 
 /* Page */
@@ -41,7 +41,7 @@
     min-height: 100vh;
     background: var(--bg);
     padding: 40px 20px;
-    color: var(--text);
+    color: var(--pn-text);
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
@@ -58,13 +58,20 @@
     align-items: start;
 }
 
+/* Right column wrapper for sidebar + map */
+.rightColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 /* Card / left panel */
 .left{
-    background: var(--card);
-    border-radius: var(--radius-lg);
+    background: var(--pn-card);
+    border-radius: var(--pn-radius-lg);
     padding: 28px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--glass-border);
+    box-shadow: var(--pn-shadow-sm);
+    border: 1px solid var(--pn-glass-border);
 }
 
 /* Header (avatar + user info) */
@@ -79,7 +86,7 @@
     height: 64px;
     border-radius: 50%;
     object-fit: cover;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--pn-shadow-xs);
     border: 1px solid rgba(15,23,36,0.04);
 }
 
@@ -88,25 +95,25 @@
     height: 64px;
     border-radius: 50%;
     background: #e6eefc;
-    color: var(--accent);
+    color: var(--pn-accent);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 20px;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--pn-shadow-xs);
     border: 1px solid rgba(15,23,36,0.03);
 }
 
 .username{
     font-weight: 700;
     font-size: 16px;
-    color: var(--text);
+    color: var(--pn-text);
 }
 
 .timestamp{
     font-size: 13px;
-    color: var(--muted);
+    color: var(--pn-muted);
     margin-top: 2px;
 }
 
@@ -115,7 +122,7 @@
     font-size: 36px;
     margin-top: 18px;
     font-weight: 800;
-    color: var(--text);
+    color: var(--pn-text);
     letter-spacing: -0.02em;
 }
 
@@ -138,7 +145,7 @@
 /* type badge */
 .typeBadge{
     background: rgba(37,99,235,0.06); /* subtle blue tint */
-    color: var(--accent);
+    color: var(--pn-accent);
     padding: 6px 12px;
     border-radius: 999px;
     font-size: 13px;
@@ -148,7 +155,7 @@
 
 /* price badge */
 .priceBadge{
-    background: var(--accent-2);
+    background: var(--pn-accent-2);
     color: #08121a;
     padding: 6px 14px;
     border-radius: 999px;
@@ -168,7 +175,7 @@
     height: 440px;
     object-fit: cover;
     border-radius: 12px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--pn-shadow-sm);
     border: 1px solid rgba(15,23,36,0.03);
     transition: transform 300ms ease;
     will-change: transform;
@@ -185,12 +192,12 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: var(--card);
+    background: var(--pn-card);
     border: 1px solid rgba(15,23,36,0.06);
     padding: 8px;
     border-radius: 999px;
     cursor: pointer;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--pn-shadow-xs);
     transition: transform 160ms ease, background 160ms ease;
 }
 
@@ -225,12 +232,12 @@
 .thumb:hover{
     transform: translateY(-4px);
     opacity: 1;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--pn-shadow-xs);
 }
 
 .activeThumb{
     opacity: 1;
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--pn-accent);
     border-radius: 8px;
 }
 
@@ -254,38 +261,59 @@
 .infoGrid span {
     display: block;
     font-size: 12px;
-    color: var(--muted);
+    color: var(--pn-muted);
 }
 
 .infoGrid strong {
     display: block;
     margin-top: 6px;
-    color: var(--text);
+    color: var(--pn-text);
 }
 
-/* Sidebar card */
+/* Sidebar card - No longer sticky, part of rightColumn flow */
 .sidebar{
-    background: var(--card);
+    background: var(--pn-card);
     padding: 22px;
     border-radius: 12px;
-    height: fit-content;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--glass-border);
-    position: sticky;
-    top: 24px;
+    box-shadow: var(--pn-shadow-sm);
+    border: 1px solid var(--pn-glass-border);
 }
 
 /* Seller card */
 .sellerCard h3{
     margin-bottom: 6px;
     font-size: 14px;
-    color: var(--muted);
+    color: var(--pn-muted);
+}
+
+.mapContainer {
+    background: var(--pn-card);
+    padding: 20px;
+    margin-top: 6rem;
+    border-radius: 16px;
+    box-shadow: var(--pn-shadow-sm);
+    border: 1px solid var(--pn-glass-border);
+}
+
+.mapContainer h3 {
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--pn-text);
+}
+
+.mapWrapper {
+    width: 100%;
+    height: 350px;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
 }
 
 .sellerCard p{
     margin: 0;
     font-weight: 700;
-    color: var(--text);
+    color: var(--pn-text);
     margin-bottom: 12px;
 }
 
@@ -296,7 +324,7 @@
     padding: 10px;
     border: none;
     border-radius: 10px;
-    background: var(--accent);
+    background: var(--pn-accent);
     color: white;
     display: flex;
     justify-content: center;
@@ -368,7 +396,7 @@
     padding: 14px;
     border: none;
     border-radius: 10px;
-    background: var(--accent);
+    background: var(--pn-accent);
     color: white;
     font-weight: 800;
     cursor: pointer;
@@ -386,7 +414,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    color: var(--muted);
+    color: var(--pn-muted);
     font-weight: 600;
 }
 
@@ -397,7 +425,7 @@
     justify-content:center;
     align-items:center;
     gap:20px;
-    color: var(--danger);
+    color: var(--pn-danger);
 }
 
 /* Responsive */
@@ -415,9 +443,8 @@
         grid-template-columns: repeat(1,1fr);
     }
 
-    .sidebar {
-        position: relative;
-        top: auto;
+    .rightColumn {
+        gap: 20px;
     }
 }
 

@@ -4,14 +4,15 @@ services:
   backend:
     build: ./backend
     container_name: django_backend
-    # Removed the -u flag here
     command: daphne -b 0.0.0.0 -p 8000 backend.asgi:application
     env_file:
       - ./backend/.env
     environment:
       - DJANGO_SETTINGS_MODULE=backend.settings
       - PYTHONPATH=/app
-      - PYTHONUNBUFFERED=1  # This handles the "unbuffered" logs correctly
+      - PYTHONUNBUFFERED=1
+      - GDAL_LIBRARY_PATH=/usr/lib/libgdal.so
+      - GEOS_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libgeos_c.so
     volumes:
       - ./backend:/app
     ports:
@@ -37,7 +38,7 @@ services:
       - WATCHPACK_POLLING=true
 
   db:
-    image: postgres:15
+    image: postgis/postgis:15-3.3
     container_name: postgres_db
     env_file:
       - ./backend/.env
@@ -47,6 +48,9 @@ services:
       POSTGRES_PASSWORD: ${db_password}
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
 
   pgadmin:
     image: dpage/pgadmin4
@@ -64,3 +68,6 @@ services:
     container_name: redis_server
     ports:
       - "6379:6379"
+
+volumes:
+  postgres_data:
