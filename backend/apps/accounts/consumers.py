@@ -155,13 +155,26 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             )
 
     async def send_notification(self, event):
-
+        """This method is called by group_send from the ChatConsumer."""
         await self.send(text_data=json.dumps({
-            "type": event.get("notification_type", "new_message"),
-            "conversation_id": event.get("conversation_id"),
+            "type": "new_message",
+            "conversation_id": event["conversation_id"],
             "sender_id": event["sender_id"],
             "sender_name": event["sender_name"],
             "content": event["content"]
+        }))
+
+    async def send_rental_notification(self, event):
+        """This is a new handler for rental proposals."""
+        await self.send(text_data=json.dumps({
+            "type": "new_rental_proposal",
+            "title": event.get("title"),
+            "message": event.get("message"),
+            "pulse_id": event.get("pulse_id"),
+            "rental_id": event.get("rental_id"),
+            "proposed_total": event.get("proposed_total"),
+            "renter_id": event.get("renter_id"),
+            "renter_username": event.get("renter_username"),
         }))
 
 import json

@@ -7,6 +7,13 @@ import Navbar from "../../components/Navbar";
 import { Map, MapMarker, MarkerContent } from "@/components/ui/map";
 import "maplibre-gl/dist/maplibre-gl.css";
 
+/* FullCalendar imports */
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+
+/* --- helper utilities (kept from your original file) --- */
 function formatLocation(location) {
     if (!location) return "Not specified";
     if (Array.isArray(location)) {
@@ -71,6 +78,7 @@ function getMapInstance(candidate) {
     return typeof candidate.resize === "function" ? candidate : null;
 }
 
+/* --- main component --- */
 export default function PulseDetails() {
     const { type, id } = useParams();
     const navigate = useNavigate();
@@ -81,6 +89,9 @@ export default function PulseDetails() {
     const [index, setIndex] = useState(0);
     const [favAnim, setFavAnim] = useState(false);
     const mapRef = useRef(null);
+
+    /* events for FullCalendar (read-only unavailable/background events) */
+    const [calendarEvents, setCalendarEvents] = useState([]);
 
     useEffect(() => {
         let mounted = true;
@@ -109,6 +120,43 @@ export default function PulseDetails() {
 
         return () => (mounted = false);
     }, [id]);
+
+    // build calendar events when pulse (or its unavailable ranges) changes
+    useEffect(() => {
+        if (!pulse) {
+            setCalendarEvents([]);
+            return;
+        }
+
+        const ranges = pulse.unavailable_ranges ?? pulse.reserved_periods ?? [];
+
+        const events = ranges.map((r, i) => {
+
+            const startRaw = r.start ?? r.start_date;
+            const endRaw = r.end ?? r.end_date;
+
+            const start = new Date(startRaw);
+            const end = new Date(endRaw);
+
+            return {
+                id: `unav-${i}`,
+
+                // IMPORTANT FIX
+                start,
+                end,
+
+                allDay: true,  // 👈 fixes month view
+
+                display: "background",
+
+                backgroundColor: "rgba(255,70,70,0.35)",
+                borderColor: "rgba(255,70,70,0.6)",
+            };
+        });
+
+        setCalendarEvents(events);
+
+    }, [pulse]);
 
     // When pulse/coords change, try to resize & recenter the actual map instance.
     useEffect(() => {
@@ -258,7 +306,6 @@ export default function PulseDetails() {
     if (!pulse) return null;
 
     const coords = getLocationCoords(pulse.location);
-
     const isService = type === "servicii";
 
     return (
@@ -379,7 +426,7 @@ export default function PulseDetails() {
                             </div>
                         </motion.div>
 
-                        {/* RIGHT COLUMN - Contains both sidebar and map */}
+                        {/* RIGHT COLUMN - Contains both sidebar, map and calendar */}
                         <div className={styles.rightColumn}>
                             <motion.aside
                                 initial={{ opacity: 0, x: 40 }}
@@ -425,7 +472,7 @@ export default function PulseDetails() {
                                         className={styles.actionBtn}
                                         onClick={() => { navigate(`/transaction/${pulse.id}`); }}
                                     >
-                                        {isService ? "Book Service" : "Buy Item"}
+                                        {isService ? "Book Service" : "Lend Item"}
                                     </button>
                                 </div>
                             </motion.aside>
@@ -451,20 +498,56 @@ export default function PulseDetails() {
                                     >
                                         <MapMarker longitude={coords[0]} latitude={coords[1]}>
                                             <MarkerContent>
-                                                <div
-                                                    style={{
-                                                        width: "22px",
-                                                        height: "22px",
-                                                        backgroundColor: "#ff3b30",
-                                                        borderRadius: "50% 50% 50% 0",
-                                                        transform: "translate(-50%, -100%) rotate(-45deg)",
-                                                        border: "2px solid white",
-                                                        boxShadow: "0 2px 6px rgba(0,0,0,0.4)"
-                                                    }}
-                                                />
                                             </MarkerContent>
                                         </MapMarker>
                                     </Map>
+                                </div>
+                            </motion.div>
+
+                            {/* CALENDAR - read-only view of unavailable periods */}
+                            <motion.div
+                                initial={{ opacity: 0, x: 40 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className={styles.calendarContainer}
+                                style={{ marginTop: 18 }}
+                            >
+                                <h4 style={{ margin: "8px 0" }}>Availability / Unavailable periods</h4>
+
+                                <FullCalendar
+                                    key={calendarEvents.length}  // 👈 forces refresh when events change
+                                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                    initialView="dayGridMonth"
+                                    headerToolbar={{
+                                        left: "prev,next today",
+                                        center: "title",
+                                        right: "dayGridMonth,timeGridWeek,timeGridDay",
+                                    }}
+                                    height="auto"
+                                    events={calendarEvents}
+                                    selectable={false}
+                                    editable={false}
+                                    eventClick={(info) => info.jsEvent.preventDefault()}
+                                    selectMirror={false}
+                                    dayMaxEventRows={true}
+
+                                    // 👇 important for correct month behaviour
+                                    eventDisplay="background"
+                                />
+
+                                {/* small legend */}
+                                <div style={{ marginTop: 8, fontSize: 13 }}>
+                                    <span style={{
+                                        display: "inline-block",
+                                        width: 12,
+                                        height: 12,
+                                        background: "rgba(255,70,70,0.6)",
+                                        marginRight: 8,
+                                        verticalAlign: "middle",
+                                        borderRadius: 3,
+                                        border: "1px solid rgba(255,70,70,0.9)"
+                                    }} />
+                                    <span>Unavailable</span>
                                 </div>
                             </motion.div>
                         </div>

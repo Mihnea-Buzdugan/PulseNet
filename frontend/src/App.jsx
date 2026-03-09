@@ -31,16 +31,93 @@ const NotificationHandler = ({ currentUser }) => {
 
         socket.onmessage = (e) => {
             const data = JSON.parse(e.data);
-            const isFollowRequest = data.type === 'follow_request';
-            const targetPath = isFollowRequest ? '/follow-requests' : `/direct-chat/${data.sender_id}`;
 
-            if (location.pathname !== targetPath) {
+            // --- CHAT NOTIFICATIONS ---
+            if (data.type === "new_message") {
+                const currentChatPath = `/direct-chat/${data.sender_id}`;
+                if (location.pathname !== currentChatPath) {
+                    toast.custom((t) => (
+                        <div
+                            onClick={() => {
+                                navigate(currentChatPath);
+                                toast.dismiss(t.id);
+                            }}
+                            style={{
+                                display: 'flex',
+                                width: '384px',
+                                background: 'rgba(255, 255, 255, 0.95)',
+                                backdropFilter: 'blur(12px)',
+                                WebkitBackdropFilter: 'blur(12px)',
+                                borderRadius: '16px',
+                                border: '1px solid rgba(0, 0, 0, 0.05)',
+                                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                                cursor: 'pointer',
+                                overflow: 'hidden',
+                                transition: 'all 0.3s ease',
+                                borderLeft: '6px solid #2563eb',
+                                animation: t.visible ? 'enter 0.4s ease' : 'leave 0.4s ease',
+                            }}
+                        >
+                            <div style={{ flex: 1, padding: '16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div style={{
+                                        height: '48px',
+                                        width: '48px',
+                                        borderRadius: '50%',
+                                        background: 'linear-gradient(135deg, #2563eb 0%, #4338ca 100%)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                        fontWeight: 'bold',
+                                        fontSize: '18px',
+                                        flexShrink: 0,
+                                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                    }}>
+                                        {data.sender_name ? data.sender_name[0].toUpperCase() : 'U'}
+                                    </div>
+                                    <div style={{ marginLeft: '12px', flex: 1 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '14px', fontWeight: '800', color: '#111827' }}>
+                                                {data.sender_name}
+                                            </span>
+                                            <span style={{ fontSize: '10px', color: '#2563eb', fontWeight: 'bold', background: '#eff6ff', padding: '2px 8px', borderRadius: '10px' }}>
+                                                NOW
+                                            </span>
+                                        </div>
+                                        <p style={{
+                                            margin: '4px 0 0',
+                                            fontSize: '13px',
+                                            color: '#4b5563',
+                                            lineHeight: '1.4',
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: '2',
+                                            WebkitBoxOrient: 'vertical',
+                                            overflow: 'hidden'
+                                        }}>
+                                            {data.content}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ borderLeft: '1px solid rgba(0,0,0,0.05)', display: 'flex' }}>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); toast.dismiss(t.id); }}
+                                    style={{ background: 'transparent', border: 'none', padding: '0 16px', cursor: 'pointer', color: '#9ca3af', fontSize: '18px' }}
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+                    ), { duration: 10000 });
+                }
+            }
+
+            // --- RENTAL PROPOSAL NOTIFICATIONS ---
+            else if (data.type === "new_rental_proposal") {
                 toast.custom((t) => (
                     <div
-                        onClick={() => {
-                            navigate(targetPath);
-                            toast.dismiss(t.id);
-                        }}
+                        onClick={() => toast.dismiss(t.id)}
                         style={{
                             display: 'flex',
                             width: '384px',
@@ -53,18 +130,17 @@ const NotificationHandler = ({ currentUser }) => {
                             cursor: 'pointer',
                             overflow: 'hidden',
                             transition: 'all 0.3s ease',
-                            borderLeft: '6px solid #2563eb',
+                            borderLeft: '6px solid #10b981', // green for rental
                             animation: t.visible ? 'enter 0.4s ease' : 'leave 0.4s ease',
                         }}
                     >
                         <div style={{ flex: 1, padding: '16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                {/* Avatar */}
                                 <div style={{
                                     height: '48px',
                                     width: '48px',
                                     borderRadius: '50%',
-                                    background: 'linear-gradient(135deg, #2563eb 0%, #4338ca 100%)',
+                                    background: 'linear-gradient(135deg, #10b981 0%, #047857 100%)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -74,57 +150,35 @@ const NotificationHandler = ({ currentUser }) => {
                                     flexShrink: 0,
                                     boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                                 }}>
-                                    {data.sender_name ? data.sender_name[0].toUpperCase() : 'U'}
+                                    {data.renter_username ? data.renter_username[0].toUpperCase() : 'R'}
                                 </div>
-
-                                {/* Text */}
                                 <div style={{ marginLeft: '12px', flex: 1 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '14px', fontWeight: '800', color: '#111827' }}>
-                                            {data.sender_name}
-                                        </span>
-                                        <span style={{ fontSize: '10px', color: '#2563eb', fontWeight: 'bold', background: '#eff6ff', padding: '2px 8px', borderRadius: '10px' }}>
-                                            NOW
-                                        </span>
-                                    </div>
-                                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#4b5563', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                        {data.content}
+                                    <span style={{ fontSize: '14px', fontWeight: '800', color: '#111827' }}>
+                                        {data.renter_username} proposed a rental
+                                    </span>
+                                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#4b5563', lineHeight: '1.4' }}>
+                                        {data.message}
+                                    </p>
+                                    <p style={{ marginTop: '4px', fontSize: '13px', fontWeight: '600', color: '#047857' }}>
+                                        Proposed Total: {data.proposed_total}
                                     </p>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Close Button */}
-                        <div style={{ borderLeft: '1px solid rgba(0,0,0,0.05)', display: 'flex' }}>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    toast.dismiss(t.id);
-                                }}
-                                style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    padding: '0 16px',
-                                    cursor: 'pointer',
-                                    color: '#9ca3af',
-                                    fontSize: '18px'
-                                }}
-                            >
-                                ×
-                            </button>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                                <button
+                                    onClick={() => toast.dismiss(t.id)}
+                                    style={{ background: '#10b981', border: 'none', color: 'white', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer' }}
+                                >
+                                    OK
+                                </button>
+                            </div>
                         </div>
                     </div>
-                ), { duration: 10000 });
+                ), { duration: 15000 });
             }
         };
 
-        return () => {
-            if (socket.readyState === WebSocket.CONNECTING) {
-                socket.onopen = () => socket.close();
-            } else if (socket.readyState === WebSocket.OPEN) {
-                socket.close();
-            }
-        };
+        return () => socket.close();
     }, [currentUser, location.pathname, navigate]);
 
     return null;

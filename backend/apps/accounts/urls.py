@@ -25,6 +25,7 @@ urlpatterns = [
     path('get_latest_pulses/', views.get_latest_pulses, name='get_latest_pulses'),
     path("get_nearest_pulses/", views.get_nearest_pulses, name="get_nearest_pulses"),
     path('pulse/<int:pulse_id>/', views.get_pulse_by_id, name='get_pulse_by_id'),
+    path("create_pulse_rental/", views.create_pulse_rental, name="create_pulse_rental"),
     path('favorites/', views.get_favorite_pulses, name="get_favorite_pulses"),
     path('add_to_favorites/<int:pulse_id>/', views.add_pulse_to_favorites, name='add_to_favorites'),
     path('delete_from_favorites/<int:pulse_id>/', views.delete_pulse_from_favorites, name='delete_from_favorites'),

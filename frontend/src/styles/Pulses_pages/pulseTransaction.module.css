@@ -1,197 +1,299 @@
-/* pulseTransaction.module.css */
-
-/* Page wrapper */
 .body {
-    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
     min-height: 100vh;
-    background-color: #f5f6fa;
-    padding-bottom: 40px;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+    padding-bottom: 3rem;
 }
 
-/* Main container */
 .mainContainer {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
 }
 
-/* Page title */
+.header {
+    margin-bottom: 2rem;
+}
+
 .title {
     font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: 30px;
-    text-align: center;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: #0f172a;
 }
 
-/* Carousel */
+.subtitle {
+    color: #64748b;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.pageGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (min-width: 850px) {
+    .pageGrid {
+        grid-template-columns: 1.2fr 1fr;
+    }
+}
+
+.leftCard, .card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    border: 1px solid #e2e8f0;
+}
+
 .carousel {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    height: 350px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    margin-bottom: 20px;
+    background: #f1f5f9;
+    margin-bottom: 1.5rem;
 }
 
-.mainImage {
-    width: 256px;
-    height: 256px;
+.carouselImg {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 .noImage {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.carouselBtn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #ddd;
-    color: #666;
-    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.2s;
 }
 
-/* Carousel buttons */
-.nav {
-    background: rgba(255,255,255,0.8);
-    border: none;
-    padding: 6px;
+.carouselBtn:hover {
+    background: #f8fafc;
+    transform: translateY(-50%) scale(1.05);
+}
+
+.carouselBtn:first-of-type { left: 1rem; }
+.carouselBtn:last-of-type { right: 1rem; }
+
+.detailsSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.sellerInfo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.nav:hover {
-    background: rgba(255,255,255,1);
 }
 
-/* Details */
-.details {
-    margin-bottom: 20px;
+.sellerName {
+    margin: 0 0 0.25rem 0;
+    color: #334155;
 }
 
-.details p {
-    margin-bottom: 6px;
-    font-size: 0.95rem;
-}
-
-/* Form */
-.form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.field {
-    display: flex;
-    flex-direction: column;
-}
-
-.field label {
-    margin-bottom: 6px;
-    font-weight: 600;
-}
-
-.field input,
-.field textarea {
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 0.95rem;
-    resize: none;
-}
-
-.field textarea {
-    height: 100px;
-}
-
-/* Confirm button */
-.transactionBtn {
-    padding: 12px 0;
-    font-weight: bold;
-    border-radius: 12px;
-    cursor: pointer;
-    color: white;
-    width: 100%;
-    transition: transform 0.15s, background-color 0.2s;
-}
-
-.transactionBtn:hover {
-    transform: scale(1.03);
-}
-
-.serviceBtn {
-    background-color: #22c55e;
-}
-
-.serviceBtn:hover {
-    background-color: #16a34a;
-}
-
-.objectBtn {
-    background-color: #1d4ed8;
-}
-
-.objectBtn:hover {
-    background-color: #1e40af;
-}
-
-/* Status message */
-.status {
-    margin-top: 10px;
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-/* Map */
-.mapWrapper {
-    margin-top: 20px;
-    height: 320px;
-    width: 100%;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-}
-
-.mapMarker {
-    width: 22px;
-    height: 22px;
-    background-color: #ff3b30;
-    border-radius: 50% 50% 50% 0;
-    transform: translate(-50%, -100%) rotate(-45deg);
-    border: 2px solid white;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-
-/* Seller card */
-.sellerCard {
-    margin-top: 20px;
-    background-color: #fff;
-    padding: 12px;
-    border-radius: 12px;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-}
-
-.contactBtn {
-    margin-top: 10px;
-    background: #f3f4f6;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-weight: 500;
+.textBtn {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 0.875rem;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 0.25rem;
+    padding: 0;
+}
+
+.textBtn:hover {
+    text-decoration: underline;
+}
+
+.priceTag h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #0f172a;
+    display: inline;
+}
+
+.priceTag span {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.divider {
+    border: 0;
+    height: 1px;
+    background: #e2e8f0;
+    margin: 1.5rem 0;
+}
+
+.sectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    color: #0f172a;
+}
+
+.helperText {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.summaryBox {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    color: #475569;
+}
+
+.summaryTotal {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+    color: #0f172a;
+    font-size: 1.1rem;
+    margin-bottom: 0;
+}
+
+.buyBtn {
+    width: 100%;
+    padding: 1rem;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
     border: none;
+    border-radius: 8px;
+    cursor: pointer;
     transition: background 0.2s;
 }
 
-.contactBtn:hover {
-    background: #e5e7eb;
+.buyBtn:hover:not(:disabled) {
+    background: #1d4ed8;
 }
 
-/* Loading and error */
-.loading, .error {
+.buyBtn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+.errorAlert {
+    background: #fef2f2;
+    color: #b91c1c;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    border: 1px solid #fecaca;
+}
+
+.statusMsg {
+    margin-top: 1rem;
     text-align: center;
-    margin-top: 20px;
-    font-weight: bold;
+    font-weight: 500;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.calendarWrapper {
+    /* Scopes the FullCalendar to not overlap its container */
+    overflow: hidden;
+}
+
+.mapWrapper {
+    height: 250px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+
+.loader {
+    text-align: center;
+    margin-top: 5rem;
     font-size: 1.2rem;
+    color: #64748b;
+}
+
+.proposedPriceLabel {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9rem;
+    color: #334155;
+    margin-bottom: 0.75rem;
+}
+
+.priceInput {
+    margin-top: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.95rem;
+    color: #0f172a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.priceInput:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Info alert for owner warning */
+.infoAlert {
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    border: 1px solid #bae6fd;
+}
+
+/* Calendar event labels styling (optional tweak for visibility) */
+.calendarEventLabel b {
+    font-weight: 600;
 }

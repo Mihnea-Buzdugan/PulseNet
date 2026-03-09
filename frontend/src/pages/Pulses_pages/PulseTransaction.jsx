@@ -1,33 +1,42 @@
-// PulseTransaction.jsx
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-import { ArrowLeft, ArrowRight, Heart, MessageSquare } from "lucide-react";
+import { ArrowLeft, ArrowRight, MessageSquare, Calendar, MapPin, CreditCard } from "lucide-react";
 import styles from "../../styles/Pulses_pages/pulseTransaction.module.css";
 import { Map, MapMarker, MarkerContent } from "@/components/ui/map";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (typeof document === "undefined") return null;
-    if (document.cookie && document.cookie !== "") {
-        const cookies = document.cookie.split(";");
-        for (let cookie of cookies) {
-            cookie = cookie.trim();
-            if (cookie.startsWith(name + "=")) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+
+function getLocationCoords(location) {
+    // default coords (lon, lat)
+    const defaultCoords = [27.5766, 47.1585];
+
+    if (!location) return defaultCoords;
+    if (Array.isArray(location)) return location;
+    if (location.coordinates) return location.coordinates;
+    return defaultCoords;
 }
 
-function formatLocation(location) {
-    if (!location) return "Not specified";
-    if (Array.isArray(location)) return `${location[1].toFixed(4)}°N, ${location[0].toFixed(4)}°E`;
-    if (location.coordinates) return `${location.coordinates[1].toFixed(4)}°N, ${location.coordinates[0].toFixed(4)}°E`;
-    return String(location);
+function getMapInstance(candidate) {
+    if (!candidate) return null;
+
+    // wrapper exposes getMap()
+    if (typeof candidate.getMap === "function") {
+        try {
+            return candidate.getMap();
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    // wrapper might expose a property with the instance
+    if (candidate.mapInstance) return candidate.mapInstance;
+    if (candidate.map) return candidate.map;
+    // maybe the ref is already the actual instance
+    return typeof candidate.resize === "function" ? candidate : null;
 }
 
 export default function PulseTransaction() {
@@ -36,17 +45,23 @@ export default function PulseTransaction() {
 
     const [pulse, setPulse] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [status, setStatus] = useState("");
+    const [statusMsg, setStatusMsg] = useState("");
     const [index, setIndex] = useState(0);
 
-    // Transaction fields
-    const [quantity, setQuantity] = useState(1);
-    const [period, setPeriod] = useState(""); // for services
-    const [instructions, setInstructions] = useState("");
+    // Rental period
+    const [selectedStart, setSelectedStart] = useState(null);
+    const [selectedEnd, setSelectedEnd] = useState(null);
+
+    const [calendarEvents, setCalendarEvents] = useState([]);
     const [transactionLoading, setTransactionLoading] = useState(false);
+
+    const [currentUser, setCurrentUser] = useState(null);
+    const [proposedPrice, setProposedPrice] = useState("");
+    const [priceError, setPriceError] = useState("");
 
     const mapRef = useRef(null);
 
+    // Fetch pulse
     useEffect(() => {
         let mounted = true;
         const fetchPulse = async () => {
@@ -56,9 +71,39 @@ export default function PulseTransaction() {
                     credentials: "include",
                 });
                 const data = await res.json();
-                if (mounted && data.success) setPulse(data.pulse);
+                if (mounted && data.success) {
+                    setPulse(data.pulse);
+
+                    // initialize proposed price with the pulse price once we have it
+                    setProposedPrice(String(data.pulse?.price ?? ""));
+
+                    const ranges = data.pulse.unavailable_ranges ?? data.pulse.reserved_periods ?? [];
+                    const events = ranges
+                        .map((r, i) => {
+                            const start = r.start ?? r.start_date;
+                            const end = r.end ?? r.end_date;
+                            if (!start || !end) return null;
+                            return {
+                                id: `unav-${i}`,
+                                start,
+                                end,
+                                // Use 'block' instead of 'background' to make them easily clickable
+                                display: "block",
+                                backgroundColor: "#fee2e2", // Light red bg
+                                borderColor: "#ef4444",     // Dark red border
+                                textColor: "#b91c1c",       // Red text
+                                title: "Already Booked",
+                                extendedProps: { type: "unavailable" }
+                            };
+                        })
+                        .filter(Boolean);
+                    setCalendarEvents(events);
+                } else {
+                    if (mounted) setStatusMsg("❌ Could not load pulse.");
+                }
             } catch (err) {
-                console.error(err);
+                console.error("fetchPulse error:", err);
+                if (mounted) setStatusMsg("❌ Error loading pulse.");
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -67,153 +112,396 @@ export default function PulseTransaction() {
         return () => (mounted = false);
     }, [pulseId]);
 
-    const images = useMemo(() => (pulse && pulse.images ? pulse.images : []), [pulse]);
-    const coords = pulse ? (Array.isArray(pulse.location) ? pulse.location : pulse.location.coordinates) : [27.5766, 47.1585];
-    const isService = pulse?.type === "servicii";
+    // Fetch current user (so we can tell if the current user is the owner)
+    useEffect(() => {
+        let mounted = true;
+        const fetchUser = async () => {
+            try {
+                // Adjust this endpoint to your backend's current-user endpoint if different.
+                const res = await fetch("http://localhost:8000/accounts/current_user/", {
+                    method: "GET",
+                    credentials: "include",
+                });
+                if (!mounted) return;
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.user) setCurrentUser(data.user);
+                    else setCurrentUser(null);
+                } else {
+                    setCurrentUser(null);
+                }
+            } catch (err) {
+                console.warn("Could not fetch current user:", err);
+                if (mounted) setCurrentUser(null);
+            }
+        };
+        fetchUser();
+        return () => (mounted = false);
+    }, []);
+
+    useEffect(() => {
+        if (!pulse) return;
+
+        const coords = getLocationCoords(pulse.location);
+
+        let mounted = true;
+
+        const ensureMapReady = async () => {
+            // Small initial delay to allow DOM/CSS layout
+            await new Promise((r) => setTimeout(r, 250));
+
+            let mapInst = getMapInstance(mapRef.current);
+
+            // Poll for the instance (some wrappers initialize it slightly later)
+            const start = Date.now();
+            const timeout = 2000; // ms
+            while (!mapInst && Date.now() - start < timeout && mounted) {
+                await new Promise((r) => setTimeout(r, 150));
+                mapInst = getMapInstance(mapRef.current);
+            }
+
+            if (!mounted) return;
+
+            if (mapInst) {
+                try {
+                    // Resize and recenter/redraw the map
+                    if (typeof mapInst.resize === "function") mapInst.resize();
+                    if (typeof mapInst.setCenter === "function")
+                        mapInst.setCenter([coords[0], coords[1]]);
+                    else if (typeof mapInst.flyTo === "function")
+                        mapInst.flyTo({ center: [coords[0], coords[1]] });
+
+                    if (typeof mapInst.setZoom === "function") mapInst.setZoom(16);
+                } catch (err) {
+                    // final fallback
+                    window.dispatchEvent(new Event("resize"));
+                }
+            } else {
+                // If we couldn't detect an instance, force a resize event
+                window.dispatchEvent(new Event("resize"));
+            }
+        };
+
+        ensureMapReady();
+
+        return () => {
+            mounted = false;
+        };
+    }, [pulse]);
+
+    useEffect(() => {
+        const t = setTimeout(() => window.dispatchEvent(new Event("resize")), 500);
+        return () => clearTimeout(t);
+    }, []);
+
+    const images = useMemo(() => (pulse?.images ?? []), [pulse]);
 
     const next = () => images.length && setIndex(i => (i + 1) % images.length);
     const prev = () => images.length && setIndex(i => (i - 1 + images.length) % images.length);
 
-    const handleTransaction = async () => {
-        if (!quantity || (isService && !period)) {
-            alert("Please fill all required fields.");
+    // Calendar date select handler
+    const handleDateSelect = (selectInfo) => {
+        const { start, end } = selectInfo;
+        setSelectedStart(start);
+        // FullCalendar 'end' is exclusive. Subtract 1 day so our local state is inclusive for math.
+        setSelectedEnd(new Date(end.getTime() - 86400000));
+    };
+
+    // Prevent selecting over already booked/unavailable dates
+    const handleSelectAllow = (selectInfo) => {
+        const { start, end } = selectInfo;
+        for (const ev of calendarEvents) {
+            const evStart = new Date(ev.start);
+            const evEnd = new Date(ev.end);
+            // If the selected range intersects with an unavailable event, block the selection
+            if (start < evEnd && end > evStart) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    // Combine unavailable events with the currently selected range for visual feedback
+    const displayEvents = useMemo(() => {
+        const events = [...calendarEvents];
+        if (selectedStart && selectedEnd) {
+            events.push({
+                id: "current-selection",
+                start: selectedStart,
+                end: new Date(selectedEnd.getTime() + 86400000),
+                display: "block",
+                title: "Selected Period",
+                backgroundColor: "#10b981", // Emerald green
+                borderColor: "#10b981",
+            });
+        }
+        return events;
+    }, [calendarEvents, selectedStart, selectedEnd]);
+
+    const isOverlap = () => {
+        if (!selectedStart || !selectedEnd) return false;
+        for (const ev of calendarEvents) {
+            const evStart = new Date(ev.start);
+            const evEnd = new Date(ev.end);
+            if (selectedStart < evEnd && selectedEnd >= evStart) return true;
+        }
+        return false;
+    };
+
+    const totalDays = selectedStart && selectedEnd
+        ? Math.max(1, Math.ceil((selectedEnd - selectedStart) / (1000 * 60 * 60 * 24)) + 1)
+        : 0;
+
+    const computeTotalPrice = () => {
+        if (!selectedStart || !selectedEnd) return 0;
+        const priceNum = Number(proposedPrice);
+        if (!priceNum || priceNum <= 0) return 0;
+        return totalDays * priceNum;
+    };
+
+    // Whether current user is the owner of this pulse
+    const isOwner = !!(currentUser && pulse && Number(currentUser.id) === Number(pulse.user_id));
+
+    const validatePrice = () => {
+        const num = Number(proposedPrice);
+        if (!proposedPrice) {
+            setPriceError("Please enter a proposed price.");
+            return false;
+        }
+        if (Number.isNaN(num) || num <= 0) {
+            setPriceError("Price must be a positive number.");
+            return false;
+        }
+        setPriceError("");
+        return true;
+    };
+
+    const handleCreateRental = async () => {
+        // Basic validations
+        if (!selectedStart || !selectedEnd) {
+            setStatusMsg("❌ Please select a rental period on the calendar.");
             return;
         }
+        if (isOverlap()) {
+            setStatusMsg("❌ Selected period overlaps with an existing reservation.");
+            return;
+        }
+        if (isOwner) {
+            setStatusMsg("❌ You are the owner of this pulse and cannot propose a rental to yourself.");
+            return;
+        }
+        if (!validatePrice()) {
+            setStatusMsg("❌ Please fix the proposed price.");
+            return;
+        }
+
         setTransactionLoading(true);
+        setStatusMsg("");
         try {
-            const csrfToken = getCookie("csrftoken");
-            const body = {
+            const csrfToken = document.cookie
+                .split("; ")
+                .find(row => row.startsWith("csrftoken="))
+                ?.split("=")[1];
+
+            const payload = {
                 pulse_id: pulse.id,
-                quantity,
-                period: isService ? period : null,
-                instructions,
+                start_date: selectedStart.toISOString(),
+                end_date: selectedEnd.toISOString(),
+                proposed_price: Number(proposedPrice),
             };
-            const res = await fetch("http://localhost:8000/accounts/create_transaction/", {
+
+            const res = await fetch("http://localhost:8000/accounts/create_pulse_rental/", {
                 method: "POST",
                 credentials: "include",
-                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
-                body: JSON.stringify(body),
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                },
+                body: JSON.stringify(payload),
             });
+
             const data = await res.json();
             if (res.ok && data.success) {
-                setStatus("✅ Transaction successful!");
-                setTimeout(() => navigate("/"), 2000);
-            } else setStatus(`❌ ${data.error || "Transaction failed"}`);
+                setStatusMsg("✅ Rental proposal created successfully!");
+                // Optionally navigate away or show the created proposal details
+                setTimeout(() => navigate("/"), 1600);
+            } else {
+                setStatusMsg(`❌ ${data.error || "Failed to create rental proposal."}`);
+            }
         } catch (err) {
             console.error(err);
-            setStatus("❌ Error during transaction");
+            setStatusMsg("❌ Error while creating rental proposal.");
         } finally {
             setTransactionLoading(false);
         }
     };
 
-    if (loading) return <div className="text-center mt-20">Loading...</div>;
-    if (!pulse) return <div className="text-center mt-20">Pulse not found</div>;
+    const handleEventClick = (info) => {
+        if (info.event.extendedProps.type === "unavailable") {
+            setStatusMsg("ℹ️ This period is already reserved by another user.");
+            // Optional: clear message after 3 seconds
+            setTimeout(() => setStatusMsg(""), 3000);
+        }
+    };
+
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    if (loading) return <div className={styles.loader}>Loading...</div>;
+    if (!pulse) return <div className={styles.loader}>Pulse not found</div>;
+
+    const coords = getLocationCoords(pulse.location);
+
+    const totalPrice = computeTotalPrice();
 
     return (
         <div className={styles.body}>
             <Navbar />
-
             <div className={styles.mainContainer}>
-                <h1 className="text-3xl font-bold mb-6">
-                    {isService ? "Book Service" : "Purchase Item"}: {pulse.name}
-                </h1>
 
-                {/* Carousel */}
-                <div className="flex items-center mb-6">
-                    <button onClick={prev}><ArrowLeft size={24} /></button>
-                    {images.length ? <img src={images[index]} className="w-64 h-64 object-cover mx-4 rounded-lg" /> :
-                        <div className="w-64 h-64 bg-gray-200 flex items-center justify-center rounded-lg">No image</div>}
-                    <button onClick={next}><ArrowRight size={24} /></button>
+                <div className={styles.header}>
+                    <h1 className={styles.title}>Book {pulse.name}</h1>
+                    <p className={styles.subtitle}>Review details, select your dates, and confirm your rental proposal.</p>
                 </div>
 
-                {/* Details */}
-                <div className="mb-6 space-y-2">
-                    <p><strong>Price:</strong> {pulse.price} {pulse.currency}</p>
-                    <p><strong>Posted by:</strong> @{pulse.user}</p>
-                </div>
-
-                {/* Transaction form */}
-                <div className="mb-6 space-y-4">
-                    {!isService && (
-                        <div>
-                            <label className="block mb-1 font-semibold">Quantity</label>
-                            <input
-                                type="number"
-                                min={1}
-                                value={quantity}
-                                onChange={e => setQuantity(parseInt(e.target.value) || 1)}
-                                className="border rounded px-2 py-1 w-32"
-                            />
+                <div className={styles.pageGrid}>
+                    {/* LEFT COLUMN: Carousel + Form */}
+                    <div className={styles.leftCard}>
+                        <div className={styles.carousel}>
+                            <button className={styles.carouselBtn} onClick={prev}><ArrowLeft size={20} /></button>
+                            {images.length ? (
+                                <img src={images[index]} alt="pulse" className={styles.carouselImg} />
+                            ) : (
+                                <div className={styles.noImage}>No image available</div>
+                            )}
+                            <button className={styles.carouselBtn} onClick={next}><ArrowRight size={20}/></button>
                         </div>
-                    )}
 
-                    {isService && (
-                        <div>
-                            <label className="block mb-1 font-semibold">Rental / Service period</label>
-                            <input
-                                type="text"
-                                placeholder="e.g., 3 days"
-                                value={period}
-                                onChange={e => setPeriod(e.target.value)}
-                                className="border rounded px-2 py-1 w-64"
-                            />
+                        <div className={styles.detailsSection}>
+                            <div className={styles.sellerInfo}>
+                                <img src={`https://ui-avatars.com/api/?name=${pulse.user}&background=random`} alt="Seller" className={styles.avatar} />
+                                <div>
+                                    <p className={styles.sellerName}>Hosted by <strong>@{pulse.user}</strong></p>
+                                    <button className={styles.textBtn} onClick={() => navigate(`/direct-chat/${pulse.user_id}`)}>
+                                        <MessageSquare size={14} /> Contact Seller
+                                    </button>
+                                </div>
+                            </div>
+                            <div className={styles.priceTag}>
+                                <h2>{pulse.price} {pulse.currency}</h2>
+                                <span>/ day (listed)</span>
+                            </div>
                         </div>
-                    )}
 
-                    <div>
-                        <label className="block mb-1 font-semibold">Additional Instructions</label>
-                        <textarea
-                            placeholder="Special requests..."
-                            value={instructions}
-                            onChange={e => setInstructions(e.target.value)}
-                            className="border rounded px-2 py-1 w-64 h-24"
-                        />
+                        <hr className={styles.divider} />
+
+                        <div className={styles.formSection}>
+                            <h3 className={styles.sectionTitle}><CreditCard size={18}/> Booking Summary</h3>
+
+                            <p className={styles.helperText}>
+                                You can propose a custom price for this rental. The pulse owner will review it.
+                            </p>
+
+                            <label className={styles.proposedPriceLabel}>
+                                Proposed price (per day)
+                                <input
+                                    type="number"
+                                    min="0.01"
+                                    step="0.01"
+                                    value={proposedPrice}
+                                    onChange={(e) => setProposedPrice(e.target.value)}
+                                    onBlur={validatePrice}
+                                    className={styles.priceInput}
+                                />
+                            </label>
+                            {priceError && <div className={styles.errorAlert}>{priceError}</div>}
+
+                            {selectedStart && selectedEnd ? (
+                                <div className={styles.summaryBox}>
+                                    <div className={styles.summaryRow}>
+                                        <span>{Number(proposedPrice || 0).toFixed(2)} {pulse.currency} x {totalDays} days</span>
+                                        <span>{totalPrice.toFixed(2)} {pulse.currency}</span>
+                                    </div>
+                                    <div className={`${styles.summaryRow} ${styles.summaryTotal}`}>
+                                        <strong>Total</strong>
+                                        <strong>{totalPrice.toFixed(2)} {pulse.currency}</strong>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className={styles.helperText}>Select dates on the calendar to see the total price.</p>
+                            )}
+
+                            {isOverlap() && (
+                                <div className={styles.errorAlert}>
+                                    Selected period overlaps with existing reservations.
+                                </div>
+                            )}
+
+                            {isOwner ? (
+                                <div className={styles.infoAlert}>
+                                    You are the owner of this pulse — you cannot propose a rental to yourself.
+                                </div>
+                            ) : null}
+
+                            <button
+                                className={styles.buyBtn}
+                                onClick={handleCreateRental}
+                                disabled={transactionLoading || !selectedStart || !selectedEnd || isOverlap() || isOwner}
+                            >
+                                {transactionLoading ? "Processing..." : "Propose Rental"}
+                            </button>
+                            {statusMsg && <div className={styles.statusMsg}>{statusMsg}</div>}
+                        </div>
                     </div>
-                </div>
 
-                {/* Confirm button */}
-                <button
-                    className={`px-6 py-3 rounded-lg font-semibold ${
-                        isService ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
-                    } text-white`}
-                    onClick={handleTransaction}
-                    disabled={transactionLoading}
-                >
-                    {transactionLoading ? "Processing..." : isService ? "Book Now" : "Buy Now"}
-                </button>
+                    {/* RIGHT COLUMN: Calendar + Map */}
+                    <div className={styles.sidebar}>
+                        <div className={styles.card}>
+                            <h3 className={styles.sectionTitle}><Calendar size={18}/> Select Dates</h3>
+                            <p className={styles.helperText}>Click and drag to select your rental period.</p>
+                            <div className={styles.calendarWrapper}>
+                                <FullCalendar
+                                    plugins={[dayGridPlugin, interactionPlugin]}
+                                    initialView="dayGridMonth"
+                                    selectable={true}
+                                    selectAllow={handleSelectAllow}
+                                    validRange={{ start: todayStr }}
+                                    select={handleDateSelect}
+                                    events={displayEvents}
+                                    eventClick={handleEventClick} // Handle the label click
+                                    height={400}
+                                    headerToolbar={{
+                                        left: "prev",
+                                        center: "title",
+                                        right: "next"
+                                    }}
+                                    // Custom styling for the event labels
+                                    eventContent={(eventInfo) => (
+                                        <div className={styles.calendarEventLabel}>
+                                            <b>{eventInfo.event.title}</b>
+                                        </div>
+                                    )}
+                                />
+                            </div>
+                        </div>
 
-                {status && <p className="mt-4 text-lg">{status}</p>}
+                        <div className={styles.card}>
+                            <h3 className={styles.sectionTitle}><MapPin size={18}/> Pickup Location</h3>
+                            <div className={styles.mapWrapper}>
+                                <Map
+                                    key={`${coords[0]}-${coords[1]}-${pulse.id}`}
+                                    ref={mapRef}
+                                    center={coords}
+                                    zoom={16}
+                                >
+                                    <MapMarker longitude={coords[0]} latitude={coords[1]}>
+                                        <MarkerContent>
+                                        </MarkerContent>
+                                    </MapMarker>
+                                </Map>
+                            </div>
+                        </div>
+                    </div>
 
-                {/* Map */}
-                <div className="mt-6 h-64 w-full rounded-lg overflow-hidden">
-                    <Map key={`${coords[0]}-${coords[1]}-${pulse.id}`} ref={mapRef} center={coords} zoom={16}>
-                        <MapMarker longitude={coords[0]} latitude={coords[1]}>
-                            <MarkerContent>
-                                <div style={{
-                                    width: "22px",
-                                    height: "22px",
-                                    backgroundColor: "#ff3b30",
-                                    borderRadius: "50% 50% 50% 0",
-                                    transform: "translate(-50%, -100%) rotate(-45deg)",
-                                    border: "2px solid white",
-                                    boxShadow: "0 2px 6px rgba(0,0,0,0.4)"
-                                }} />
-                            </MarkerContent>
-                        </MapMarker>
-                    </Map>
-                </div>
-
-                {/* Seller info */}
-                <div className="mt-6 p-4 border rounded-lg">
-                    <h3 className="font-bold mb-2">Seller</h3>
-                    <p>@{pulse.user}</p>
-                    <button
-                        className="mt-2 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 flex items-center"
-                        onClick={() => navigate(`/direct-chat/${pulse.user_id}`)}
-                    >
-                        <MessageSquare size={16} className="mr-1" /> Contact
-                    </button>
                 </div>
             </div>
         </div>

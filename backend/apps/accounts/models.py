@@ -76,7 +76,7 @@ class Pulse(models.Model):
     currencyType = models.CharField(max_length=10, default="RON")
 
     is_available = models.BooleanField(default=True)
-    visibility_radius = models.IntegerField(default=0)  # km; 0 = visible to everyone
+    visibility_radius = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -85,6 +85,44 @@ class Pulse(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.pulse_type})"
+
+class PulseRental(models.Model):
+    pulse = models.ForeignKey(
+        Pulse,
+        on_delete=models.CASCADE,
+        related_name="rentals"
+    )
+
+    renter = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="pulse_rentals"
+    )
+
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    total_price = models.DecimalField(max_digits=12, decimal_places=2)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("confirmed", "Confirmed"),
+        ("cancelled", "Cancelled"),
+        ("completed", "Completed"),
+    ]
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending"
+    )
+
+    class Meta:
+        ordering = ["-start_date"]
+
+    def __str__(self):
+        return f"{self.pulse.title} reserved by {self.renter} ({self.start_date} - {self.end_date})"
 
 
 class FavoritePulse(models.Model):

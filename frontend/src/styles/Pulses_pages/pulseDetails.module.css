@@ -460,3 +460,12 @@
         height: 44px;
     }
 }
+
+.calendarContainer {
+    margin-top: 30px;
+    background: var(--pn-card);
+    border-radius: 16px;
+    padding: 22px;
+    border: 1px solid var(--pn-glass-border);
+    box-shadow: var(--pn-shadow-sm);
+}
