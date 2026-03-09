@@ -22,7 +22,8 @@ from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, Favori
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
-
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 def generate_password(length=12):
     alphabet = string.ascii_letters + string.digits + string.punctuation
@@ -451,6 +452,27 @@ def add_pulse(request):
         images = request.FILES.getlist('images')
         for img in images:
             PulseImage.objects.create(pulse=pulse, image=img)
+
+        first_image = pulse.images.first()
+        broadcast_payload = {
+            "id": pulse.id,
+            "type": pulse.pulse_type,
+            "name": pulse.title,
+            "user": request.user.username,
+            "price": float(pulse.price),
+            "currency": pulse.currencyType,
+            "timestamp": pulse.created_at.strftime("%Y-%m-%d %H:%M"),
+            "image": request.build_absolute_uri(first_image.image.url) if first_image else None,
+            "lat": pulse.location.y if pulse.location else None,
+            "lng": pulse.location.x if pulse.location else None,
+        }
+
+        
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "pulses_feed",
+            {"type": "pulse.message", "data": broadcast_payload}
+        )
 
         return JsonResponse({
             "success": True,

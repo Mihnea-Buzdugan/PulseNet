@@ -26,6 +26,9 @@ export default function Index() {
     // -------------------------
     // get user location once
     // -------------------------
+
+
+
     useEffect(() => {
         if (!navigator.geolocation) {
             console.warn("Geolocation not supported");
@@ -44,6 +47,51 @@ export default function Index() {
             },
             { enableHighAccuracy: true, timeout: 10000 }
         );
+    }, []);
+
+    useEffect(() => {
+        // 1. Initialize the connection
+        // Note: use 'ws' for localhost and 'wss' for production (HTTPS)
+        const socket = new WebSocket("ws://localhost:8000/ws/pulses/");
+
+        // 2. Listen for the "Open" event
+        socket.onopen = () => {
+            console.log("Connected to Pulse WebSocket");
+        };
+
+        // 3. Handle incoming data
+        socket.onmessage = (event) => {
+            const newPulse = JSON.parse(event.data);
+            console.log("New Pulse received:", newPulse);
+
+            setLatestPulses((prev) => {
+                // Only add if it doesn't already exist in the list
+                if (prev.find(p => p.id === newPulse.id)) return prev;
+                return [newPulse, ...prev];
+            });
+
+            // B. Update the Map (if it has coordinates)
+            if (newPulse.lat && newPulse.lng) {
+                setNearestPulses((prev) => {
+                    // Prevent duplicates if the signal fires twice
+                    if (prev.find(p => p.id === newPulse.id)) return prev;
+                    return [newPulse, ...prev];
+                });
+            }
+        };
+
+        // 4. Handle errors/closure
+        socket.onerror = (err) => console.error("WebSocket Error:", err);
+        socket.onclose = () => console.warn(" WebSocket disconnected");
+
+        // 5. Cleanup: Close the connection when the component unmounts
+        return () => {
+            if (socket.readyState === WebSocket.CONNECTING) {
+                socket.onopen = () => socket.close();
+            } else if (socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+        };
     }, []);
 
     // -------------------------

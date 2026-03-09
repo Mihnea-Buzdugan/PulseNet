@@ -155,7 +155,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             )
 
     async def send_notification(self, event):
-        """This method is called by group_send from the ChatConsumer."""
+
         await self.send(text_data=json.dumps({
             "type": event.get("notification_type", "new_message"),
             "conversation_id": event.get("conversation_id"),
@@ -164,3 +164,32 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             "content": event["content"]
         }))
 
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer
+
+class PulseConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+
+        self.room_group_name = "pulses_feed"
+
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+
+        # 2. Accept the connection
+        await self.accept()
+        print(f"Connection accepted for group: {self.room_group_name}")
+
+    async def disconnect(self, close_code):
+
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+        print(f"Connection closed with code: {close_code}")
+
+    async def pulse_message(self, event):
+        data = event["data"]
+
+        await self.send(text_data=json.dumps(data))

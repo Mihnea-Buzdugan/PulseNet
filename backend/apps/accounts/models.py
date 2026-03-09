@@ -76,6 +76,7 @@ class Pulse(models.Model):
     currencyType = models.CharField(max_length=10, default="RON")
 
     is_available = models.BooleanField(default=True)
+    visibility_radius = models.IntegerField(default=0)  # km; 0 = visible to everyone
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
