@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.contrib.auth import get_user_model, login as django_login,logout as django_logout
 from django.core.exceptions import ValidationError
 import json
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.contrib.auth import get_user_model
 from django.views.decorators.http import require_http_methods, require_POST
 from google.auth.transport.requests import Request
@@ -20,7 +20,7 @@ from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
 from .decorators import api_login_required
-from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental
+from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
@@ -1353,3 +1353,68 @@ def my_conversations(request):
     results.sort(key=lambda x: x["timestamp"], reverse=True)
 
     return JsonResponse(results, safe=False)
+
+
+
+@login_required
+def list_alerts(request):
+    """Return all active alerts with their images"""
+
+    # Get alerts, include user in one join, and prefetch images
+    alerts = Alert.objects.filter(is_active=True)\
+        .select_related("user")\
+        .prefetch_related("images")\
+        .order_by("-created_at")
+
+    data = [
+        {
+            "id": alert.id,
+            "user_id": alert.user.id,
+            "user_name": alert.user.username,
+            "title": alert.title,
+            "description": alert.description,
+            "category": alert.category,
+            "category_display": alert.get_category_display(),
+            "created_at": alert.created_at.isoformat(),
+            "location": alert.location,
+            "images": [request.build_absolute_uri(img.image.url) for img in alert.images.all()]
+        }
+        for alert in alerts
+    ]
+
+    return JsonResponse({"success": True, "alerts": data})
+
+
+@login_required
+@csrf_exempt
+def create_alert(request):
+    """Create a new notice"""
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        title = data.get("title")
+        description = data.get("description")
+        category = data.get("category", "other")
+        location = data.get("location")
+    except Exception:
+        return JsonResponse({"success": False, "error": "Invalid JSON data."}, status=400)
+
+    if not title or not description:
+        return JsonResponse({"success": False, "error": "Title and description are required."}, status=400)
+
+
+    alert = Alert.objects.create(
+        user=request.user,
+        title=title,
+        description=description,
+        category=category,
+        location=location
+    )
+
+    return JsonResponse({
+        "success": True,
+        "alert_id": alert.id,
+        "category_display": alert.get_category_display()
+    })

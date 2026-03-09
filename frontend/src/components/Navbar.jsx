@@ -138,7 +138,7 @@ function Navbar() {
     const toggleMenu = () => setMenuActive(!menuActive);
 
     const navItems = isAuthenticated
-        ? ['Home', 'Profile', 'Add Pulse', 'Logout']
+        ? ['Home', 'Alerts', 'Profile', 'Add Pulse', 'Logout']
         : ['Home', 'Login'];
 
     const renderNavItem = (item, index) => {
@@ -148,6 +148,7 @@ function Navbar() {
             Profile: () => navigate('/profile'),
             Login: () => navigate('/login'),
             Home: () => navigate('/'),
+            Alerts: () => navigate('/alerts'),
             "Add Pulse": () => navigate('/add-pulse'),
         };
 

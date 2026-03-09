@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import User, Follow, Friendship, PendingFollow, Pulse, PulseImage, Group_Conversation, DirectConversation, \
-    FavoritePulse, PulseRental
+    FavoritePulse, PulseRental, Alert, AlertImage
 
 # Register your models here.
 
@@ -14,3 +14,5 @@ admin.site.register(Group_Conversation)
 admin.site.register(DirectConversation)
 admin.site.register(FavoritePulse)
 admin.site.register(PulseRental)
+admin.site.register(Alert)
+admin.site.register(AlertImage)

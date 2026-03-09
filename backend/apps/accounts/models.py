@@ -279,3 +279,44 @@ class DirectMessage(models.Model):
 
     def __str__(self):
         return f"From {self.sender.email} at {self.timestamp}"
+
+
+class Alert(models.Model):
+    CATEGORY_CHOICES = [
+        ("weather", "Weather Alert"),
+        ("lost", "Lost Item"),
+        ("found", "Found Item"),
+        ("traffic", "Traffic Alert"),
+        ("safety", "Safety Notice"),
+        ("event", "Event"),
+        ("missing_person", "Missing Person"),
+        ("infrastructure", "Road / Utilities"),
+        ("public_health", "Health / Medical"),
+        ("meetup", "Meetup"),
+        ("volunteer", "Volunteer Request"),
+        ("other", "Other"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notices")
+    title = models.CharField(max_length=150)
+    description = models.TextField()
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="other")
+    created_at = models.DateTimeField(auto_now_add=True)
+    location = models.CharField(max_length=150, blank=True, null=True)  # optional
+    is_active = models.BooleanField(default=True)  # Admin/user can deactivate
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.title} ({self.get_category_display()})"
+
+
+class AlertImage(models.Model):
+    alert = models.ForeignKey(
+        Alert,
+        on_delete=models.CASCADE,
+        related_name="images"
+    )
+    image = models.ImageField(upload_to="alert_images/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
