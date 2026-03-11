@@ -1,3 +1,6 @@
+/* =============================
+   Global reset + base
+   ============================= */
 * {
     margin: 0;
     padding: 0;
@@ -218,7 +221,7 @@
 
 /* CONTENT AREAS */
 .contentArea {
-    @apply w-full;
+    @apply w-full mb-8; /* added bottom spacing between content areas */
 }
 
 .card {
@@ -226,7 +229,12 @@
 }
 
 .sectionTitle {
-    @apply text-xl font-extrabold text-slate-900 mb-6;
+    @apply text-xl font-extrabold text-slate-900 mb-2;
+}
+
+/* subtitle used in offers header */
+.sectionSubtitle {
+    @apply text-sm text-slate-500 max-w-xl mb-4;
 }
 
 /* OVERVIEW STATS */
@@ -263,75 +271,97 @@
     @apply text-xs uppercase px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-600 font-bold shadow-sm;
 }
 
-/* OBJECTS */
+/* =============================
+   OBJECT / PULSE CARDS (IMPROVED)
+   ============================= */
+
+/* Grid - 1 column by default; you may change to 2-col on wider screens if needed */
 .objectGrid {
     @apply grid grid-cols-1 gap-4;
 }
 
+/* Card base: smaller, cleaner, horizontal layout */
 .objectCard {
-    @apply bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-row transition-all duration-300 hover:shadow-lg;
-    height: 200px;
+    @apply bg-white border border-slate-200 rounded-2xl shadow-sm
+    flex gap-5 p-4 items-center
+    transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
+    /* remove fixed height for flexible content */
     position: relative;
 }
 
+/* Image area - square thumbnail */
 .objectImage {
-    @apply flex items-center justify-center transition-colors flex-shrink-0;
-    width: 280px;
-    height: 100%;
-    padding: 12px;
+    @apply flex-shrink-0 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center;
+    width: 120px;
+    height: 120px;
+    padding: 0;
 }
 
+/* Make real images cover the thumbnail */
 .pulseImage {
-    @apply w-full h-full rounded-xl;
-    object-fit: cover;
+    @apply w-full h-full object-cover;
 }
 
+/* Placeholder emoji */
 .imagePlaceholder {
-    @apply text-5xl opacity-40;
+    @apply text-4xl opacity-40;
 }
 
+/* Info: vertical layout with good spacing */
 .objectInfo {
-    @apply p-5 flex flex-col flex-1;
-    overflow-y: auto;
-    padding-bottom: 50px;
+    @apply flex flex-col gap-1 flex-1;
+    overflow: hidden;
 }
 
 .objectName {
-    @apply text-lg font-bold text-slate-900 mb-2;
+    @apply text-base font-bold text-slate-900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .pulseDescription {
-    @apply text-sm text-slate-500 mb-2 leading-relaxed;
+    @apply text-sm text-slate-500 mb-1 leading-relaxed;
+    max-height: 3.6rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .pulseCategory {
-    @apply text-sm text-slate-600 mb-2 font-medium;
+    @apply text-xs text-indigo-600 font-semibold uppercase tracking-wide;
 }
 
 .pulsePhone {
-    @apply text-sm text-slate-600 mb-2 font-medium;
+    @apply text-sm text-slate-600 font-medium;
 }
 
 .pulseDate {
-    @apply text-xs text-slate-400 mb-3 font-medium;
+    @apply text-xs text-slate-400;
 }
 
+/* Meta row sits at the end of the card */
 .objectMeta {
     @apply mt-auto flex items-center justify-between gap-2 flex-wrap;
 }
 
+/* Price pill */
 .price {
-    @apply text-sm font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-lg;
+    @apply text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg;
 }
 
+/* Actions: right aligned and simple */
 .objectActions {
-    @apply absolute bottom-3 right-3;
+    @apply flex items-start gap-2;
 }
 
+/* Delete / remove button */
 .removeBtn {
-    @apply px-2.5 py-1 rounded-lg bg-white text-rose-800 border border-rose-100 text-xs font-bold hover:bg-rose-50 transition-transform shadow-sm;
+    @apply px-3 py-1 rounded-lg text-xs font-bold
+    bg-rose-50 text-rose-700 border border-rose-200
+    hover:bg-rose-100 transition;
 }
 
+/* Availability badges */
 .availableBadge {
     @apply px-3 py-1 text-xs rounded-full bg-emerald-100 text-emerald-800 font-bold;
 }
@@ -340,7 +370,9 @@
     @apply px-3 py-1 text-xs rounded-full bg-rose-100 text-rose-800 font-bold;
 }
 
-/* EDIT FORM */
+/* =============================
+   EDIT FORM
+   ============================= */
 .editForm {
     @apply w-full max-w-2xl bg-slate-50 border border-slate-100 p-6 sm:p-8 rounded-3xl shadow-inner mt-2;
 }
@@ -377,7 +409,9 @@
     @apply px-6 py-2.5 rounded-full bg-white border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-slate-500;
 }
 
-/* ANALYTICS */
+/* =============================
+   ANALYTICS
+   ============================= */
 .analyticsBox {
     @apply bg-slate-50 border border-slate-100 rounded-2xl p-6;
 }
@@ -414,12 +448,13 @@
     @apply bg-transparent border-0 text-lg cursor-pointer;
 }
 
-
-
 .inlineLabel {
     @apply inline-flex mx-2 items-center gap-2 font-bold text-slate-700;
 }
 
+/* =============================
+   MODALS
+   ============================= */
 .modalOverlay {
     @apply fixed inset-0 bg-black bg-opacity-40
     flex items-center justify-center
@@ -453,9 +488,11 @@
     hover:bg-red-600 transition;
 }
 
-
+/* =============================
+   PULSES HEADER (responsive)
+   ============================= */
 .pulsesHeader {
-    @apply flex items-center justify-between mb-6;
+    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6;
 }
 
 .pulseTypeDropdown {
@@ -466,4 +503,165 @@
 
 .emptyState {
     @apply text-slate-400 font-medium text-sm col-span-3 py-8 text-center;
+}
+
+/* =============================
+   RENTAL OFFERS SECTION (IMPROVED)
+   ============================= */
+
+.rentalSection {
+    @apply bg-white rounded-3xl shadow-sm border border-slate-200 p-8 mt-8;
+}
+
+.rentalHeader {
+    @apply flex items-center justify-between mb-6;
+}
+
+.rentalTitle {
+    @apply text-xl font-extrabold text-slate-900;
+}
+
+/* Offer list container */
+.offersList {
+    @apply grid gap-4;
+}
+
+/* Offer card (used by your JSX as styles.offerCard) */
+.offerCard {
+    @apply bg-white border border-slate-200 rounded-2xl shadow-sm
+    p-4 flex flex-col md:flex-row md:items-center
+    justify-between gap-4
+    transition-all duration-300 hover:shadow-md;
+}
+
+/* Left column inside offer */
+.offerLeft {
+    @apply flex flex-col gap-1 min-w-0;
+}
+
+.offerPulseTitle {
+    @apply text-base font-bold text-slate-900 truncate;
+}
+
+.offerMeta {
+    @apply text-sm text-slate-600 flex flex-col gap-1 mt-1;
+}
+
+/* Status pill (you can toggle class depending on status) */
+.offerStatus {
+    @apply inline-flex items-center text-xs font-bold uppercase px-2 py-1 rounded-full w-fit;
+}
+
+/* Small note for non-pending statuses */
+.smallNote {
+    @apply text-sm text-slate-500 font-medium;
+}
+
+/* Actions column */
+.offerActions {
+    @apply flex gap-2 flex-wrap items-center;
+}
+
+/* Buttons */
+.acceptBtn {
+    @apply px-3 py-1.5 rounded-lg
+    bg-emerald-600 text-white
+    text-sm font-semibold
+    hover:bg-emerald-700
+    transition-all shadow-sm;
+}
+
+.rejectBtn {
+    @apply px-3 py-1.5 rounded-lg
+    bg-red-500 text-white
+    text-sm font-semibold
+    hover:bg-red-600
+    transition-all shadow-sm;
+}
+
+.counterBtn {
+    @apply px-3 py-1.5 rounded-lg
+    bg-indigo-600 text-white
+    text-sm font-semibold
+    hover:bg-indigo-700
+    transition-all shadow-sm;
+}
+
+/* Offer sub-elements formatting for dates and price */
+.offerMeta > div {
+    @apply flex items-center gap-2;
+}
+
+/* =============================
+   COUNTER OFFER
+   ============================= */
+
+.counterContainer {
+    @apply flex items-center gap-2 mt-3 flex-wrap;
+}
+
+.counterInput {
+    @apply px-3 py-2 rounded-lg border border-slate-300 bg-white
+    text-sm font-medium outline-none
+    focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500;
+}
+
+.counterSubmit {
+    @apply px-4 py-2 rounded-lg bg-indigo-600 text-white font-bold
+    hover:bg-indigo-700 transition;
+}
+
+.counterCancel {
+    @apply px-4 py-2 rounded-lg bg-slate-200 text-slate-700 font-bold
+    hover:bg-slate-300 transition;
+}
+
+/* =============================
+   RENTAL MODALS
+   ============================= */
+
+.rentalModalOverlay {
+    @apply fixed inset-0 bg-black bg-opacity-40
+    flex items-center justify-center
+    z-50 backdrop-blur-sm;
+}
+
+.rentalModal {
+    @apply bg-white rounded-2xl shadow-xl
+    w-full max-w-md p-6;
+}
+
+.rentalModalTitle {
+    @apply text-lg font-semibold text-slate-800 mb-2;
+}
+
+.rentalModalText {
+    @apply text-sm text-slate-600 mb-6;
+}
+
+.rentalModalActions {
+    @apply flex justify-end gap-3;
+}
+
+.rentalModalCancel {
+    @apply px-4 py-2 rounded-lg bg-slate-200
+    hover:bg-slate-300 transition;
+}
+
+.rentalModalAccept {
+    @apply px-4 py-2 rounded-lg bg-emerald-600 text-white
+    hover:bg-emerald-700 transition;
+}
+
+.rentalModalReject {
+    @apply px-4 py-2 rounded-lg bg-red-500 text-white
+    hover:bg-red-600 transition;
+}
+
+/* =============================
+   EMPTY STATES
+   ============================= */
+
+.rentalEmpty {
+    @apply text-slate-400 font-medium text-sm py-8 text-center;
 }

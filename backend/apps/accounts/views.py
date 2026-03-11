@@ -821,6 +821,7 @@ def create_pulse_rental(request):
         start_date=start_date,
         end_date=end_date,
         total_price=proposed_total,
+        initial_price=proposed_total,
         status="pending",
     )
 
@@ -848,6 +849,99 @@ def create_pulse_rental(request):
         "rental_id": rental.id,
         "proposed_total": proposed_total
     })
+
+
+def get_user_rentals(request):
+    if request.method == "GET":
+        rentals = PulseRental.objects.filter(pulse__user=request.user)
+
+        data = []
+        for rental in rentals:
+            data.append({
+                "id": rental.id,
+                "pulse_title": rental.pulse.title,
+                "pulse_type": rental.pulse.pulse_type,
+                "renter": rental.renter.username,
+                "start_date": rental.start_date,
+                "end_date": rental.end_date,
+                "total_price": str(rental.total_price),
+                "initial_price": str(rental.initial_price),
+                "status": rental.status,
+            })
+
+        return JsonResponse(data, safe=False)
+
+
+@csrf_exempt
+def modify_rental_status(request, rental_id):
+    if request.method == "PATCH":
+        try:
+            rental = PulseRental.objects.get(id=rental_id)
+
+            if rental.pulse.user != request.user:
+                return JsonResponse({"error": "Unauthorized"}, status=403)
+
+            data = json.loads(request.body)
+
+            status = data.get("status", rental.status)
+            price_per_day = data.get("total_price", rental.total_price)
+
+            # Calculate duration
+            duration = (rental.end_date - rental.start_date).days
+            if duration <= 0:
+                duration = 1
+
+            total_price = float(price_per_day) * duration
+
+            rental.status = status
+            rental.total_price = total_price
+            rental.save()
+
+            return JsonResponse({
+                "message": "Rental updated successfully",
+                "status": rental.status,
+                "days": duration,
+                "total_price": total_price
+            })
+
+        except PulseRental.DoesNotExist:
+            return JsonResponse({"error": "Rental not found"}, status=404)
+
+    elif request.method == "DELETE":
+
+        try:
+            rental = PulseRental.objects.get(id=rental_id)
+
+            rental.delete()
+
+        except PulseRental.DoesNotExist:
+            return JsonResponse({"error": "Rental not found"}, status=404)
+
+    return JsonResponse({"error": "Invalid method"}, status=405)
+
+
+
+@login_required
+def get_rental_proposals(request):
+    if request.method == "GET":
+        user = request.user
+        rentals = PulseRental.objects.filter(renter=user)
+
+        data = []
+        for rental in rentals:
+            data.append({
+                "id": rental.id,
+                "pulse_title": rental.pulse.title,
+                "pulse_type": rental.pulse.pulse_type,
+                "renter": rental.renter.username,
+                "start_date": rental.start_date,
+                "end_date": rental.end_date,
+                "total_price": str(rental.total_price),
+                "initial_price": str(rental.initial_price),
+                "status": rental.status,
+            })
+
+        return JsonResponse(data, safe=False)
 
 @login_required
 @require_POST
