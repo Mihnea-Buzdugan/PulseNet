@@ -1,7 +1,6 @@
 /* Alerts.module.css */
 
 .body {
-    background-color: #f8fafc;
     min-height: 100vh;
     color: #0f172a;
     font-family: system-ui, -apple-system, sans-serif;
@@ -43,15 +42,17 @@
     z-index: 1;
 }
 
+
 /* Header & Title */
 .headerSection {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
     margin-bottom: 3rem;
     border-bottom: 2px solid rgba(15, 23, 42, 0.05);
     padding-bottom: 1rem;
 }
+
 
 .title {
     font-size: 2.5rem;
@@ -69,7 +70,42 @@
     filter: drop-shadow(0 4px 6px rgba(239, 68, 68, 0.2));
 }
 
+.alertButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    background: transparent;
+    color: #ef4444;
+    font-family: sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    border: 2px solid #ef4444;
+    text-transform: capitalize;
+    gap: 0.75rem;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.alertButton .arrowIcon {
+    width: 1.5rem;
+    height: 1.5rem;
+    stroke: currentcolor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+
+.alertButton:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: #dc2626;
+    color: #dc2626;
+}
+
 .liveIndicator {
+    padding-top: 15px;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -337,4 +373,121 @@
 /* Ensure the card doesn't jump when switching images */
 .card {
     min-height: 480px;
+}
+
+/* Noul Grid Layout */
+.parent {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: auto auto auto; /* Lăsăm rândurile să se adapteze la conținut */
+    grid-column-gap: 1.5rem; /* Recomandat pentru a separa cardurile */
+    grid-row-gap: 1.5rem;
+    width: 100%;
+}
+
+.div1 { grid-area: 1 / 1 / 3 / 4; display: flex; flex-direction: column; }
+.div2 { grid-area: 1 / 4 / 3 / 7; display: flex; flex-direction: column; }
+
+/* Bara de mijloc (Other Alerts + Dropdown) */
+.div3 {
+    grid-area: 3 / 1 / 4 / 7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(15, 23, 42, 0.05);
+    padding-bottom: 0.5rem;
+    margin-top: 1rem;
+}
+
+.div4 { grid-area: 4 / 1 / 6 / 3; }
+.div5 { grid-area: 4 / 3 / 6 / 5; }
+.div6 { grid-area: 4 / 5 / 6 / 7; }
+
+/* --- Styling pentru noile elemente --- */
+.sectionHeading {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 1rem;
+}
+
+.controlsLeft {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.controlsLeft h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+.categoryDropdown {
+    padding: 0.5rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #475569;
+    background-color: white;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.categoryDropdown:hover {
+    border-color: #cbd5e1;
+}
+
+.categoryDropdown:focus {
+    border-color: #ef4444;
+}
+
+.carouselControls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.carouselControls button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    color: #0f172a;
+    transition: all 0.2s;
+}
+
+.carouselControls button:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: scale(1.05);
+}
+
+.carouselControls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f1f5f9;
+}
+
+.emptyCardSlot {
+    height: 100%;
+    min-height: 200px;
+    border: 2px dashed #e2e8f0;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsivitate pentru Grid */
+@media (max-width: 1024px) {
+    .parent {
+        display: flex;
+        flex-direction: column;
+    }
 }

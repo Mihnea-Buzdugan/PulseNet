@@ -19,7 +19,7 @@ const DirectChat = React.lazy(() => import('./pages/User_pages/DirectChat.jsx'))
 const Messages = React.lazy(() => import('./pages/User_pages/Messages.jsx'));
 const PulseTransaction = React.lazy(() => import('./pages/Pulses_pages/PulseTransaction.jsx'));
 const Alerts = React.lazy(() => import('./pages/Alerts/Alerts.jsx'));
-
+const AddAlerts = React.lazy(() => import('./pages/Alerts/AddAlerts.jsx'));
 const NotificationHandler = ({ currentUser }) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -249,6 +249,7 @@ function App() {
                     <Route path="/messages" element={<Messages />} />
                     <Route path="/favorites" element={<FavoritePulses />} />
                     <Route path="/alerts" element={<Alerts />} />
+                    <Route path="/add-alerts" element={<AddAlerts />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </Suspense>
