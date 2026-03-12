@@ -390,7 +390,7 @@ export default function Index() {
 
                         {/* Right column: Latest pulses */}
                         <div className={styles.dreapta}>
-                            {latestPulses.map((pulse) => (
+                            {latestPulses.slice(0,4).map((pulse) => (
                                 <div key={pulse.id} className={styles.stire} onClick={() => openPulse(pulse)}>
                                     <div className={styles.smallimg}>
                                         <img src={pulse.image || DEFAULT_IMAGE} className={styles.ferrari} onError={handleImageError} alt="Pulse" />
