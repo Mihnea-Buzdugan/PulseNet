@@ -1,0 +1,255 @@
+/* =========================================
+   Global & Container
+   ========================================= */
+
+/* Notă: Pentru 'body', de obicei e mai bine să pui asta în globals.css.
+   Dacă folosești CSS Modules, s-ar putea să nu se aplice direct pe body de aici. */
+:global(body) {
+    background: #f8fafc;
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.container {
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 2.5rem;
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.08);
+    box-sizing: border-box;
+}
+
+/* =========================================
+   Typography & Form Layout
+   ========================================= */
+
+.alertForm {
+    display: flex;
+    flex-direction: column;
+}
+
+.formTitle {
+    color: #0f172a;
+    font-size: 1.85rem;
+    font-weight: 800;
+    margin-top: 0;
+    margin-bottom: 2rem;
+    text-align: center;
+    letter-spacing: -0.5px;
+}
+
+.inputGroup {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.inputGroup label,
+.labelHeader {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.2rem;
+}
+
+.inputGroup input,
+.inputGroup select,
+.inputGroup textarea {
+    padding: 0.85rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 1rem;
+    color: #1e293b;
+    background-color: #f8fafc;
+    transition: all 0.25s ease;
+    outline: none;
+    font-family: inherit;
+}
+
+.inputGroup input:hover,
+.inputGroup select:hover,
+.inputGroup textarea:hover {
+    border-color: #cbd5e1;
+}
+
+.inputGroup input:focus,
+.inputGroup select:focus,
+.inputGroup textarea:focus {
+    background-color: #ffffff;
+    border-color: #ef4444; /* Accent color (Red) */
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+
+.inputGroup textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* =========================================
+   Image Upload Section
+   ========================================= */
+
+.imageUploadSection {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.imageGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Adaptabil */
+    gap: 12px;
+    margin-top: 0.5rem;
+}
+
+.imagePreviewBox {
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.imagePreviewBox:hover {
+    transform: scale(1.02);
+}
+
+/* Efect de overlay întunecat la hover pentru a vedea X-ul mai bine */
+.imagePreviewBox::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.imagePreviewBox:hover::before {
+    opacity: 1;
+}
+
+.removeImgBtn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efect de bounce */
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.4);
+}
+
+.imagePreviewBox:hover .removeImgBtn {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.removeImgBtn:hover {
+    background: #dc2626;
+    transform: translate(-50%, -50%) scale(1.1) !important;
+}
+
+.uploadBtnBox {
+    aspect-ratio: 1 / 1;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #64748b;
+    background-color: #f8fafc;
+    transition: all 0.2s ease;
+    gap: 0.5rem;
+}
+
+.uploadBtnBox span {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.uploadBtnBox:hover {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+    color: #ef4444;
+}
+
+/* =========================================
+   Submit Button
+   ========================================= */
+
+.submitBtn {
+    width: 100%;
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: 12px; /* Mai modern decât pastila complet rotundă, se potrivește cu input-urile */
+    background-color: transparent;
+    color: #ef4444;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: 2px solid #ef4444;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.submitBtn:hover:not(:disabled) {
+    background-color: #ef4444;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px -3px rgba(239, 68, 68, 0.3);
+}
+
+.submitBtn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.submitBtn:disabled {
+    border-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+    background-color: #f1f5f9;
+}
+
+/* =========================================
+   Responsive
+   ========================================= */
+
+@media (max-width: 640px) {
+    .container {
+        margin: 1rem;
+        padding: 1.5rem;
+        border-radius: 16px;
+    }
+
+    .formTitle {
+        font-size: 1.5rem;
+    }
+
+    .imageGrid {
+        grid-template-columns: repeat(2, 1fr); /* 2 coloane pe mobile pentru a nu fi pozele prea mici */
+    }
+}
