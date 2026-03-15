@@ -1,6 +1,6 @@
 /* --- MAIN NAVBAR CONTAINER --- */
 .navbar {
-    position: sticky; /* Keeps navbar at the top while scrolling */
+    position: relative; /* Keeps navbar at the top while scrolling */
     top: 0;
     display: flex;
     justify-content: space-between;
