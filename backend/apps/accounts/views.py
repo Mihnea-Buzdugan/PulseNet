@@ -526,7 +526,19 @@ def get_latest_pulses(request):
     page_number = request.GET.get('page', 1)
     per_page = 15
 
-    pulses = get_base_pulse_queryset(request.user).order_by("-created_at")
+    lat = request.GET.get("lat")
+    lng = request.GET.get("lng")
+
+    if lat and lng:
+        ref_location = Point(float(lng), float(lat), srid=4326)
+        radius_km = request.user.visibility_radius or 1
+        pulses = (
+            Pulse.objects.select_related("user").prefetch_related("images")
+            .filter(location__distance_lte=(ref_location, D(km=radius_km)))
+            .order_by("-created_at")
+        )
+    else:
+        pulses = get_base_pulse_queryset(request.user).order_by("-created_at")
 
     paginator = Paginator(pulses, per_page)
     page_obj = paginator.get_page(page_number)

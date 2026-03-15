@@ -31,6 +31,9 @@ export default function Index() {
     // map popup
     const [selectedPoint, setSelectedPoint] = useState(null);
 
+    // map ref for imperative control
+    const mapRef = useRef(null);
+
     // -------------------------
     // Helper: open a pulse page
     // -------------------------
@@ -160,8 +163,11 @@ export default function Index() {
         setLoading(true);
 
         try {
+            const locationParams = userLocation
+                ? `&lat=${userLocation.lat}&lng=${userLocation.lng}`
+                : "";
             const res = await fetch(
-                `http://localhost:8000/accounts/get_latest_pulses/?page=${pageNum}`,
+                `http://localhost:8000/accounts/get_latest_pulses/?page=${pageNum}${locationParams}`,
                 { method: "GET", credentials: "include" }
             );
             const data = await res.json();
@@ -228,9 +234,17 @@ export default function Index() {
         fetchBestPulses();
     }, []);
 
-    // when user location appears, fetch nearest
+    // when user location appears, fetch nearest + latest + center map
     useEffect(() => {
         fetchNearestPulses();
+        if (userLocation) fetchLatestPulses(1);
+        if (userLocation && mapRef.current) {
+            mapRef.current.flyTo({
+                center: [userLocation.lng, userLocation.lat],
+                zoom: 12,
+                duration: 1000,
+            });
+        }
     }, [userLocation]);
 
     // load more
@@ -242,7 +256,7 @@ export default function Index() {
         if (!timestamp) return "";
         // timestamp expected "YYYY-MM-DD HH:MM"
         // convert to ISO by replacing the space with 'T'
-        const iso = timestamp.replace(" ", "T");
+        const iso = timestamp.replace(" ", "T") + "Z";
         const date = new Date(iso);
         if (isNaN(date.getTime())) return timestamp;
 
@@ -354,7 +368,7 @@ export default function Index() {
         );
     }
 
-    if (loading || nearestPulses.length === 0) {
+    if (loading && latestPulses.length === 0) {
         return <Loading />;
     }
 
@@ -379,7 +393,7 @@ export default function Index() {
                         <div className={styles.test}>
                             <div className={styles.stanga}>
                                 <div className={styles.mare}>
-                                    <Map center={mapCenter} zoom={12} fadeDuration={0}>
+                                    <Map ref={mapRef} center={mapCenter} zoom={12} fadeDuration={0}>
                                         <MapClusterLayer
                                             data={pulsesGeoJSON}
                                             clusterRadius={50}
@@ -400,7 +414,7 @@ export default function Index() {
                                                 clusterRadius={0}
                                                 pointColor="#22c55e"
                                                 clusterColors={["#22c55e"]}
-                                                onPointClick={(feature, coordinates) => {
+                                                onPointClick={(_feature, coordinates) => {
                                                     setSelectedPoint({
                                                         coordinates,
                                                         properties: {
