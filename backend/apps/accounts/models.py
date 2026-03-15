@@ -18,7 +18,7 @@ class User(AbstractUser):
 
     location = models.PointField(srid=4326, null=True, blank=True)
 
-    distance_radius = models.IntegerField(default=0)
+    visibility_radius = models. PositiveIntegerField(default=1)
 
 
     ONLINE_STATUS_CHOICES = [
@@ -329,7 +329,7 @@ class Alert(models.Model):
     description = models.TextField()
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="other")
     created_at = models.DateTimeField(auto_now_add=True)
-    location = models.CharField(max_length=150, blank=True, null=True)
+    location = models.PointField(srid=4326, null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:

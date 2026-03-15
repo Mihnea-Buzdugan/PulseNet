@@ -385,6 +385,32 @@
     @apply flex flex-col gap-1.5 mb-4;
 }
 
+.labelWrapper {
+    @apply flex justify-between items-center;
+}
+
+
+.rangeValue {
+    @apply text-xs font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full;
+}
+
+.rangeInput {
+    @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600;
+}
+
+.rangeInput::-webkit-slider-thumb {
+    @apply appearance-none w-5 h-5 bg-blue-600 border-2 border-white rounded-full shadow-md;
+    transition: transform 0.1s ease-in-out;
+}
+
+.rangeInput::-webkit-slider-thumb:hover {
+    @apply scale-110 bg-blue-700;
+}
+
+.rangeInput::-moz-range-thumb {
+    @apply w-5 h-5 bg-blue-600 border-2 border-white rounded-full shadow-md;
+}
+
 .inputLabel {
     @apply text-xs font-bold uppercase tracking-wider text-slate-500 ml-1;
 }

@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import Navbar from "../../components/Navbar";
 import styles from "../../styles/User_pages/profile.module.css";
 import Loading from "../../components/Loading";
+import {Map, useMap} from "@/components/ui/map";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -43,6 +44,67 @@ const formatCurrency = (value, currency = "lei") => {
     return n.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ` ${currency}`;
 };
 
+function RadiusCircle({ center, radiusKm }) {
+    const { map, isLoaded } = useMap();
+    const sourceId = "radius-source";
+    const layerId = "radius-layer";
+    const outlineId = "radius-outline";
+
+    useEffect(() => {
+        if (!isLoaded || !map || !center) return;
+
+        // Generează un cerc GeoJSON aproximativ
+        const points = 64;
+        const coords = [];
+        const kmPerDegLat = 111.32;
+        const kmPerDegLng = 111.32 * Math.cos((center.lat * Math.PI) / 180);
+
+        for (let i = 0; i <= points; i++) {
+            const angle = (i / points) * 2 * Math.PI;
+            const dx = (radiusKm / kmPerDegLng) * Math.cos(angle);
+            const dy = (radiusKm / kmPerDegLat) * Math.sin(angle);
+            coords.push([center.lng + dx, center.lat + dy]);
+        }
+
+        const geojson = {
+            type: "Feature",
+            geometry: { type: "Polygon", coordinates: [coords] },
+        };
+
+        // Dacă sursa există deja, doar actualizează datele
+        if (map.getSource(sourceId)) {
+            map.getSource(sourceId).setData(geojson);
+            return;
+        }
+
+        map.addSource(sourceId, { type: "geojson", data: geojson });
+
+        map.addLayer({
+            id: layerId,
+            type: "fill",
+            source: sourceId,
+            paint: { "fill-color": "#4A90E2", "fill-opacity": 0.15 },
+        });
+
+        map.addLayer({
+            id: outlineId,
+            type: "line",
+            source: sourceId,
+            paint: { "line-color": "#4A90E2", "line-width": 2 },
+        });
+
+        return () => {
+            try {
+                if (map.getLayer(outlineId)) map.removeLayer(outlineId);
+                if (map.getLayer(layerId)) map.removeLayer(layerId);
+                if (map.getSource(sourceId)) map.removeSource(sourceId);
+            } catch { /* ignore */ }
+        };
+    }, [isLoaded, map, center, radiusKm]);
+
+    return null;
+}
+
 export default function Profile() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -56,7 +118,6 @@ export default function Profile() {
     const fileInputRef = useRef(null);
     const lastObjectUrlRef = useRef(null);
     const previousProfileUrlRef = useRef(null);
-
     const [editForm, setEditForm] = useState({
         firstName: "",
         lastName: "",
@@ -66,6 +127,7 @@ export default function Profile() {
         online_status: "offline",
         quiet_hours_start: "",
         quiet_hours_end: "",
+        visibility_radius: 1,
     });
 
     // rental offers state (offers for user's pulses)
@@ -113,6 +175,14 @@ export default function Profile() {
                 if (data.user) {
                     setUser(data.user);
                     setPreview(data.user.profilePicture || null);
+
+                    // Extrage coordonatele din GeoJSON Point
+                    if (data.user.location?.coordinates) {
+                        setUserLocation({
+                            lng: data.user.location.coordinates[0],
+                            lat: data.user.location.coordinates[1],
+                        });
+                    }
                 }
                 setLoading(false);
             })
@@ -149,7 +219,7 @@ export default function Profile() {
                 // Fetch rental proposals (as renter)
                 const proposalsRes = await fetch("http://localhost:8000/accounts/pulse_own_proposals/", {
                     method: "GET",
-                    credentials: "include", // ✅ important!
+                    credentials: "include",
                     headers: {
                         "Content-Type": "application/json",
                         "X-CSRFToken": getCookie("csrftoken"),
@@ -218,7 +288,9 @@ export default function Profile() {
                     "X-CSRFToken": csrfToken,
                 },
                 credentials: "include",
-                body: JSON.stringify(editForm),
+                body: JSON.stringify({
+                    ...editForm,
+                }),
             });
             if (response.ok) {
                 const data = await response.json();
@@ -663,6 +735,32 @@ export default function Profile() {
                                                 <option value="do_not_disturb">Do Not Disturb</option>
                                             </select>
                                         </div>
+                                        <div className={styles.inputGroup}>
+                                            <div className={styles.labelWrapper}>
+                                                <label htmlFor="visibility-range" className={styles.inputLabel}>
+                                                    Visibility Range
+                                                </label>
+                                                <span className={styles.rangeValue}>{editForm.visibility_radius} km</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                id="visibility-range"
+                                                min="1"
+                                                max="10"
+                                                step="1"
+                                                value={editForm.visibility_radius}
+                                                className={styles.rangeInput}
+                                                onChange={(e) =>
+                                                    setEditForm((prev) => ({
+                                                        ...prev,
+                                                        visibility_radius: Number(e.target.value),
+                                                    }))
+                                                }
+                                            />
+                                            <Map>
+
+                                            </Map>
+                                        </div>
                                         <div className={styles.editActions}>
                                             <button onClick={handleSave} className={styles.saveButton}>
                                                 Save Changes
@@ -699,6 +797,7 @@ export default function Profile() {
                                                     online_status: user.online_status ?? user.onlineStatus ?? "offline",
                                                     quiet_hours_start: formatTimeForInput(user.quiet_hours_start ?? user.quietHoursStart),
                                                     quiet_hours_end: formatTimeForInput(user.quiet_hours_end ?? user.quietHoursEnd),
+                                                    visibility_radius: user.visibility_radius || 1,
                                                 });
                                                 setEditMode(true);
                                             }}
