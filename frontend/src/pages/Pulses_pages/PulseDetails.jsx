@@ -53,6 +53,25 @@ function getMapInstance(candidate) {
     return typeof candidate.resize === "function" ? candidate : null;
 }
 
+// Convert a backend UTC timestamp (ISO) into a local YYYY-MM-DD string
+// so FullCalendar treats it as an all-day event in the user's timezone.
+function utcIsoToLocalDateString(isoOrDate) {
+    const d = new Date(isoOrDate);
+    // Shift by timezone offset to get the equivalent local date
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().split("T")[0];
+}
+
+// Convert ISO timestamp to local human-readable string (for UI timestamps)
+function isoToLocalString(isoOrDate) {
+    try {
+        const d = new Date(isoOrDate);
+        return d.toLocaleString();
+    } catch (e) {
+        return String(isoOrDate);
+    }
+}
+
 export default function PulseDetails() {
     const { type, id } = useParams();
     const navigate = useNavigate();
@@ -175,7 +194,6 @@ export default function PulseDetails() {
     };
 
     const handleDeleteComment = async (commentId) => {
-        if (!confirm("Are you sure you want to delete this comment?")) return;
         const csrftoken = getCookie("csrftoken");
         try {
             const res = await fetch(`http://localhost:8000/accounts/pulse/comments/${commentId}/`, {
@@ -263,25 +281,42 @@ export default function PulseDetails() {
         return () => (mounted = false);
     }, [id]);
 
+    // === TIMEZONE-FIXED: convert backend UTC ranges to local all-day events ===
     useEffect(() => {
         if (!pulse) {
             setCalendarEvents([]);
             return;
         }
+
         const ranges = pulse.unavailable_ranges ?? pulse.reserved_periods ?? [];
-        const events = ranges.map((r, i) => {
-            const startRaw = r.start ?? r.start_date;
-            const endRaw = r.end ?? r.end_date;
-            return {
-                id: `unav-${i}`,
-                start: new Date(startRaw),
-                end: new Date(endRaw),
-                allDay: true,
-                display: "background",
-                backgroundColor: "rgba(255,70,70,0.35)",
-                borderColor: "rgba(255,70,70,0.6)",
-            };
-        });
+
+        const events = ranges
+            .map((r, i) => {
+                const startRaw = r.start ?? r.start_date;
+                const endRaw = r.end ?? r.end_date;
+                if (!startRaw || !endRaw) return null;
+
+                // Convert backend UTC ISO -> local YYYY-MM-DD
+                const startLocalDate = utcIsoToLocalDateString(startRaw);
+
+                // Convert end to local, then add 1 day
+                const endDate = new Date(endRaw);
+                endDate.setDate(endDate.getDate() + 1); // add 1 day
+                const endLocalDate = utcIsoToLocalDateString(endDate.toISOString());
+
+                return {
+                    id: `unav-${i}`,
+                    start: startLocalDate,
+                    end: endLocalDate, // FullCalendar end is exclusive
+                    allDay: true,
+                    display: "background",
+                    backgroundColor: "rgba(255,70,70,0.35)",
+                    borderColor: "rgba(255,70,70,0.6)",
+                    extendedProps: { source: "backend" },
+                };
+            })
+            .filter(Boolean);
+
         setCalendarEvents(events);
     }, [pulse]);
 
@@ -315,6 +350,7 @@ export default function PulseDetails() {
     const prev = () => { if (images.length) setIndex(i => (i - 1 + images.length) % images.length); };
 
     const handleFavorite = async () => {
+        if (!pulse) return;
         setFavAnim(true);
         try {
             const csrfToken = getCookie("csrftoken");
@@ -323,13 +359,14 @@ export default function PulseDetails() {
                 credentials: "include",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
             });
-            const data = await response.json();
-            if (response.ok && data.success) setPulse(prev => ({ ...prev, is_favorite: true }));
+            const data = await response.json().catch(() => null);
+            if (response.ok && data?.success) setPulse(prev => ({ ...prev, is_favorite: true }));
         } catch (err) { console.error("Favorite error:", err); }
         setTimeout(() => setFavAnim(false), 350);
     };
 
     const delete_favorite = async () => {
+        if (!pulse) return;
         try {
             const csrfToken = getCookie("csrftoken");
             const response = await fetch(`http://localhost:8000/accounts/delete_from_favorites/${pulse.id}/`, {
@@ -337,8 +374,8 @@ export default function PulseDetails() {
                 credentials: "include",
                 headers: { "X-CSRFToken": csrfToken },
             });
-            const data = await response.json();
-            if (response.ok && data.success) setPulse(prev => ({ ...prev, is_favorite: false }));
+            const data = await response.json().catch(() => null);
+            if (response.ok && data?.success) setPulse(prev => ({ ...prev, is_favorite: false }));
         } catch (err) { console.error("Delete favorite error:", err); }
     };
 
@@ -377,11 +414,11 @@ export default function PulseDetails() {
                                 {pulse.user_avatar ? (
                                     <img src={pulse.user_avatar} alt="avatar" className={styles.avatar} />
                                 ) : (
-                                    <div className={styles.avatarPlaceholder}>{pulse.user[0]}</div>
+                                    <div className={styles.avatarPlaceholder}>{pulse.user?.[0] ?? '?'}</div>
                                 )}
                                 <div>
                                     <div className={styles.username}>{pulse.user}</div>
-                                    <div className={styles.timestamp}>{pulse.timestamp}</div>
+                                    <div className={styles.timestamp}>{isoToLocalString(pulse.timestamp)}</div>
                                 </div>
                             </div>
 
@@ -412,7 +449,7 @@ export default function PulseDetails() {
 
                             {/* INFO GRID */}
                             <div className={styles.infoGrid}>
-                                <div><span>Posted</span><strong>{pulse.timestamp}</strong></div>
+                                <div><span>Posted</span><strong>{isoToLocalString(pulse.timestamp)}</strong></div>
                                 <div><span>Location</span><strong>{formatLocation(pulse.location)}</strong></div>
                                 <div><span>Condition</span><strong>{pulse.condition || "N/A"}</strong></div>
                             </div>

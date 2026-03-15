@@ -21,6 +21,30 @@ services:
       - db
       - redis
 
+  celery_worker:
+    build: ./backend
+    container_name: celery_worker
+    command: celery -A backend worker --loglevel=info
+    env_file:
+      - ./backend/.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=backend.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  celery_beat:
+    build: ./backend
+    container_name: celery_beat
+    command: celery -A backend beat --loglevel=info
+    env_file:
+      - ./backend/.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=backend.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+
   frontend:
     build: ./frontend
     container_name: react_frontend
@@ -50,7 +74,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
 
   pgadmin:
     image: dpage/pgadmin4

@@ -181,6 +181,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
@@ -205,3 +206,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+LANGUAGE_CODE = 'ro-ro'  # Optional: Romanian language
+TIME_ZONE = 'Europe/Bucharest'  # Romanian local time
+USE_I18N = True
+USE_TZ = True

@@ -21,7 +21,7 @@ from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
 from .decorators import api_login_required
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
-    PulseComment, PulseRating, Notification
+    PulseComment, PulseRating, Notification, UrgentRequest
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
@@ -636,27 +636,39 @@ def get_best_pulses(request):
 @require_http_methods(["GET"])
 def get_favorite_pulses(request):
     page_number = request.GET.get("page", 1)
-    per_page = 15
+    per_page = request.GET.get("per_page", 15)
+
+    search = request.GET.get("search", "").strip()
+    pulse_type = request.GET.get("type", "all")
+    sort = request.GET.get("sort", "recent")
 
     try:
-        # Get only pulses that the current user favorited
+        # Get IDs of pulses favorited by the user
         favorite_pulse_ids = FavoritePulse.objects.filter(
             user=request.user
         ).values_list("pulse_id", flat=True)
 
-        pulses = (
-            Pulse.objects
-            .filter(id__in=favorite_pulse_ids)
-            .select_related("user")
-            .prefetch_related("images")
-            .order_by("-created_at")
-        )
+        pulses = Pulse.objects.filter(id__in=favorite_pulse_ids).select_related("user").prefetch_related("images")
 
+        # Server-side filtering
+        if search:
+            pulses = pulses.filter(title__icontains=search)
+        if pulse_type != "all":
+            pulses = pulses.filter(pulse_type=pulse_type)
+
+        # Server-side sorting
+        if sort == "price_asc":
+            pulses = pulses.order_by("price")
+        elif sort == "price_desc":
+            pulses = pulses.order_by("-price")
+        else:  # recent
+            pulses = pulses.order_by("-created_at")
+
+        # Pagination
         paginator = Paginator(pulses, per_page)
         page_obj = paginator.get_page(page_number)
 
         final_data = []
-
         for p in page_obj:
             final_data.append({
                 "id": p.id,
@@ -685,7 +697,6 @@ def get_favorite_pulses(request):
             "success": False,
             "error": str(e)
         }, status=400)
-
 
 
 @csrf_exempt
@@ -1773,3 +1784,48 @@ def delete_notification(request, notif_id):
             "success": False,
             "error": "Notification not found"
         }, status=404)
+
+
+def urgent_requests_list(request):
+    """Return all active urgent requests as JSON."""
+    requests = UrgentRequest.objects.filter(is_active=True)
+    data = []
+    for obj in requests:
+        data.append({
+            "id": obj.id,
+            "user_id": obj.user.id,
+            "user": obj.user.username,
+            "title": obj.title,
+            "description": obj.description,
+            "category": obj.category,
+            "pulse_type": obj.pulse_type,
+            "max_price": float(obj.max_price) if obj.max_price else None,
+            "location": [obj.location.x, obj.location.y] if obj.location else None,
+            "radius_km": obj.radius_km,
+            "created_at": obj.created_at.isoformat(),
+            "expires_at": obj.expires_at.isoformat() if obj.expires_at else None,
+        })
+    return JsonResponse({"success": True, "urgent_requests": data})
+
+def urgent_request_detail(request, request_id):
+    """Return a single urgent request as JSON."""
+    try:
+        obj = UrgentRequest.objects.get(id=request_id, is_active=True)
+    except UrgentRequest.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Urgent request not found"}, status=404)
+
+    data = {
+        "id": obj.id,
+        "user_id": obj.user.id,
+        "user": obj.user.username,
+        "title": obj.title,
+        "description": obj.description,
+        "category": obj.category,
+        "pulse_type": obj.pulse_type,
+        "max_price": float(obj.max_price) if obj.max_price else None,
+        "location": [obj.location.x, obj.location.y] if obj.location else None,
+        "radius_km": obj.radius_km,
+        "created_at": obj.created_at.isoformat(),
+        "expires_at": obj.expires_at.isoformat() if obj.expires_at else None,
+    }
+    return JsonResponse({"success": True, "urgent_request": data})

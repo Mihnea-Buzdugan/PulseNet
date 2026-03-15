@@ -39,6 +39,26 @@ function getMapInstance(candidate) {
     return typeof candidate.resize === "function" ? candidate : null;
 }
 
+// Format a Date to an ISO-like string that includes the local timezone offset
+// Example output: 2026-03-24T22:00:00+02:00
+function formatDateToLocalIso(d) {
+    if (!(d instanceof Date)) d = new Date(d);
+    const tzOffset = -d.getTimezoneOffset(); // minutes offset from UTC (positive east)
+    const sign = tzOffset >= 0 ? '+' : '-';
+    const absOffset = Math.abs(tzOffset);
+    const hoursOffset = Math.floor(absOffset / 60);
+    const minsOffset = absOffset % 60;
+    const pad = (n) => String(n).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const min = pad(d.getMinutes());
+    const sec = pad(d.getSeconds());
+
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}:${sec}${sign}${pad(hoursOffset)}:${pad(minsOffset)}`;
+}
+
 export default function PulseTransaction() {
     const { pulseId } = useParams();
     const navigate = useNavigate();
@@ -80,23 +100,29 @@ export default function PulseTransaction() {
                     const ranges = data.pulse.unavailable_ranges ?? data.pulse.reserved_periods ?? [];
                     const events = ranges
                         .map((r, i) => {
-                            const start = r.start ?? r.start_date;
-                            const end = r.end ?? r.end_date;
-                            if (!start || !end) return null;
+                            const startUtc = new Date(r.start ?? r.start_date); // backend UTC
+                            const endUtc   = new Date(r.end ?? r.end_date);
+
+                            // Convert to local ISO string so FullCalendar interprets correctly
+                            const startLocal = new Date(startUtc.getTime() + startUtc.getTimezoneOffset()*60000 * -1);
+                            const endLocal   = new Date(endUtc.getTime() + endUtc.getTimezoneOffset()*60000 * -1);
+
+                            if (!startLocal || !endLocal) return null;
+
                             return {
                                 id: `unav-${i}`,
-                                start,
-                                end,
-                                // Use 'block' instead of 'background' to make them easily clickable
+                                start: startLocal,
+                                end: endLocal,
                                 display: "block",
-                                backgroundColor: "#fee2e2", // Light red bg
-                                borderColor: "#ef4444",     // Dark red border
-                                textColor: "#b91c1c",       // Red text
+                                backgroundColor: "#fee2e2",
+                                borderColor: "#ef4444",
+                                textColor: "#b91c1c",
                                 title: "Already Booked",
                                 extendedProps: { type: "unavailable" }
                             };
                         })
                         .filter(Boolean);
+
                     setCalendarEvents(events);
                 } else {
                     if (mounted) setStatusMsg("❌ Could not load pulse.");
@@ -118,7 +144,7 @@ export default function PulseTransaction() {
         const fetchUser = async () => {
             try {
                 // Adjust this endpoint to your backend's current-user endpoint if different.
-                const res = await fetch("http://localhost:8000/accounts/current_user/", {
+                const res = await fetch("http://localhost:8000/accounts/user/", {
                     method: "GET",
                     credentials: "include",
                 });
@@ -305,8 +331,10 @@ export default function PulseTransaction() {
 
             const payload = {
                 pulse_id: pulse.id,
-                start_date: selectedStart.toISOString(),
-                end_date: selectedEnd.toISOString(),
+                // IMPORTANT: send local-time ISO with timezone offset so backend that expects local times
+                // will receive the correct hour (avoid the 2-hour shift you were seeing).
+                start_date: formatDateToLocalIso(selectedStart),
+                end_date: formatDateToLocalIso(selectedEnd),
                 proposed_price: Number(proposedPrice),
             };
 
@@ -355,9 +383,8 @@ export default function PulseTransaction() {
 
     return (
         <div className={styles.body}>
-            <Navbar />
             <div className={styles.mainContainer}>
-
+                <Navbar />
                 <div className={styles.header}>
                     <h1 className={styles.title}>Book {pulse.name}</h1>
                     <p className={styles.subtitle}>Review details, select your dates, and confirm your rental proposal.</p>
