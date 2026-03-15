@@ -2,7 +2,27 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import Navbar from "../../components/Navbar";
 import styles from "../../styles/User_pages/profile.module.css";
 import Loading from "../../components/Loading";
-import {Map, useMap} from "@/components/ui/map";
+import { MapContainer, TileLayer, Marker, Circle, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+
+function ChangeView({ center, radiusKm }) {
+    const map = useMap();
+    useEffect(() => {
+        const radiusM = (radiusKm || 1) * 1000;
+        const lat = center[0];
+        const lng = center[1];
+        const latDelta = radiusM / 111320;
+        const lngDelta = radiusM / (111320 * Math.cos((lat * Math.PI) / 180));
+        map.fitBounds(
+            [
+                [lat - latDelta, lng - lngDelta],
+                [lat + latDelta, lng + lngDelta],
+            ],
+            { padding: [30, 30] }
+        );
+    }, [center, radiusKm]);
+    return null;
+}
 
 function getCookie(name) {
     let cookieValue = null;
@@ -44,67 +64,6 @@ const formatCurrency = (value, currency = "lei") => {
     return n.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ` ${currency}`;
 };
 
-function RadiusCircle({ center, radiusKm }) {
-    const { map, isLoaded } = useMap();
-    const sourceId = "radius-source";
-    const layerId = "radius-layer";
-    const outlineId = "radius-outline";
-
-    useEffect(() => {
-        if (!isLoaded || !map || !center) return;
-
-        // Generează un cerc GeoJSON aproximativ
-        const points = 64;
-        const coords = [];
-        const kmPerDegLat = 111.32;
-        const kmPerDegLng = 111.32 * Math.cos((center.lat * Math.PI) / 180);
-
-        for (let i = 0; i <= points; i++) {
-            const angle = (i / points) * 2 * Math.PI;
-            const dx = (radiusKm / kmPerDegLng) * Math.cos(angle);
-            const dy = (radiusKm / kmPerDegLat) * Math.sin(angle);
-            coords.push([center.lng + dx, center.lat + dy]);
-        }
-
-        const geojson = {
-            type: "Feature",
-            geometry: { type: "Polygon", coordinates: [coords] },
-        };
-
-        // Dacă sursa există deja, doar actualizează datele
-        if (map.getSource(sourceId)) {
-            map.getSource(sourceId).setData(geojson);
-            return;
-        }
-
-        map.addSource(sourceId, { type: "geojson", data: geojson });
-
-        map.addLayer({
-            id: layerId,
-            type: "fill",
-            source: sourceId,
-            paint: { "fill-color": "#4A90E2", "fill-opacity": 0.15 },
-        });
-
-        map.addLayer({
-            id: outlineId,
-            type: "line",
-            source: sourceId,
-            paint: { "line-color": "#4A90E2", "line-width": 2 },
-        });
-
-        return () => {
-            try {
-                if (map.getLayer(outlineId)) map.removeLayer(outlineId);
-                if (map.getLayer(layerId)) map.removeLayer(layerId);
-                if (map.getSource(sourceId)) map.removeSource(sourceId);
-            } catch { /* ignore */ }
-        };
-    }, [isLoaded, map, center, radiusKm]);
-
-    return null;
-}
-
 export default function Profile() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -128,6 +87,8 @@ export default function Profile() {
         quiet_hours_start: "",
         quiet_hours_end: "",
         visibility_radius: 1,
+        lat: null,
+        lng: null,
     });
 
     // rental offers state (offers for user's pulses)
@@ -176,12 +137,12 @@ export default function Profile() {
                     setUser(data.user);
                     setPreview(data.user.profilePicture || null);
 
-                    // Extrage coordonatele din GeoJSON Point
                     if (data.user.location?.coordinates) {
-                        setUserLocation({
+                        setEditForm((prev) => ({
+                            ...prev,
                             lng: data.user.location.coordinates[0],
                             lat: data.user.location.coordinates[1],
-                        });
+                        }));
                     }
                 }
                 setLoading(false);
@@ -757,9 +718,37 @@ export default function Profile() {
                                                     }))
                                                 }
                                             />
-                                            <Map>
 
-                                            </Map>
+                                            <div className={styles.mapContainer}>
+                                                {/* Folosim coordonatele din editForm, sau un fallback (București) dacă sunt null */}
+                                                <MapContainer
+                                                    center={editForm.lat && editForm.lng ? [editForm.lat, editForm.lng] : [44.4268, 26.1025]}
+                                                    zoom={13}
+                                                    style={{ height: "100%", width: "100%" }}
+                                                >
+                                                    <TileLayer
+                                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                                    />
+
+                                                    {/* Asigură-te că harta se recentrează când se schimbă locația */}
+                                                    {editForm.lat && editForm.lng && (
+                                                        <ChangeView center={[editForm.lat, editForm.lng]} radiusKm={editForm.visibility_radius} />
+                                                    )}
+
+                                                    {/* Marker-ul și Cercul se afișează doar dacă avem coordonate setate */}
+                                                    {editForm.lat && editForm.lng && (
+                                                        <>
+                                                            <Marker position={[editForm.lat, editForm.lng]} />
+                                                            <Circle
+                                                                center={[editForm.lat, editForm.lng]}
+                                                                radius={editForm.visibility_radius * 1000} // radius e în metri, editForm e în km
+                                                                pathOptions={{ color: 'blue', fillColor: 'blue', fillOpacity: 0.2 }}
+                                                            />
+                                                        </>
+                                                    )}
+                                                </MapContainer>
+                                            </div>
                                         </div>
                                         <div className={styles.editActions}>
                                             <button onClick={handleSave} className={styles.saveButton}>
@@ -788,7 +777,7 @@ export default function Profile() {
 
                                         <button
                                             onClick={() => {
-                                                setEditForm({
+                                                setEditForm((prev) => ({
                                                     firstName: user.firstName || "",
                                                     lastName: user.lastName || "",
                                                     username: user.username || "",
@@ -798,8 +787,17 @@ export default function Profile() {
                                                     quiet_hours_start: formatTimeForInput(user.quiet_hours_start ?? user.quietHoursStart),
                                                     quiet_hours_end: formatTimeForInput(user.quiet_hours_end ?? user.quietHoursEnd),
                                                     visibility_radius: user.visibility_radius || 1,
-                                                });
+                                                    lat: user.location?.coordinates?.[1] ?? prev.lat,
+                                                    lng: user.location?.coordinates?.[0] ?? prev.lng,
+                                                }));
                                                 setEditMode(true);
+                                                navigator.geolocation?.getCurrentPosition((position) => {
+                                                    setEditForm((prev) => ({
+                                                        ...prev,
+                                                        lat: position.coords.latitude,
+                                                        lng: position.coords.longitude,
+                                                    }));
+                                                });
                                             }}
                                             className={styles.editProfileBtn}
                                         >

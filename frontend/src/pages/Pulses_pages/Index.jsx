@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import Navbar from "../../components/Navbar";
 import styles from "../../styles/index.module.css";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +25,8 @@ export default function Index() {
 
     // geolocation
     const [userLocation, setUserLocation] = useState(null);
+    const [userRadius, setUserRadius] = useState(1);
+    const [locationDenied, setLocationDenied] = useState(false);
 
     // map popup
     const [selectedPoint, setSelectedPoint] = useState(null);
@@ -53,7 +55,7 @@ export default function Index() {
     // -------------------------
     useEffect(() => {
         if (!navigator.geolocation) {
-            console.warn("Geolocation not supported");
+            setLocationDenied(true);
             return;
         }
 
@@ -64,35 +66,60 @@ export default function Index() {
                     lng: pos.coords.longitude,
                 });
             },
-            (err) => {
-                console.warn("Geolocation error:", err);
+            () => {
+                setLocationDenied(true);
             },
             { enableHighAccuracy: true, timeout: 10000 }
         );
     }, []);
 
+    // fetch visibility radius from profile
+    useEffect(() => {
+        fetch("http://localhost:8000/accounts/profile/", {
+            method: "GET",
+            credentials: "include",
+        })
+            .then((r) => r.json())
+            .then((data) => {
+                const radius = data.user?.visibility_radius;
+                if (radius) setUserRadius(radius);
+            })
+            .catch(() => {});
+    }, []);
+
     // -------------------------
     // WebSocket for real-time pulses
     // -------------------------
+    const socketRef = useRef(null);
     useEffect(() => {
-        // Note: change to wss://... in production
-        const socket = new WebSocket("ws://localhost:8000/ws/pulses/");
+        // 1. Inițializăm socket-ul o singură dată
+        socketRef.current = new WebSocket("ws://localhost:8000/ws/pulses/");
 
-        socket.onopen = () => {
+        socketRef.current.onopen = () => {
             console.log("Connected to Pulse WebSocket");
+            // Dacă din întâmplare locația a fost adusă extrem de repede, o trimitem
+            if (userLocation) {
+                socketRef.current.send(JSON.stringify({
+                    type: "set_location",
+                    lat: userLocation.lat,
+                    lng: userLocation.lng,
+                    radius: userRadius,
+                }));
+            }
         };
 
-        socket.onmessage = (event) => {
+        socketRef.current.onmessage = (event) => {
             try {
                 const newPulse = JSON.parse(event.data);
-                // Add to latest pulses (prepended)
+
+                // Adăugăm postarea nouă la 'Latest'
                 setLatestPulses((prev) => {
                     if (!newPulse || !newPulse.id) return prev;
                     if (prev.find((p) => p.id === newPulse.id)) return prev;
                     return [newPulse, ...prev];
                 });
 
-                // If websocket pulse includes coordinates, add to nearest list too
+                // Adăugăm postarea nouă și la 'Nearest' (pentru hartă)
                 if (newPulse.lat !== undefined && newPulse.lng !== undefined) {
                     setNearestPulses((prev) => {
                         if (prev.find((p) => p.id === newPulse.id)) return prev;
@@ -104,17 +131,26 @@ export default function Index() {
             }
         };
 
-        socket.onerror = (err) => console.error("WebSocket Error:", err);
-        socket.onclose = () => console.warn("WebSocket disconnected");
+        socketRef.current.onerror = (err) => console.error("WebSocket Error:", err);
+        socketRef.current.onclose = () => console.warn("WebSocket disconnected");
 
         return () => {
-            if (socket.readyState === WebSocket.CONNECTING) {
-                socket.onopen = () => socket.close();
-            } else if (socket.readyState === WebSocket.OPEN) {
-                socket.close();
+            if (socketRef.current) {
+                socketRef.current.close();
             }
         };
     }, []);
+
+    useEffect(() => {
+        if (userLocation && socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            socketRef.current.send(JSON.stringify({
+                type: "set_location",
+                lat: userLocation.lat,
+                lng: userLocation.lng,
+                radius: userRadius,
+            }));
+        }
+    }, [userLocation, userRadius]);
 
     // -------------------------
     // fetch latest pulses (paginated)
@@ -277,6 +313,47 @@ export default function Index() {
     // -------------------------
     // Render
     // -------------------------
+    if (locationDenied) {
+        return (
+            <div style={{
+                minHeight: "100vh",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#e9e6e6",
+                gap: "16px",
+                textAlign: "center",
+                padding: "24px",
+            }}>
+                <div style={{ fontSize: "48px" }}>📍</div>
+                <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#1e293b" }}>
+                    Location access required
+                </h2>
+                <p style={{ color: "#64748b", maxWidth: "360px", lineHeight: "1.6" }}>
+                    PulseNet uses your location to show pulses near you.
+                    Please enable location access in your browser settings and reload the page.
+                </p>
+                <button
+                    onClick={() => window.location.reload()}
+                    style={{
+                        marginTop: "8px",
+                        padding: "10px 28px",
+                        background: "#4f46e5",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "999px",
+                        fontWeight: "700",
+                        fontSize: "15px",
+                        cursor: "pointer",
+                    }}
+                >
+                    Reload page
+                </button>
+            </div>
+        );
+    }
+
     if (loading || nearestPulses.length === 0) {
         return <Loading />;
     }

@@ -3,6 +3,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from geopy.distance import geodesic
+
 from .models import (
     Group_Conversation,
     Group_Message,
@@ -223,16 +225,63 @@ class PulseConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_group_name = "pulses_feed"
 
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        self.user_coords = None
+        self.visibility_radius = None
 
-        # 2. Accept the connection
+        user = self.scope.get("user")
+        if user and user.is_authenticated:
+            await self._load_user_location(user)
+
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
-        print(f"Connection accepted for group: {self.room_group_name}")
+
+    @database_sync_to_async
+    def _load_user_location(self, user):
+        try:
+            u = User.objects.get(id=user.id)
+            if u.location:
+                self.user_coords = {
+                    "lat": u.location.y,
+                    "lng": u.location.x,
+                }
+            self.visibility_radius = u.visibility_radius or 1
+        except User.DoesNotExist:
+            pass
+
+    async def receive(self, text_data=None, bytes_data=None):
+        if text_data:
+            data = json.loads(text_data)
+            if data.get("type") == "set_location":
+                self.user_coords = {
+                    "lat": data.get("lat"),
+                    "lng": data.get("lng")
+                }
+                self.visibility_radius = data.get("radius", self.visibility_radius or 10)
+
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         print(f"Connection closed with code: {close_code}")
 
     async def pulse_message(self, event):
-        data = event["data"]
-        await self.send(text_data=json.dumps(data))
+        pulse_data = event["data"]
+
+        if not self.user_coords:
+            return
+
+        pulse_lat = pulse_data.get("lat")
+        pulse_lng = pulse_data.get("lng")
+
+        if pulse_lat is None or pulse_lng is None:
+            return
+
+        user_point = (self.user_coords["lat"], self.user_coords["lng"])
+        pulse_point = (pulse_lat, pulse_lng)
+
+        distance_km = geodesic(user_point, pulse_point).km
+
+        if distance_km <= self.visibility_radius:
+            pulse_data["distance"] = round(distance_km, 2)
+            await self.send(text_data=json.dumps(pulse_data))
+        else:
+            print(f"Pulse ignorat. Distanța: {distance_km}km > Raza: {self.visibility_radius}km")

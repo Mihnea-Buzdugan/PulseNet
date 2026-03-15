@@ -27,6 +27,7 @@ import string
 from django.contrib.auth.hashers import make_password
 from django.db import models
 from decimal import Decimal
+from django.contrib.gis.db.models.functions import Distance as GisDistance
 
 def generate_password(length=12):
     alphabet = string.ascii_letters + string.digits + string.punctuation
@@ -508,7 +509,15 @@ def remove_pulse(request, pulse_id):
         )
 
 
-# Searching and relathionships views
+def get_base_pulse_queryset(user):
+
+    qs = Pulse.objects.select_related("user").prefetch_related("images")
+
+    if user.location and user.visibility_radius:
+        qs = qs.filter(location__distance_lte=(user.location, D(km=user.visibility_radius)))
+
+    return qs
+
 
 @csrf_protect
 @login_required
@@ -517,13 +526,16 @@ def get_latest_pulses(request):
     page_number = request.GET.get('page', 1)
     per_page = 15
 
-    pulses = Pulse.objects.select_related("user").prefetch_related("images").all().order_by("-created_at")
+    pulses = get_base_pulse_queryset(request.user).order_by("-created_at")
 
     paginator = Paginator(pulses, per_page)
     page_obj = paginator.get_page(page_number)
 
     final_data = []
     for p in page_obj:
+        images = list(p.images.all())
+        image_url = request.build_absolute_uri(images[0].image.url) if images else None
+
         final_data.append({
             "id": p.id,
             "type": p.pulse_type,
@@ -537,7 +549,7 @@ def get_latest_pulses(request):
             "pulse_type": p.pulse_type,
             "currency": p.currencyType,
             "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
-            "image": request.build_absolute_uri(p.images.first().image.url) if p.images.exists() else None,
+            "image": image_url,
         })
 
     return JsonResponse({
@@ -554,23 +566,30 @@ def get_nearest_pulses(request):
     lat = request.GET.get("lat")
     lng = request.GET.get("lng")
 
-    if not lat or not lng:
+    if lat and lng:
+        ref_location = Point(float(lng), float(lat), srid=4326)
+    else:
+        ref_location = request.user.location
+
+    if not ref_location:
         return JsonResponse({"success": False, "error": "Location required"}, status=400)
 
-    user_location = Point(float(lng), float(lat), srid=4326)
+    radius_km = request.user.visibility_radius
 
     pulses = (
         Pulse.objects
-        .filter(location__isnull=False)
+        .filter(location__distance_lte=(ref_location, D(km=radius_km)))
         .select_related("user")
         .prefetch_related("images")
-        .annotate(distance=Distance("location", user_location))
+        .annotate(distance=GisDistance("location", ref_location))
         .order_by("distance")[:10]
     )
 
     data = []
-
     for p in pulses:
+        images = list(p.images.all())
+        image_url = request.build_absolute_uri(images[0].image.url) if images else None
+
         data.append({
             "id": p.id,
             "type": p.pulse_type,
@@ -584,9 +603,9 @@ def get_nearest_pulses(request):
             "currency": p.currencyType,
             "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
             "distance": round(p.distance.km, 2),
-            "lat": p.location.y,
-            "lng": p.location.x,
-            "image": request.build_absolute_uri(p.images.first().image.url) if p.images.exists() else None,
+            "lat": p.location.y if p.location else None,
+            "lng": p.location.x if p.location else None,
+            "image": image_url,
         })
 
     return JsonResponse({
@@ -602,13 +621,16 @@ def get_best_pulses(request):
     page_number = request.GET.get('page', 1)
     per_page = 15
 
-    pulses = Pulse.objects.select_related("user").prefetch_related("images").all().order_by("-popularity_score")
+    pulses = get_base_pulse_queryset(request.user).order_by("-popularity_score")
 
     paginator = Paginator(pulses, per_page)
     page_obj = paginator.get_page(page_number)
 
     final_data = []
     for p in page_obj:
+        images = list(p.images.all())
+        image_url = request.build_absolute_uri(images[0].image.url) if images else None
+
         final_data.append({
             "id": p.id,
             "type": p.pulse_type,
@@ -622,7 +644,7 @@ def get_best_pulses(request):
             "total_reviews": p.total_reviews,
             "currency": p.currencyType,
             "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
-            "image": request.build_absolute_uri(p.images.first().image.url) if p.images.exists() else None,
+            "image": image_url,
         })
 
     return JsonResponse({
