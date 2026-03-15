@@ -464,6 +464,9 @@ export default function Profile() {
             alert("Introduceți un preț valid.");
             return;
         }
+
+        // decide whether this id belongs to a proposal (renter side) or an offer (owner side)
+        const isProposal = rentalProposals.some((p) => p.id === id);
         try {
             const res = await fetch(`http://localhost:8000/accounts/pulse_rentals/${id}/`, {
                 method: "PATCH",
@@ -476,10 +479,21 @@ export default function Profile() {
             });
             if (res.ok) {
                 const updated = await res.json();
-                updateOfferInState(id, {
-                    total_price: updated.total_price != null ? updated.total_price : parsed,
-                    status: updated.status || "pending",
-                });
+
+                if (isProposal) {
+                    updateProposalInState(id, {
+                        total_price: updated.total_price != null ? updated.total_price : parsed,
+                        status: updated.status || "pending",
+                        last_offer_by: updated.last_offer_by // ← add this line
+                    });
+                } else {
+                    updateOfferInState(id, {
+                        total_price: updated.total_price != null ? updated.total_price : parsed,
+                        status: updated.status || "pending",
+                        last_offer_by: updated.last_offer_by // ← add this line
+                    });
+                }
+
                 closeCounterModal();
             } else {
                 alert("Eroare la trimiterea contraofertei.");
@@ -489,6 +503,7 @@ export default function Profile() {
             alert("Eroare de rețea. Încearcă din nou.");
         }
     };
+
 
     // open/close accept/decline confirmation modals
     const openAcceptModal = (offer) => setAcceptModal({ show: true, id: offer.id });
@@ -810,7 +825,7 @@ export default function Profile() {
                                         </div>
 
                                         <div className={styles.offerActions}>
-                                            {offer.status === "pending" ? (
+                                            {offer.status === "pending" && offer.last_offer_by !== user.id ? (
                                                 <>
                                                     <button onClick={() => openAcceptModal(offer)} className={styles.acceptBtn}>
                                                         Acceptă
@@ -909,43 +924,53 @@ export default function Profile() {
 
                                         <div className={styles.offerActions}>
                                             {proposal.status === "pending" && (
-                                                <button
-                                                    onClick={() => openDeleteModal(proposal)}
-                                                    className={styles.rejectBtn}
-                                                >
-                                                    Anulează propunerea
-                                                </button>
-                                            )}
-
-                                            {proposal.total_price !==proposal.initial_price && (proposal.status !== "declined" && proposal.status !== "confirmed") && (
                                                 <>
                                                     <button
-                                                        onClick={() => openAcceptModal(proposal)}
-                                                        className={styles.acceptBtn}
-                                                    >
-                                                        Acceptă oferta
-                                                    </button>
-
-                                                    <button
-
-                                                        onClick={() => openDeclineModal(proposal)}
+                                                        onClick={() => openDeleteModal(proposal)}
                                                         className={styles.rejectBtn}
                                                     >
-                                                        Refuză oferta
+                                                        Anulează propunerea
                                                     </button>
+
+                                                    {/* Counteroffer button for renter's own proposals */}
                                                 </>
                                             )}
 
+                                            {proposal.total_price !== proposal.initial_price &&
+                                                proposal.last_offer_by !== user.id &&
+                                                proposal.status === "pending" &&
+                                                (
+                                                    <>
+                                                        <button
+                                                            onClick={() => openCounterModal(proposal)}
+                                                            className={styles.counterBtn}
+                                                            style={{ marginLeft: "8px" }}
+                                                        >
+                                                            Contraofertă
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => openAcceptModal(proposal)}
+                                                            className={styles.acceptBtn}
+                                                        >
+                                                            Acceptă oferta
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => openDeclineModal(proposal)}
+                                                            className={styles.rejectBtn}
+                                                        >
+                                                            Refuză oferta
+                                                        </button>
+                                                    </>
+                                                )}
+
                                             {proposal.status === "confirmed" && (
-                                                <div className={styles.smallNote}>
-                                                    Închiriere confirmată
-                                                </div>
+                                                <div className={styles.smallNote}>Închiriere confirmată</div>
                                             )}
 
                                             {proposal.status === "declined" && (
-                                                <div className={styles.smallNote}>
-                                                    Oferta a fost refuzată
-                                                </div>
+                                                <div className={styles.smallNote}>Oferta a fost refuzată</div>
                                             )}
                                         </div>
                                     </div>

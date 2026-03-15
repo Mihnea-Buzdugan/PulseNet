@@ -1,105 +1,98 @@
+/* --- MAIN NAVBAR CONTAINER --- */
 .navbar {
-    position: relative;
+    position: sticky; /* Keeps navbar at the top while scrolling */
+    top: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 20px 40px;
     background: white;
     color: black;
-    border-radius: 10px;
-    max-width: 1300px;
     width: 100%;
     margin: 0 auto;
     z-index: 1000;
-    border-bottom: 1px solid #efefef; /* Optional: adds definition */
+    border-bottom: 1px solid #efefef;
+    box-sizing: border-box; /* Crucial for preventing horizontal scroll */
 }
 
-.navbar .name {
-    font-size: 1.7rem;
-    font-weight: bold;
-}
-
-.brandContainer { /* Renamed from .right for clarity */
+/* --- LEFT SECTION: BRAND --- */
+.brandContainer {
     display: flex;
     align-items: center;
-    flex-shrink: 0;
-}
-
-.logo {
-    height: 35px;
-    margin-right: 5px;
-    width: auto;
-    object-fit: contain;
+    flex-shrink: 0; /* Prevents logo from squishing */
     cursor: pointer;
 }
 
-/* --- MIDDLE SECTION (Search + DM Button) --- */
+.logo {
+    height: 32px;
+    width: auto;
+    margin-right: 10px;
+    object-fit: contain;
+}
+
+.navbar .name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* --- MIDDLE SECTION: SEARCH & ICONS --- */
 .middleSection {
     display: flex;
     align-items: center;
-    gap: 20px;
-    flex: 1;
+    gap: 15px;
+    flex: 1; /* Allows this section to grow/shrink */
     justify-content: center;
-    max-width: 550px; /* Keeps search and icon from drifting too far apart */
+    max-width: 650px; /* Limits how wide the search area can get */
     margin: 0 20px;
 }
 
 .searchContainer {
     position: relative;
-    width: 100%;
-    max-width: 400px;
+    flex: 1; /* Search bar fills the available middle space */
+    min-width: 150px;
 }
 
 .searchInput {
     width: 100%;
     padding: 10px 18px;
-    border-radius: 25px;
-    border: 1px solid #ddd;
-    background-color: #f6f7f8;
+    border-radius: 20px;
+    border: 1px solid #dbdbdb;
+    background-color: #fafafa;
     outline: none;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     font-size: 0.95rem;
 }
 
 .searchInput:focus {
     background-color: #fff;
     border-color: #ff8a65;
-    box-shadow: 0 0 0 2px rgba(255, 138, 101, 0.2);
+    box-shadow: 0 0 0 1px rgba(255, 138, 101, 0.2);
 }
 
-/* --- THE COOL DM BUTTON --- */
+/* --- ICON BUTTONS (DM & HEART) --- */
 .iconButtonsContainer {
     display: flex;
     align-items: center;
     gap: 16px;
+    flex-shrink: 0;
 }
 
-/* Heart button in navbar */
 .favoriteNavButton {
     position: relative;
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 8px;
-    border-radius: 50%;
-    margin-bottom: 2px;
-    transition: all 0.2s ease;
     color: #ef4444;
+    transition: transform 0.2s ease;
 }
 
 .favoriteNavButton:hover {
-    background: rgba(239, 68, 68, 0.1);
     transform: scale(1.1);
 }
 
 .heartIcon {
     font-size: 22px;
-    transition: transform 0.2s ease;
-}
-
-.favoriteNavButton:hover .heartIcon {
-    transform: scale(1.15);
 }
 
 .dmButton {
@@ -108,24 +101,23 @@
     display: flex;
     align-items: center;
     color: #262626;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.2s ease;
-    flex-shrink: 0;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .dmButton:hover {
-    transform: scale(1.15);
-    color: #ff8a65; /* Matches your theme */
+    transform: scale(1.1);
+    color: #ff8a65;
 }
 
 .activeDm {
-    color: #000;
+    color: #ff8a65;
 }
 
 .badge {
     position: absolute;
     top: -6px;
     right: -8px;
-    background-color: #ff3b30; /* Notification red */
+    background-color: #ff3b30;
     color: white;
     font-size: 10px;
     font-weight: 700;
@@ -137,7 +129,7 @@
     text-align: center;
 }
 
-/* --- Search Dropdown --- */
+/* --- SEARCH DROPDOWN --- */
 .searchDropdown {
     position: absolute;
     top: calc(100% + 10px);
@@ -146,10 +138,10 @@
     background: white;
     border-radius: 12px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    max-height: 450px;
+    max-height: 400px;
     overflow-y: auto;
     z-index: 2000;
-    padding: 8px 0;
+    border: 1px solid #efefef;
 }
 
 .searchResultItem {
@@ -181,50 +173,57 @@
     color: #65676b;
 }
 
-/* --- Action Buttons --- */
+/* --- ACTION BUTTONS (INSIDE DROPDOWN) --- */
 .userActions {
     display: flex;
     gap: 8px;
 }
 
 .userActions button {
-    padding: 6px 14px;
+    padding: 6px 12px;
     font-size: 12px;
     font-weight: 600;
     border-radius: 8px;
     border: none;
     cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.userActions button:hover {
+    opacity: 0.8;
 }
 
 .followBtn { background-color: #0095f6; color: white; }
 .unfollowBtn { background-color: #f0f2f5; color: #050505; }
 .msgBtn { background-color: #ff8a65; color: white; }
 
-/* --- Navigation Links --- */
+/* --- RIGHT SECTION: DESKTOP NAV LINKS --- */
 .navLinks {
     display: flex;
-    gap: 10px;
+    gap: 5px;
     flex-shrink: 0;
 }
 
 .sus {
     cursor: pointer;
-    padding: 5px 10px;
-    transition: 0.3s;
+    padding: 8px 12px;
+    transition: color 0.3s;
     font-weight: 500;
+    font-size: 0.95rem;
 }
 
 .sus:hover {
     color: #ff8a65;
 }
 
-/* --- Responsive & Mobile --- */
+/* --- MOBILE & RESPONSIVE LOGIC --- */
 .hamburger {
     display: none;
     cursor: pointer;
-    font-size: 1.7rem;
+    font-size: 1.5rem;
     border: none;
     background: transparent;
+    padding: 5px;
 }
 
 .mobileMenu {
@@ -235,30 +234,223 @@
     right: 0;
     background: white;
     flex-direction: column;
-    gap: 10px;
-    padding: 15px 20px;
-    border-radius: 0 0 10px 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 10px 0;
+    border-top: 1px solid #efefef;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
     z-index: 10;
 }
 
 .active { display: flex; }
 
+/* --- TABLET --- */
 @media (max-width: 900px) {
-    .middleSection {
-        flex: 1;
-        margin: 0 10px;
-    }
+    .navbar { padding: 10px 20px; }
+    .middleSection { margin: 0 15px; }
 }
 
+/* --- MOBILE --- */
 @media (max-width: 768px) {
     .navLinks { display: none; }
     .hamburger { display: block; }
+
+    .navbar .name { font-size: 1.2rem; }
 }
 
-@media (max-width: 480px) {
-    .navbar { padding: 10px 15px; }
-    .navbar .name { display: none; }
-    .middleSection { gap: 10px; }
-    .searchInput { padding: 8px 12px; font-size: 0.85rem; }
+/* --- SMALL MOBILE --- */
+@media (max-width: 500px) {
+    .navbar .name { display: none; } /* Hide text name to give search more room */
+
+    .middleSection {
+        margin: 0 10px;
+        gap: 10px;
+    }
+
+    .searchDropdown {
+        /* Full width dropdown on tiny screens */
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        top: 65px;
+    }
+}
+
+/* --- NOTIFICATIONS --- */
+/* --- NOTIFICATION WRAPPER --- */
+.notifWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* --- BELL BUTTON --- */
+.notifButton {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #ff8a65;
+    transition: transform 0.2s ease, color 0.2s ease;
+    position: relative;
+}
+
+.notifButton:hover,
+.activeNotif {
+    transform: scale(1.12);
+    color: #ff7043;
+}
+
+.notifIcon {
+    font-size: 22px;
+}
+
+/* --- DROPDOWN CONTAINER --- */
+.notifDropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: -90px;
+    width: 300px;
+    max-height: 420px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+    border: 1px solid #efefef;
+    z-index: 2000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    animation: fadeNotif 0.15s ease;
+}
+
+@keyframes fadeNotif {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- HEADER --- */
+.notifHeader {
+    padding: 14px 16px;
+    font-weight: 600;
+    font-size: 14px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
+}
+
+/* --- LIST --- */
+.notifList {
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+/* --- ITEM --- */
+.notifItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-bottom: 1px solid #f7f7f7;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.notifItem:hover {
+    background-color: #f9fafb;
+}
+
+/* --- TEXT CONTENT --- */
+.notifContent {
+    flex: 1;
+}
+
+.notifTitle {
+    font-weight: 600;
+    font-size: 13.5px;
+    color: #111827;
+    margin-bottom: 3px;
+}
+
+.notifText {
+    font-size: 13px;
+    color: #374151;
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.notifTime {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+/* --- DELETE BUTTON --- */
+.deleteNotifBtn {
+    background: transparent;
+    border: none;
+    font-size: 15px;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+    margin-left: 8px;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.deleteNotifBtn:hover {
+    color: #ef4444;
+    transform: scale(1.15);
+}
+
+/* --- EMPTY STATE --- */
+.emptyNotifs {
+    padding: 24px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 13px;
+}
+
+/* --- BADGE --- */
+.badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background-color: #ff3b30;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 10px;
+    border: 2px solid white;
+    line-height: 1;
+    min-width: 14px;
+    text-align: center;
+    pointer-events: none;
+}
+
+/* --- SCROLLBAR STYLE --- */
+.notifList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notifList::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 10px;
+}
+
+.notifList::-webkit-scrollbar-thumb:hover {
+    background: #d1d5db;
+}
+
+/* --- MOBILE --- */
+@media (max-width: 500px) {
+    .notifDropdown {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        top: 65px;
+        max-height: 60vh;
+    }
 }
