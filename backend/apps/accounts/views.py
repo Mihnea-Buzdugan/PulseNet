@@ -518,7 +518,7 @@ def get_base_pulse_queryset(user):
 
     return qs
 
-
+#fixed
 @csrf_protect
 @login_required
 @require_http_methods(["GET"])
@@ -569,6 +569,7 @@ def get_latest_pulses(request):
         "pulses": final_data,
         "has_next": page_obj.has_next(),
     })
+
 
 @csrf_protect
 @login_required
