@@ -277,7 +277,7 @@ export default function Index() {
     // -------------------------
     // Render
     // -------------------------
-    if (loading && nearestPulses.length === 0) {
+    if (loading || nearestPulses.length === 0) {
         return <Loading />;
     }
 

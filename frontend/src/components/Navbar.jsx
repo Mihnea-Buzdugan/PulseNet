@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from '../styles/Components/navbar.module.css';
-import { FaHeart } from "react-icons/fa";
+import { FaHeart, FaBell } from "react-icons/fa";
 
 // Helper to get CSRF token for POST requests
 function getCookie(name) {
@@ -21,16 +21,22 @@ function Navbar() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [menuActive, setMenuActive] = useState(false);
     const [user, setUser] = useState(null);
-    const [unreadCount, setUnreadCount] = useState(5); // Placeholder for DM notifications
+    const [unreadCount, setUnreadCount] = useState(0); // For DMs
 
-    // --- Search & Dropdown States ---
+    // --- Search & Notification States ---
     const [query, setQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
-    const [showDropdown, setShowDropdown] = useState(false);
-    const searchRef = useRef(null);
+    const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
+    const [notifications, setNotifications] = useState([]);
+    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+
+    const searchRef = useRef(null);
+    const notifRef = useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
+
+    const unreadNotifCount = notifications.filter(n => !n.is_read).length;
 
     // 1. Auth Logic: Check tokens on mount
     useEffect(() => {
@@ -47,19 +53,36 @@ function Navbar() {
         }
     }, []);
 
-    // 2. Fetch Current User Data
-    useEffect(() => {
-        fetch('http://localhost:8000/accounts/user/', { credentials: 'include' })
-            .then((res) => res.json())
-            .then((data) => setUser(data))
-            .catch(console.error);
-    }, []);
+    // 2. Fetch User Data & Notifications
+    const fetchData = async () => {
+        if (!isAuthenticated) return;
+        try {
+            // Fetch User
+            const userRes = await fetch('http://localhost:8000/accounts/user/', { credentials: 'include' });
+            const userData = await userRes.json();
+            setUser(userData);
 
-    // 3. Search Logic with 300ms Debounce
+            // Fetch Notifications from your Django model
+            const notifRes = await fetch('http://localhost:8000/accounts/notifications/', { credentials: 'include' });
+            const notifData = await notifRes.json();
+            setNotifications(notifData.notifications || []);
+        } catch (err) {
+            console.error("Navbar data fetch error:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+        // Refresh notifications every 60 seconds
+        const interval = setInterval(fetchData, 60000);
+        return () => clearInterval(interval);
+    }, [isAuthenticated]);
+
+    // 3. Search Logic (Debounced)
     useEffect(() => {
         if (!query.trim()) {
             setSearchResults([]);
-            setShowDropdown(false);
+            setShowSearchDropdown(false);
             return;
         }
 
@@ -71,20 +94,24 @@ function Navbar() {
                 );
                 const data = await res.json();
                 setSearchResults(data.users || []);
-                setShowDropdown(true);
+                setShowSearchDropdown(true);
+                setShowNotifDropdown(false); // Close notifs if searching
             } catch (err) {
-                console.error("Navbar search error:", err);
+                console.error("Search error:", err);
             }
         }, 300);
 
         return () => clearTimeout(timeout);
     }, [query]);
 
-    // 4. Close dropdown when clicking outside
+    // 4. Click Outside to Close Menus
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (searchRef.current && !searchRef.current.contains(event.target)) {
-                setShowDropdown(false);
+                setShowSearchDropdown(false);
+            }
+            if (notifRef.current && !notifRef.current.contains(event.target)) {
+                setShowNotifDropdown(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -100,6 +127,52 @@ function Navbar() {
         setIsAuthenticated(false);
         navigate('/Login');
     };
+
+    const toggleNotifications = async () => {
+        const nextState = !showNotifDropdown;
+        setShowNotifDropdown(nextState);
+        setShowSearchDropdown(false);
+
+        // Mark as read when opening
+        if (nextState && unreadNotifCount > 0) {
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            try {
+                await fetch('http://localhost:8000/accounts/notifications/mark-read/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                    credentials: 'include'
+                });
+            } catch (err) {
+                console.error("Failed to mark notifications read", err);
+            }
+        }
+    };
+
+    const handleNotifClick = (n) => {
+        setShowNotifDropdown(false);
+        if (n.type === 'chat_message') {
+            navigate(`/direct-chat/${n.sender_id}`);
+        } else if (n.type === 'rental_proposal') {
+            navigate(`/profile`);
+        } else if (n.pulse_id) {
+            navigate(`/pulse/${n.pulse_id}`);
+        }
+    };
+
+    const deleteNotification = async (id) => {
+        try {
+            await fetch(`http://localhost:8000/accounts/delete_notification/${id}/`, {
+                method: "DELETE",
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                credentials: 'include'
+            });
+
+            setNotifications(prev => prev.filter(n => n.id !== id));
+        } catch (err) {
+            console.error("Failed to delete notification:", err);
+        }
+    };
+
 
     const handleUserAction = async (e, targetUser, action) => {
         e.stopPropagation();
@@ -131,18 +204,15 @@ function Navbar() {
     const openChat = (e, userId) => {
         e.stopPropagation();
         navigate(`/direct-chat/${userId}`);
-        setShowDropdown(false);
+        setShowSearchDropdown(false);
         setQuery("");
     };
-
-    const toggleMenu = () => setMenuActive(!menuActive);
 
     const navItems = isAuthenticated
         ? ['Home', 'Alerts', 'Profile', 'Add Pulse', 'Logout']
         : ['Home', 'Login'];
 
     const renderNavItem = (item, index) => {
-        if (!item) return null;
         const handlers = {
             Logout: handleLogout,
             Profile: () => navigate('/profile'),
@@ -161,13 +231,13 @@ function Navbar() {
 
     return (
         <nav className={styles.navbar}>
-            {/* LEFT: Logo & Brand */}
-            <div className={styles.brandContainer}>
-                <img src="/logo.png" alt="Logo" className={styles.logo} onClick={() => navigate('/')} />
+            {/* LEFT */}
+            <div className={styles.brandContainer} onClick={() => navigate('/')}>
+                <img src="/logo.png" alt="Logo" className={styles.logo} />
                 <div className={styles.name}>PulseNet</div>
             </div>
 
-            {/* MIDDLE: Search Bar + DM Button */}
+            {/* MIDDLE */}
             <div className={styles.middleSection}>
                 <div className={styles.searchContainer} ref={searchRef}>
                     <input
@@ -176,10 +246,10 @@ function Navbar() {
                         className={styles.searchInput}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        onFocus={() => query && setShowDropdown(true)}
+                        onFocus={() => query && setShowSearchDropdown(true)}
                     />
 
-                    {showDropdown && searchResults.length > 0 && (
+                    {showSearchDropdown && searchResults.length > 0 && (
                         <div className={styles.searchDropdown}>
                             {searchResults.map((u) => (
                                 <div
@@ -187,7 +257,7 @@ function Navbar() {
                                     className={styles.searchResultItem}
                                     onClick={() => {
                                         navigate(`/user-profile/${u.id}`);
-                                        setShowDropdown(false);
+                                        setShowSearchDropdown(false);
                                         setQuery("");
                                     }}
                                 >
@@ -198,9 +268,7 @@ function Navbar() {
 
                                     <div className={styles.userActions}>
                                         {(u.is_friend || !u.private_account) && (
-                                            <button className={styles.msgBtn} onClick={(e) => openChat(e, u.id)}>
-                                                DM
-                                            </button>
+                                            <button className={styles.msgBtn} onClick={(e) => openChat(e, u.id)}>DM</button>
                                         )}
                                         {u.is_following ? (
                                             <button className={styles.unfollowBtn} onClick={(e) => handleUserAction(e, u, 'unfollow')}>Unfollow</button>
@@ -214,70 +282,75 @@ function Navbar() {
                     )}
                 </div>
 
-                {/* --- INSTA-STYLE DM BUTTON --- */}
                 {isAuthenticated && (
                     <div className={styles.iconButtonsContainer}>
-
                         {/* DM BUTTON */}
-                        <div
-                            className={`${styles.dmButton} ${
-                                location.pathname.startsWith('/chat') ? styles.activeDm : ''
-                            }`}
-                            onClick={() => navigate('/messages')}
-                        >
-                            <svg
-                                aria-label="Direct Messaging"
-                                color="currentColor"
-                                fill="currentColor"
-                                height="24"
-                                role="img"
-                                viewBox="0 0 24 24"
-                                width="24"
-                            >
-                                <line
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    x1="22"
-                                    x2="9.218"
-                                    y1="3"
-                                    y2="10.083"
-                                ></line>
-                                <polygon
-                                    fill="none"
-                                    points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334"
-                                    stroke="currentColor"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                ></polygon>
+                        <div className={`${styles.dmButton} ${location.pathname.startsWith('/messages') ? styles.activeDm : ''}`} onClick={() => navigate('/messages')}>
+                            <svg aria-label="Direct Messaging" color="currentColor" fill="currentColor" height="24" viewBox="0 0 24 24" width="24">
+                                <line fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" x1="22" x2="9.218" y1="3" y2="10.083"></line>
+                                <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></polygon>
                             </svg>
+                            {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
+                        </div>
 
-                            {unreadCount > 0 && (
-                                <span className={styles.badge}>{unreadCount}</span>
+                        {/* NOTIFICATIONS BUTTON */}
+                        <div className={styles.notifWrapper} ref={notifRef}>
+                            <div className={`${styles.notifButton} ${showNotifDropdown ? styles.activeNotif : ''}`} onClick={toggleNotifications}>
+                                <FaBell className={styles.notifIcon} />
+                                {unreadNotifCount > 0 && <span className={styles.badge}>{unreadNotifCount}</span>}
+                            </div>
+
+                            {showNotifDropdown && (
+                                <div className={styles.notifDropdown}>
+
+                                    <div className={styles.notifList}>
+                                        {notifications.length > 0 ? (
+                                            notifications.map((n) => (
+                                                <div
+                                                    key={n.id}
+                                                    className={styles.notifItem}
+                                                    onClick={() => handleNotifClick(n)}
+                                                >
+                                                    <div className={styles.notifContent}>
+                                                        <div className={styles.notifTitle}>{n.title}</div>
+                                                        <div className={styles.notifText}>{n.message}</div>
+                                                        <div className={styles.notifTime}>{n.created_at}</div>
+                                                    </div>
+
+                                                    {/* DELETE BUTTON */}
+                                                    <button
+                                                        className={styles.deleteNotifBtn}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // prevents opening notification
+                                                            deleteNotification(n.id);
+                                                        }}
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className={styles.emptyNotifs}>No new notifications</div>
+                                        )}
+                                    </div>
+                                </div>
                             )}
                         </div>
 
-                        {/* ❤️ FAVORITES BUTTON */}
-                        <div
-                            className={styles.favoriteNavButton}
-                            onClick={() => navigate('/favorites')}
-                        >
+                        {/* FAVORITES */}
+                        <div className={styles.favoriteNavButton} onClick={() => navigate('/favorites')}>
                             <FaHeart className={styles.heartIcon} />
                         </div>
-
                     </div>
                 )}
             </div>
 
-            {/* RIGHT: Navigation Links */}
+            {/* RIGHT */}
             <div className={styles.navLinks}>
                 {navItems.map((item, i) => renderNavItem(item, i))}
             </div>
 
-            <button className={styles.hamburger} onClick={toggleMenu}>
-                &#9776;
-            </button>
+            <button className={styles.hamburger} onClick={() => setMenuActive(!menuActive)}>&#9776;</button>
 
             <div className={`${styles.mobileMenu} ${menuActive ? styles.active : ''}`}>
                 {navItems.map((item, i) => renderNavItem(item, i))}
