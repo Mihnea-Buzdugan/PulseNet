@@ -57,10 +57,8 @@ const AlertCarousel = ({ images }) => {
     );
 };
 
-// --- Sub-Component for individual Alert Card (pentru a nu repeta codul de 5 ori) ---
 const AlertCard = ({ a, formatDate }) => {
-    if (!a) return <div className={styles.emptyCardSlot}></div>; // Placeholder dacă nu există alertă
-
+    if (!a) return <div className={styles.emptyCardSlot}></div>;
     return (
         <div className={styles.card}>
             <div className={styles.cardHeader}>
@@ -79,7 +77,7 @@ const AlertCard = ({ a, formatDate }) => {
             <div className={styles.cardFooter}>
                 {a.location && (
                     <span className={styles.metaTag}>
-                        <MapPin size={14} /> {a.location}
+                        <MapPin size={14} /> {a.lat.toFixed(4)}, {a.lng.toFixed(4)}
                     </span>
                 )}
                 <span className={styles.metaTag}>

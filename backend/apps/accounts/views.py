@@ -253,7 +253,7 @@ def profile(request):
             "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
             "biography": user.biography,
             "location": json.loads(user.location.geojson) if user.location else None,
-            "distanceRadius": user.distance_radius,
+            "visibility_radius": user.visibility_radius,
             "quiet_hours_start": user.quiet_hours_start.strftime("%H:%M") if user.quiet_hours_start else None,
             "quiet_hours_end": user.quiet_hours_end.strftime("%H:%M") if user.quiet_hours_end else None,
             "trustScore": user.trust_score,
@@ -285,7 +285,7 @@ def update_profile(request):
         user.online_status = data.get("online_status", user.online_status)
         user.quiet_hours_start = data.get("quiet_hours_start", user.quiet_hours_start)
         user.quiet_hours_end = data.get("quiet_hours_end", user.quiet_hours_end)
-
+        user.visibility_radius = data.get('visibility_radius', user.visibility_radius)
         # 3. Validate and save
         user.save()
 
@@ -313,8 +313,8 @@ def update_profile(request):
                 "username": user.username,
                 "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
                 "biography": user.biography,
-                "location": user.location,
-                "distanceRadius": user.distance_radius,
+                "location": json.loads(user.location.geojson) if user.location else None,
+                "visibility_radius": user.visibility_radius,
                 "quiet_hours_start": user.quiet_hours_start,
                 "quiet_hours_end": user.quiet_hours_end,
                 "trustScore": user.trust_score,
@@ -385,8 +385,8 @@ def upload_profile_picture(request):
                 "username": user.username,
                 "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
                 "biography": user.biography,
-                "location": user.location,
-                "distanceRadius": user.distance_radius,
+                "location": json.loads(user.location.geojson) if user.location else None,
+                "visibility_radius": user.visibility_radius,
                 "quiet_hours_start": user.quiet_hours_start,
                 "quiet_hours_end": user.quiet_hours_end,
                 "trustScore": user.trust_score,
@@ -1681,7 +1681,8 @@ def list_alerts(request):
             "category": alert.category,
             "category_display": alert.get_category_display(),
             "created_at": alert.created_at.isoformat(),
-            "location": alert.location,
+            "lat": float(alert.location.y),
+            "lng": float(alert.location.x),
             "images": [request.build_absolute_uri(img.image.url) for img in alert.images.all()]
         }
         for alert in alerts
