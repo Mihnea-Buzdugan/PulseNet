@@ -55,6 +55,10 @@ urlpatterns = [
     # Warnings and shit
     path("alerts/", views.list_alerts, name="list_alerts"),
     path("alerts/create/", views.create_alert, name="create_alert"),
+    path("alerts/<int:alert_id>/", views.alert_details, name="alert_details"),
+    path("alerts/<int:alert_id>/confirm/", views.confirm_alert, name="confirm_alert"),
+    path("alerts/<int:alert_id>/unconfirm/", views.unconfirm_alert, name="unconfirm_alert"),
+    path("alerts/<int:alert_id>/report/", views.report_alert, name="report_alert"),
 
     #Urgent requests
     path("urgent-requests/", views.urgent_requests_list, name="urgent_requests_list"),

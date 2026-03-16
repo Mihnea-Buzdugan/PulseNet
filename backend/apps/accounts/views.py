@@ -19,9 +19,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
+from django.db import IntegrityError
 from .decorators import api_login_required
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
-    PulseComment, PulseRating, Notification, UrgentRequest
+    PulseComment, PulseRating, Notification, UrgentRequest, AlertConfirm, AlertReport
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
@@ -1477,7 +1478,7 @@ def user_profile(request, user_id):
             "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
             "biography": user.biography,
             "location": user.location,
-            "distanceRadius": user.distance_radius,
+            "visibilityRadius": user.visibility_radius,
             "quiet_hours_start": user.quiet_hours_start,
             "quiet_hours_end": user.quiet_hours_end,
             "trustScore": user.trust_score,
@@ -1814,38 +1815,178 @@ def list_alerts(request):
 
 
 @login_required
-@csrf_exempt
 def create_alert(request):
-    """Create a new notice"""
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
 
     try:
-        data = json.loads(request.body)
-        title = data.get("title")
-        description = data.get("description")
-        category = data.get("category", "other")
-        location = data.get("location")
-    except Exception:
-        return JsonResponse({"success": False, "error": "Invalid JSON data."}, status=400)
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        category = request.POST.get("category", "other")
+        location_json = request.POST.get("location")
 
-    if not title or not description:
-        return JsonResponse({"success": False, "error": "Title and description are required."}, status=400)
+        location = None
+        if location_json:
+            loc = json.loads(location_json)
+            lng, lat = loc["coordinates"]
+            location = Point(lng, lat)
+
+        if not title or not description:
+            return JsonResponse({"success": False, "error": "Title and description are required."}, status=400)
+
+        # 1. Create the Alert
+        alert = Alert.objects.create(
+            user=request.user,
+            title=title,
+            description=description,
+            category=category,
+            location=location
+        )
+
+        # 2. Save the images
+        images_files = request.FILES.getlist("images")
+        saved_images = []
+        for img_file in images_files:
+            img_obj = AlertImage.objects.create(alert=alert, image=img_file)
+            saved_images.append(request.build_absolute_uri(img_obj.image.url))
+
+        # 3. Prepare data for WebSocket (Match your JSX keys!)
+        user_avatar = None
+        if hasattr(request.user, 'profile_picture') and request.user.profile_picture:
+            user_avatar = request.build_absolute_uri(request.user.profile_picture.url)
+
+        broadcast_data = {
+            "id": alert.id,
+            "title": alert.title,
+            "description": alert.description,
+            "category": alert.category,
+            "category_display": alert.get_category_display(),
+            "user_name": request.user.username,  # Matches a.user_name in JSX
+            "user_avatar": user_avatar,
+            "created_at": alert.created_at.isoformat(),
+            "lat": location.y if location else None,
+            "lng": location.x if location else None,
+            "images": saved_images, # List of full URLs
+            "image": saved_images[0] if saved_images else None,
+        }
+
+        # 4. Broadcast to Channels
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "alerts_feed",
+            {
+                "type": "alert.message",
+                "data": broadcast_data,
+            }
+        )
+
+        return JsonResponse({
+            "success": True,
+            "alert_id": alert.id,
+            "category_display": alert.get_category_display()
+        })
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
-    alert = Alert.objects.create(
-        user=request.user,
-        title=title,
-        description=description,
-        category=category,
-        location=location
-    )
+def alert_details(request, alert_id):
+    alert = get_object_or_404(Alert, id=alert_id)
+
+    # Increment views if the user is not the owner
+
+    # Fetch all related images and build absolute URLs for the frontend
+    image_urls = [
+        request.build_absolute_uri(img.image.url)
+        for img in alert.images.all()
+    ]
+
+    is_confirmed = False
+    if request.user.is_authenticated and request.user != alert.user:
+        if request.user.id not in alert.viewed_users:
+            alert.views_count += 1
+            alert.viewed_users.append(request.user.id)
+            alert.save()
+
+    data = {
+        "id": alert.id,
+        "title": alert.title,
+        "description": alert.description,
+        "category": alert.category,
+        "category_display": alert.get_category_display(),
+        "created_at": alert.created_at,
+        "user": alert.user.username,
+        "user_id": alert.user.id,
+        "lat": alert.location.y if alert.location else None,
+        "lng": alert.location.x if alert.location else None,
+        "images": image_urls,
+        "confirm_count": alert.confirm_count,
+        "report_count": alert.report_count,
+        "views_count": alert.views_count,  # <-- use the actual field
+        "is_confirmed": is_confirmed,
+    }
 
     return JsonResponse({
         "success": True,
-        "alert_id": alert.id,
-        "category_display": alert.get_category_display()
+        "alert": data
     })
+
+@login_required
+@require_POST
+def confirm_alert(request, alert_id):
+    alert = get_object_or_404(Alert, id=alert_id)
+
+    try:
+        AlertConfirm.objects.create(alert=alert, user=request.user)
+        return JsonResponse({"success": True, "message": "Alert confirmed.", "confirm_count": alert.confirm_count + 1})
+    except IntegrityError:
+        # User already confirmed
+        return JsonResponse({"success": False, "message": "You have already confirmed this alert."})
+
+
+@login_required
+@require_POST
+def unconfirm_alert(request, alert_id):
+    alert = get_object_or_404(Alert, id=alert_id)
+    confirm = AlertConfirm.objects.filter(alert=alert, user=request.user).first()
+    if confirm:
+        confirm.delete()
+        return JsonResponse({"success": True, "message": "Confirmation removed.", "confirm_count": alert.confirm_count - 1})
+    return JsonResponse({"success": False, "message": "You had not confirmed this alert."})
+
+
+@login_required
+@csrf_exempt  # if you're using fetch with CSRF token
+def report_alert(request, alert_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Invalid method"}, status=405)
+
+    alert = get_object_or_404(Alert, id=alert_id)
+
+    try:
+        data = json.loads(request.body)
+        reason = data.get("reason")
+        description = data.get("description", "")
+        if not reason:
+            return JsonResponse({"success": False, "error": "Reason is required"}, status=400)
+
+        report = AlertReport.objects.create(
+            alert=alert,
+            user=request.user,
+            reason=reason,
+            description=description
+        )
+
+        # Increment report_count (your model's save already does this)
+        alert.refresh_from_db()
+
+        return JsonResponse({
+            "success": True,
+            "report_id": report.id,
+            "report_count": alert.report_count
+        })
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
 @login_required

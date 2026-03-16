@@ -285,3 +285,38 @@ class PulseConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps(pulse_data))
         else:
             print(f"Pulse ignorat. Distanța: {distance_km}km > Raza: {self.visibility_radius}km")
+
+
+
+class AlertConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        try:
+            self.room_group_name = "alerts_feed"
+            # Join the alerts group
+            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+            await self.accept()
+
+            await self.send(text_data=json.dumps({
+                "type": "welcome",
+                "message": "Connected to Alerts feed"
+            }))
+            print("Successfully connected and sent welcome message!")
+        except Exception as e:
+            print(f"🔥 ERROR IN WEBSOCKET CONNECT: {e} 🔥")
+            raise
+
+    async def disconnect(self, close_code):
+        # Leave the group
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        print(f"AlertConsumer disconnected: {close_code}")
+
+    async def alert_message(self, event):
+        """
+        Receive alert broadcast from signal and send it to the WebSocket client
+        """
+        alert_data = event.get("data")
+        if alert_data:
+            await self.send(text_data=json.dumps({
+                "type": "alert",
+                "data": alert_data
+            }))

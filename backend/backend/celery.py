@@ -18,13 +18,21 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 # Autodiscover tasks in installed apps
 app.autodiscover_tasks()
 
-# Celery Beat schedule: delete expired urgent requests every minute
+# Celery Beat schedule
 app.conf.beat_schedule = {
+    # Delete expired urgent requests every minute
     "delete-expired-urgent-requests-every-minute": {
         "task": "apps.accounts.tasks.delete_expired_urgent_requests",
         "schedule": crontab(minute="*/1"),  # every minute
     },
+
+    # Delete old alerts older than 20 days every day at midnight
+    "delete-old-alerts-daily": {
+        "task": "apps.accounts.tasks.delete_old_alerts",
+        'schedule': crontab(minute=0),  # daily at 00:00
+    },
 }
+
 
 # Optional: make sure task decorator works for Django
 @app.task(bind=True)

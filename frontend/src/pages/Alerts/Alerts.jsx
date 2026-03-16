@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Navbar from "../../components/Navbar";
 import { AlertTriangle, MapPin, Clock, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
 import styles from "../../styles/Alerts/Alerts.module.css";
@@ -57,10 +57,15 @@ const AlertCarousel = ({ images }) => {
     );
 };
 
-const AlertCard = ({ a, formatDate }) => {
+const AlertCard = ({ a, formatDate, navigate }) => {
     if (!a) return <div className={styles.emptyCardSlot}></div>;
+
     return (
-        <div className={styles.card}>
+        <div
+            className={styles.card}
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate(`/alert/${a.id}`)}
+        >
             <div className={styles.cardHeader}>
                 <span className={styles.categoryBadge}>
                     <AlertTriangle size={14} />
@@ -102,6 +107,45 @@ export default function Alerts() {
                 if (data.success) setAlerts(data.alerts || []);
             })
             .finally(() => setLoading(false));
+    }, []);
+
+    const socketRef = useRef(null);
+
+    useEffect(() => {
+        // Replace with your actual domain/port. 'ws' for dev, 'wss' for prod.
+        const socketUrl = `ws://localhost:8000/ws/alerts/`;
+        socketRef.current = new WebSocket(socketUrl);
+
+        socketRef.current.onopen = () => {
+            console.log("WebSocket Connected to Alerts Feed");
+        };
+
+        socketRef.current.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+
+            // Check if the type matches what your Consumer sends
+            if (message.type === "alert" && message.data) {
+                console.log("New Live Alert Received:", message.data);
+
+                // Functional update to prepend the new alert to the top of the list
+                setAlerts((prevAlerts) => [message.data, ...prevAlerts]);
+            }
+        };
+
+        socketRef.current.onclose = (e) => {
+            console.log("WebSocket Disconnected. Code:", e.code);
+        };
+
+        socketRef.current.onerror = (err) => {
+            console.error("WebSocket Error:", err);
+        };
+
+        // Clean up on component unmount
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.close();
+            }
+        };
     }, []);
 
     const formatDate = (iso) => {
@@ -174,11 +218,11 @@ export default function Alerts() {
                         {/* Div 1 & 2: Cele mai recente (Primele 2) */}
                         <div className={styles.div1}>
                             <h2 className={styles.sectionHeading}>Most Recent</h2>
-                            <AlertCard a={recentAlerts[0]} formatDate={formatDate} />
+                            <AlertCard a={recentAlerts[0]} formatDate={formatDate} navigate={navigate}/>
                         </div>
                         <div className={styles.div2}>
                             <h2 className={styles.sectionHeading} style={{visibility: 'hidden'}}>Spacer</h2>
-                            <AlertCard a={recentAlerts[1]} formatDate={formatDate} />
+                            <AlertCard a={recentAlerts[1]} formatDate={formatDate} navigate={navigate}/>
                         </div>
 
                         {/* Div 3: Bara de control (Titlu + Dropdown + Butoane Carusel) */}
@@ -208,13 +252,13 @@ export default function Alerts() {
 
                         {/* Div 4, 5, 6: Caruselul pentru restul alertelor (afișăm 3 deodată) */}
                         <div className={styles.div4}>
-                            <AlertCard a={otherAlerts[carouselIndex]} formatDate={formatDate} />
+                            <AlertCard a={otherAlerts[carouselIndex]} formatDate={formatDate} navigate={navigate}/>
                         </div>
                         <div className={styles.div5}>
-                            <AlertCard a={otherAlerts[carouselIndex + 1]} formatDate={formatDate} />
+                            <AlertCard a={otherAlerts[carouselIndex + 1]} formatDate={formatDate} navigate={navigate}/>
                         </div>
                         <div className={styles.div6}>
-                            <AlertCard a={otherAlerts[carouselIndex + 2]} formatDate={formatDate} />
+                            <AlertCard a={otherAlerts[carouselIndex + 2]} formatDate={formatDate} navigate={navigate}/>
                         </div>
                     </div>
                 )}

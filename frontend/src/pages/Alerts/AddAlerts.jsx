@@ -136,6 +136,7 @@ export default function AddAlerts() {
                 headers: {
                     "X-CSRFToken": getCookie("csrftoken"),
                 },
+                credentials: "include",
                 body: data,
             });
 

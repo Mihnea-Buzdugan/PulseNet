@@ -1,7 +1,9 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.contrib.gis.db import models
+from django.contrib.postgres.fields import ArrayField
 from django.utils.crypto  import get_random_string
+from django.db.models import F
 # Create your models here.
 
 class User(AbstractUser):
@@ -330,6 +332,14 @@ class Alert(models.Model):
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="other")
     created_at = models.DateTimeField(auto_now_add=True)
     location = models.PointField(srid=4326, null=True, blank=True)
+    confirm_count = models.PositiveIntegerField(default=0)
+    report_count = models.PositiveIntegerField(default=0)
+    views_count = models.PositiveIntegerField(default=0)
+    viewed_users = ArrayField(
+        models.IntegerField(),  # store user IDs
+        default=list,
+        blank=True
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -347,6 +357,89 @@ class AlertImage(models.Model):
     )
     image = models.ImageField(upload_to="alert_images/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+class AlertConfirm(models.Model):
+    alert = models.ForeignKey(
+        Alert,
+        on_delete=models.CASCADE,
+        related_name="confirms"
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="alert_confirms"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("alert", "user")
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+
+        if is_new:
+            Alert.objects.filter(id=self.alert.id).update(
+                confirm_count=F("confirm_count") + 1
+            )
+
+    def delete(self, *args, **kwargs):
+        Alert.objects.filter(id=self.alert.id).update(
+            confirm_count=F("confirm_count") - 1
+        )
+        super().delete(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user} confirmed Alert {self.alert.id}"
+
+
+class AlertReport(models.Model):
+
+    REASON_CHOICES = [
+        ("false_info", "False information"),
+        ("duplicate", "Duplicate"),
+        ("irrelevant", "Irrelevant / Spam"),
+        ("safety_concern", "Safety concern"),
+        ("other", "Other"),
+    ]
+
+    alert = models.ForeignKey(
+        Alert,
+        on_delete=models.CASCADE,
+        related_name="reports"
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="alert_reports"
+    )
+
+    reason = models.CharField(max_length=50, choices=REASON_CHOICES)
+
+    description = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+
+        if is_new:
+            Alert.objects.filter(id=self.alert.id).update(
+                report_count=F("report_count") + 1
+            )
+
+    def delete(self, *args, **kwargs):
+        Alert.objects.filter(id=self.alert.id).update(
+            report_count=F("report_count") - 1
+        )
+        super().delete(*args, **kwargs)
+
+    def __str__(self):
+        return f"Report for Alert {self.alert.id} ({self.reason})"
 
 
 class Notification(models.Model):

@@ -20,6 +20,7 @@ const Messages = React.lazy(() => import('./pages/User_pages/Messages.jsx'));
 const PulseTransaction = React.lazy(() => import('./pages/Pulses_pages/PulseTransaction.jsx'));
 const Alerts = React.lazy(() => import('./pages/Alerts/Alerts.jsx'));
 const AddAlerts = React.lazy(() => import('./pages/Alerts/AddAlerts.jsx'));
+const AlertPage = React.lazy(() => import('./pages/Alerts/AlertPage.jsx'));
 const UrgentRequests = React.lazy(() => import('./pages/Requests/UrgentRequests.jsx'));
 
 const NotificationHandler = ({ currentUser }) => {
@@ -252,6 +253,7 @@ function App() {
                     <Route path="/favorites" element={<FavoritePulses />} />
                     <Route path="/alerts" element={<Alerts />} />
                     <Route path="/add-alerts" element={<AddAlerts />} />
+                    <Route path="/alert/:id" element={<AlertPage />} />
                     <Route path="/urgent-requests" element={<UrgentRequests />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>

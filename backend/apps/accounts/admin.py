@@ -6,7 +6,7 @@ from .models import (
     User, Follow, Friendship, PendingFollow, Pulse, PulseImage,
     Group_Conversation, DirectConversation, FavoritePulse,
     PulseRental, Alert, AlertImage, PulseComment,
-    PulseRating, Notification, UrgentRequest
+    PulseRating, Notification, UrgentRequest, AlertReport, AlertConfirm
 )
 
 class LocationAdminForm(forms.ModelForm):
@@ -44,7 +44,8 @@ class PulseAdmin(admin.ModelAdmin):
 @admin.register(Alert)
 class AlertAdmin(admin.ModelAdmin):
     form = LocationAdminForm
-    list_display = ('title', 'user', 'category', 'is_active')
+    list_display = ('title', 'user', 'category', 'is_active', 'created_at')
+    readonly_fields = ('created_at',)  # Make sure Django knows it's read-only
     exclude = ('location',)
 
 @admin.register(UrgentRequest)
@@ -56,5 +57,5 @@ admin.site.register([
     Follow, Friendship, PendingFollow, PulseImage,
     Group_Conversation, DirectConversation, FavoritePulse,
     PulseRental, AlertImage, PulseComment,
-    PulseRating, Notification
+    PulseRating, Notification, AlertReport, AlertConfirm
 ])
