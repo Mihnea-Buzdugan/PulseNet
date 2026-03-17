@@ -14,6 +14,7 @@ urlpatterns = [
     path('user/', views.user, name='user'),
     path('profile/', views.profile, name='profile'),
     path('update_profile/', views.update_profile, name='update_profile'),
+    path('update_location/', views.update_location, name='update_location'),
 
     # Profile Pictures
     path('upload_profile_picture/', views.upload_profile_picture, name='upload_profile_picture'),

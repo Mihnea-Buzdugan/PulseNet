@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Navbar from "../../components/Navbar";
 import styles from "../../styles/index.module.css";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +9,21 @@ import Loading from "@/components/Loading";
 // Placeholder images (adjust paths as needed)
 const DEFAULT_AVATAR = "/defaultImage.png";
 const DEFAULT_IMAGE = "/defaultImage.png";
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 
 export default function Index() {
     const navigate = useNavigate();
@@ -64,10 +79,19 @@ export default function Index() {
 
         navigator.geolocation.getCurrentPosition(
             (pos) => {
-                setUserLocation({
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                });
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                setUserLocation({ lat, lng });
+
+                fetch("http://localhost:8000/accounts/update_location/", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCookie("csrftoken"),
+                    },
+                    body: JSON.stringify({ lat, lng }),
+                }).catch(() => { });
             },
             () => {
                 setLocationDenied(true);
@@ -86,8 +110,16 @@ export default function Index() {
             .then((data) => {
                 const radius = data.user?.visibility_radius;
                 if (radius) setUserRadius(radius);
+
+                // seed map immediately with last saved location
+                const loc = data.user?.location;
+                if (loc?.coordinates) {
+                    setUserLocation((prev) =>
+                        prev ?? { lat: loc.coordinates[1], lng: loc.coordinates[0] }
+                    );
+                }
             })
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     // -------------------------
@@ -481,7 +513,7 @@ export default function Index() {
 
                         {/* Right column: Latest pulses */}
                         <div className={styles.dreapta}>
-                            {latestPulses.slice(0,4).map((pulse) => (
+                            {latestPulses.slice(0, 4).map((pulse) => (
                                 <div key={pulse.id} className={styles.stire} onClick={() => openPulse(pulse)}>
                                     <div className={styles.smallimg}>
                                         <img src={pulse.image || DEFAULT_IMAGE} className={styles.ferrari} onError={handleImageError} alt="Pulse" />
@@ -500,7 +532,7 @@ export default function Index() {
                                             <div className={styles.context}>{pulse.name} {pulse.type && <span className={styles.badge}>{pulse.type}</span>}</div>
                                         </div>
 
-                                        <div className={styles.jos} style={{justifyContent: 'space-between', alignItems: 'center', width: '300px'}}>
+                                        <div className={styles.jos} style={{ justifyContent: 'space-between', alignItems: 'center', width: '300px' }}>
                                             <div className={styles.priceTag}>💰 {pulse.price} {pulse.currency}</div>
                                             {pulse.popularity_score && (
                                                 <div className={styles.ratingGroup}>⭐ {pulse.popularity_score}</div>
@@ -563,8 +595,8 @@ export default function Index() {
                                             )}
                                             {pulse.distance !== undefined && pulse.distance !== null && (
                                                 <span className={styles.distantaSpan}>
-                📍 {pulse.distance} km away
-            </span>
+                                                    📍 {pulse.distance} km away
+                                                </span>
                                             )}
                                         </div>
                                     </div>

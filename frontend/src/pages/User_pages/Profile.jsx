@@ -975,13 +975,13 @@ export default function Profile() {
                                             {pulse.phone_number && <p className={styles.pulsePhone}>📞 {pulse.phone_number}</p>}
                                             <p className={styles.pulseDate}>
                                                 Postat:{" "}
-                                                {new Date(pulse.created_at || Date.now()).toLocaleString("ro-RO", {
+                                                {pulse.timestamp ? new Date(pulse.timestamp.replace(" ", "T") + "Z").toLocaleString("ro-RO", {
                                                     day: "2-digit",
                                                     month: "2-digit",
                                                     year: "numeric",
                                                     hour: "2-digit",
                                                     minute: "2-digit",
-                                                })}
+                                                }) : "—"}
                                             </p>
                                             <div className={styles.objectMeta}>
                                                 {pulse.price != null && (

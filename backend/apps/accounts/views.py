@@ -18,7 +18,6 @@ from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.measure import D
 from django.db import IntegrityError
 from .decorators import api_login_required
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
@@ -245,6 +244,7 @@ def profile(request):
                 "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
                 "phone_number": p.phone_number,
                 "location": json.loads(p.location.geojson) if p.location else None,
+                "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
             })
 
         user_data = {
@@ -587,12 +587,29 @@ def remove_pulse(request, pulse_id):
         )
 
 
+@csrf_protect
+@login_required
+@require_POST
+def update_location(request):
+    try:
+        data = json.loads(request.body)
+        lat = data.get("lat")
+        lng = data.get("lng")
+        if lat is None or lng is None:
+            return JsonResponse({"success": False, "error": "lat/lng required"}, status=400)
+        request.user.location = Point(float(lng), float(lat), srid=4326)
+        request.user.save(update_fields=["location"])
+        return JsonResponse({"success": True})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+
 def get_base_pulse_queryset(user):
 
     qs = Pulse.objects.select_related("user").prefetch_related("images")
 
     if user.location and user.visibility_radius:
-        qs = qs.filter(location__distance_lte=(user.location, D(km=user.visibility_radius)))
+        qs = qs.filter(location__dwithin=(user.location, user.visibility_radius / 111.32))
 
     return qs
 
@@ -612,7 +629,7 @@ def get_latest_pulses(request):
         radius_km = request.user.visibility_radius or 1
         pulses = (
             Pulse.objects.select_related("user").prefetch_related("images")
-            .filter(location__distance_lte=(ref_location, D(km=radius_km)))
+            .filter(location__dwithin=(ref_location, radius_km / 111.32))
             .order_by("-created_at")
         )
     else:
@@ -669,7 +686,7 @@ def get_nearest_pulses(request):
 
     pulses = (
         Pulse.objects
-        .filter(location__distance_lte=(ref_location, D(km=radius_km)))
+        .filter(location__dwithin=(ref_location, radius_km / 111.32))
         .select_related("user")
         .prefetch_related("images")
         .annotate(distance=GisDistance("location", ref_location))
