@@ -19,14 +19,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
+from django.db import IntegrityError
 from .decorators import api_login_required
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
-    PulseComment, PulseRating, Notification, UrgentRequest
+    PulseComment, PulseRating, Notification, UrgentRequest, AlertConfirm, AlertReport
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
 from django.db import models
 from decimal import Decimal
+from django.shortcuts import get_object_or_404
 from django.contrib.gis.db.models.functions import Distance as GisDistance
 
 def generate_password(length=12):
@@ -236,7 +238,7 @@ def profile(request):
                 "id": p.id,
                 "title": p.title,
                 "pulseType": p.pulse_type,
-                "category": p.category,
+                "category": p.pulse_type,
                 "price": float(p.price),
                 "currencyType": p.currencyType,
                 "description": p.description,
@@ -284,8 +286,8 @@ def update_profile(request):
         user.email = data.get('email', user.email)
         user.biography = data.get('biography', user.biography)
         user.online_status = data.get("online_status", user.online_status)
-        user.quiet_hours_start = data.get("quiet_hours_start", user.quiet_hours_start)
-        user.quiet_hours_end = data.get("quiet_hours_end", user.quiet_hours_end)
+        user.quiet_hours_start = data.get("quiet_hours_start") or None
+        user.quiet_hours_end = data.get("quiet_hours_end") or None
         user.visibility_radius = data.get('visibility_radius', user.visibility_radius)
         # 3. Validate and save
         user.save()
@@ -328,7 +330,8 @@ def update_profile(request):
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON format"}, status=400)
     except ValidationError as e:
-        return JsonResponse({"error": e.message_dict}, status=400)
+        errors = getattr(e, 'message_dict', None) or e.messages
+        return JsonResponse({"error": errors}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -492,6 +495,81 @@ def add_pulse(request):
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 #adauga obiect in profile page
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_pulse(request, pulse_id):
+    try:
+        pulse = get_object_or_404(Pulse, id=pulse_id)
+        if pulse.user != request.user:
+            return JsonResponse({"error": "Permission denied"}, status=403)
+
+        # Determine if JSON or FormData
+        if request.content_type.startswith("application/json"):
+            data = json.loads(request.body or "{}")
+        else:
+            data = request.POST
+        # --- Update fields if present ---
+        pulse.title = data.get("title", pulse.title)
+        pulse.pulse_type = data.get("category", pulse.category)
+        pulse.price = data.get("price", pulse.price)
+        pulse.currencyType = data.get("currencyType", pulse.currencyType)
+        pulse.description = data.get("description", pulse.description)
+        pulse.phone_number = data.get("phone_number", pulse.phone_number)
+
+        # Location handling (GeoJSON)
+        loc = data.get("location") if hasattr(data, "get") else None
+        if loc:
+            coords = loc.get("coordinates")
+            if coords and len(coords) == 2:
+                pulse.location = Point(coords[0], coords[1], srid=4326)
+        elif loc is None:
+            pulse.location = None  # allow clearing location
+
+        pulse.full_clean()
+        pulse.save()
+
+        # --- Handle uploaded images ---
+        removed_images = request.POST.getlist("removed_images")
+        if removed_images:
+            for url in removed_images:
+                filename = url.split("/")[-1]
+                pulse.images.filter(image__icontains=filename).delete()
+
+        # Add new uploaded images
+        uploaded_files = request.FILES.getlist("images")
+        for img in uploaded_files:
+            pulse.images.create(image=img)
+
+        # Prepare response data
+        pulse_data = {
+            "id": pulse.id,
+            "title": pulse.title,
+            "pulseType": pulse.pulse_type,
+            "category": pulse.category,
+            "price": float(pulse.price) if pulse.price is not None else None,
+            "currencyType": pulse.currencyType,
+            "description": pulse.description,
+            "phone_number": pulse.phone_number,
+            "location": {
+                "type": "Point",
+                "coordinates": [pulse.location.x, pulse.location.y]
+            } if pulse.location else None,
+            "images": [request.build_absolute_uri(img.image.url) for img in pulse.images.all()],
+        }
+
+        return JsonResponse({"message": "Pulse updated", "pulse": pulse_data}, status=200)
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except ValidationError as e:
+        errors = getattr(e, "message_dict", None) or e.messages
+        return JsonResponse({"error": errors}, status=400)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
 @login_required
 @require_http_methods(["DELETE"])
 def remove_pulse(request, pulse_id):
@@ -1401,7 +1479,7 @@ def user_profile(request, user_id):
             "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
             "biography": user.biography,
             "location": user.location,
-            "distanceRadius": user.distance_radius,
+            "visibilityRadius": user.visibility_radius,
             "quiet_hours_start": user.quiet_hours_start,
             "quiet_hours_end": user.quiet_hours_end,
             "trustScore": user.trust_score,
@@ -1738,38 +1816,178 @@ def list_alerts(request):
 
 
 @login_required
-@csrf_exempt
 def create_alert(request):
-    """Create a new notice"""
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
 
     try:
-        data = json.loads(request.body)
-        title = data.get("title")
-        description = data.get("description")
-        category = data.get("category", "other")
-        location = data.get("location")
-    except Exception:
-        return JsonResponse({"success": False, "error": "Invalid JSON data."}, status=400)
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        category = request.POST.get("category", "other")
+        location_json = request.POST.get("location")
 
-    if not title or not description:
-        return JsonResponse({"success": False, "error": "Title and description are required."}, status=400)
+        location = None
+        if location_json:
+            loc = json.loads(location_json)
+            lng, lat = loc["coordinates"]
+            location = Point(lng, lat)
+
+        if not title or not description:
+            return JsonResponse({"success": False, "error": "Title and description are required."}, status=400)
+
+        # 1. Create the Alert
+        alert = Alert.objects.create(
+            user=request.user,
+            title=title,
+            description=description,
+            category=category,
+            location=location
+        )
+
+        # 2. Save the images
+        images_files = request.FILES.getlist("images")
+        saved_images = []
+        for img_file in images_files:
+            img_obj = AlertImage.objects.create(alert=alert, image=img_file)
+            saved_images.append(request.build_absolute_uri(img_obj.image.url))
+
+        # 3. Prepare data for WebSocket (Match your JSX keys!)
+        user_avatar = None
+        if hasattr(request.user, 'profile_picture') and request.user.profile_picture:
+            user_avatar = request.build_absolute_uri(request.user.profile_picture.url)
+
+        broadcast_data = {
+            "id": alert.id,
+            "title": alert.title,
+            "description": alert.description,
+            "category": alert.category,
+            "category_display": alert.get_category_display(),
+            "user_name": request.user.username,  # Matches a.user_name in JSX
+            "user_avatar": user_avatar,
+            "created_at": alert.created_at.isoformat(),
+            "lat": location.y if location else None,
+            "lng": location.x if location else None,
+            "images": saved_images, # List of full URLs
+            "image": saved_images[0] if saved_images else None,
+        }
+
+        # 4. Broadcast to Channels
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "alerts_feed",
+            {
+                "type": "alert.message",
+                "data": broadcast_data,
+            }
+        )
+
+        return JsonResponse({
+            "success": True,
+            "alert_id": alert.id,
+            "category_display": alert.get_category_display()
+        })
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
-    alert = Alert.objects.create(
-        user=request.user,
-        title=title,
-        description=description,
-        category=category,
-        location=location
-    )
+def alert_details(request, alert_id):
+    alert = get_object_or_404(Alert, id=alert_id)
+
+    # Increment views if the user is not the owner
+
+    # Fetch all related images and build absolute URLs for the frontend
+    image_urls = [
+        request.build_absolute_uri(img.image.url)
+        for img in alert.images.all()
+    ]
+
+    is_confirmed = False
+    if request.user.is_authenticated and request.user != alert.user:
+        if request.user.id not in alert.viewed_users:
+            alert.views_count += 1
+            alert.viewed_users.append(request.user.id)
+            alert.save()
+
+    data = {
+        "id": alert.id,
+        "title": alert.title,
+        "description": alert.description,
+        "category": alert.category,
+        "category_display": alert.get_category_display(),
+        "created_at": alert.created_at,
+        "user": alert.user.username,
+        "user_id": alert.user.id,
+        "lat": alert.location.y if alert.location else None,
+        "lng": alert.location.x if alert.location else None,
+        "images": image_urls,
+        "confirm_count": alert.confirm_count,
+        "report_count": alert.report_count,
+        "views_count": alert.views_count,  # <-- use the actual field
+        "is_confirmed": is_confirmed,
+    }
 
     return JsonResponse({
         "success": True,
-        "alert_id": alert.id,
-        "category_display": alert.get_category_display()
+        "alert": data
     })
+
+@login_required
+@require_POST
+def confirm_alert(request, alert_id):
+    alert = get_object_or_404(Alert, id=alert_id)
+
+    try:
+        AlertConfirm.objects.create(alert=alert, user=request.user)
+        return JsonResponse({"success": True, "message": "Alert confirmed.", "confirm_count": alert.confirm_count + 1})
+    except IntegrityError:
+        # User already confirmed
+        return JsonResponse({"success": False, "message": "You have already confirmed this alert."})
+
+
+@login_required
+@require_POST
+def unconfirm_alert(request, alert_id):
+    alert = get_object_or_404(Alert, id=alert_id)
+    confirm = AlertConfirm.objects.filter(alert=alert, user=request.user).first()
+    if confirm:
+        confirm.delete()
+        return JsonResponse({"success": True, "message": "Confirmation removed.", "confirm_count": alert.confirm_count - 1})
+    return JsonResponse({"success": False, "message": "You had not confirmed this alert."})
+
+
+@login_required
+@csrf_exempt  # if you're using fetch with CSRF token
+def report_alert(request, alert_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Invalid method"}, status=405)
+
+    alert = get_object_or_404(Alert, id=alert_id)
+
+    try:
+        data = json.loads(request.body)
+        reason = data.get("reason")
+        description = data.get("description", "")
+        if not reason:
+            return JsonResponse({"success": False, "error": "Reason is required"}, status=400)
+
+        report = AlertReport.objects.create(
+            alert=alert,
+            user=request.user,
+            reason=reason,
+            description=description
+        )
+
+        # Increment report_count (your model's save already does this)
+        alert.refresh_from_db()
+
+        return JsonResponse({
+            "success": True,
+            "report_id": report.id,
+            "report_count": alert.report_count
+        })
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
 @login_required

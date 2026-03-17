@@ -283,83 +283,83 @@
 /* Card base: smaller, cleaner, horizontal layout */
 .objectCard {
     @apply bg-white border border-slate-200 rounded-2xl shadow-sm
-    flex gap-5 p-4 items-center
+    flex flex-col sm:flex-row gap-4 p-4 items-start sm:items-center
     transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
-    /* remove fixed height for flexible content */
     position: relative;
 }
 
-/* Image area - square thumbnail */
+/* Image area */
 .objectImage {
     @apply flex-shrink-0 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center;
-    width: 120px;
-    height: 120px;
-    padding: 0;
+
+    width: 100%;
+    height: 180px;
 }
 
-/* Make real images cover the thumbnail */
+/* Desktop image size */
+@media (min-width: 640px) {
+    .objectImage {
+        width: 120px;
+        height: 120px;
+    }
+}
+
+/* Image fit */
 .pulseImage {
     @apply w-full h-full object-cover;
 }
 
-/* Placeholder emoji */
+/* Placeholder */
 .imagePlaceholder {
     @apply text-4xl opacity-40;
 }
 
-/* Info: vertical layout with good spacing */
+/* Info */
 .objectInfo {
-    @apply flex flex-col gap-1 flex-1;
+    @apply flex flex-col gap-1 flex-1 w-full;
     overflow: hidden;
 }
 
+/* Title */
 .objectName {
-    @apply text-base font-bold text-slate-900;
+    @apply text-base sm:text-lg font-bold text-slate-900;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+/* Description */
 .pulseDescription {
     @apply text-sm text-slate-500 mb-1 leading-relaxed;
-    max-height: 3.6rem;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
+/* Category */
 .pulseCategory {
     @apply text-xs text-indigo-600 font-semibold uppercase tracking-wide;
 }
 
+/* Phone */
 .pulsePhone {
     @apply text-sm text-slate-600 font-medium;
 }
 
+/* Date */
 .pulseDate {
     @apply text-xs text-slate-400;
 }
 
-/* Meta row sits at the end of the card */
-.objectMeta {
-    @apply mt-auto flex items-center justify-between gap-2 flex-wrap;
-}
-
-/* Price pill */
-.price {
-    @apply text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg;
-}
-
-/* Actions: right aligned and simple */
+/* Buttons container */
 .objectActions {
-    @apply flex items-start gap-2;
+    @apply flex gap-2 flex-wrap mt-2 sm:mt-0;
 }
 
 /* Delete / remove button */
-.removeBtn {
-    @apply px-3 py-1 rounded-lg text-xs font-bold
-    bg-rose-50 text-rose-700 border border-rose-200
-    hover:bg-rose-100 transition;
-}
+
 
 /* Availability badges */
 .availableBadge {
@@ -700,4 +700,333 @@
 
 .rentalEmpty {
     @apply text-slate-400 font-medium text-sm py-8 text-center;
+}
+
+/* PulseEditModal.module.css */
+
+.modalBackdrop {
+    position: fixed;
+    inset: 0; /* top:0; right:0; bottom:0; left:0; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+    padding: 1.25rem;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Modal window */
+.modal {
+    width: 100%;
+    max-width: 640px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    padding: 1.25rem 1.25rem;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+/* Header */
+.modal > h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #000; /* keep text black as per palette */
+}
+
+/* Form layout */
+
+/* Error message */
+.error {
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+    background: rgba(255, 138, 101, 0.07); /* subtle bg from Secondary */
+    color: #ff8a65; /* Secondary */
+    border-radius: 6px;
+    font-size: 0.875rem;
+    word-break: break-word;
+}
+
+/* Modal action buttons */
+.modalActions {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+}
+
+/* Neutral (cancel) button */
+.modalActions button[type="button"] {
+    background: transparent;
+    border: 1px solid #ddd;
+    color: #222;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 90px;
+}
+
+/* Save button (primary) */
+.modalActions button[type="submit"] {
+    background: #00bfa5; /* primary */
+    border: 1px solid #00bfa5;
+    color: #fff;
+    padding: 0.55rem 0.95rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    min-width: 110px;
+}
+
+/* Disabled state */
+.modalActions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Small responsive tweak */
+@media (max-width: 520px) {
+    .modal {
+        padding: 1rem;
+        border-radius: 10px;
+    }
+    .modalActions {
+        gap: 0.5rem;
+    }
+}
+
+/* Optional: small helpers for the card buttons so they visually match */
+.editBtn {
+    background: transparent;
+    border: 1px solid #00bfa5;
+    color: #00bfa5;
+    padding: 0.35rem 0.6rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.removeBtn {
+    background: transparent;
+    border: 1px solid #ff8a65;
+    color: #ff8a65;
+    padding: 0.35rem 0.6rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.alertForm {
+    display: flex;
+    flex-direction: column;
+}
+
+.formTitle {
+    color: #0f172a;
+    font-size: 1.85rem;
+    font-weight: 800;
+    margin-top: 0;
+    margin-bottom: 2rem;
+    text-align: center;
+    letter-spacing: -0.5px;
+}
+
+.inputGroup {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.inputGroup label,
+.labelHeader {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.2rem;
+}
+
+.inputGroup input,
+.inputGroup select,
+.inputGroup textarea {
+    padding: 0.85rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 1rem;
+    color: #1e293b;
+    background-color: #f8fafc;
+    transition: all 0.25s ease;
+    outline: none;
+    font-family: inherit;
+}
+
+.inputGroup input:hover,
+.inputGroup select:hover,
+.inputGroup textarea:hover {
+    border-color: #cbd5e1;
+}
+
+.inputGroup input:focus,
+.inputGroup select:focus,
+.inputGroup textarea:focus {
+    background-color: #ffffff;
+    border-color: #ef4444; /* Accent color (Red) */
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+
+.inputGroup textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* =========================================
+   Image Upload Section
+   ========================================= */
+
+.imageUploadSection {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.imageGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Adaptabil */
+    gap: 12px;
+    margin-top: 0.5rem;
+}
+
+.imagePreviewBox {
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.imagePreviewBox:hover {
+    transform: scale(1.02);
+}
+
+/* Efect de overlay întunecat la hover pentru a vedea X-ul mai bine */
+.imagePreviewBox::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.imagePreviewBox:hover::before {
+    opacity: 1;
+}
+
+.removeImgBtn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efect de bounce */
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.4);
+}
+
+.imagePreviewBox:hover .removeImgBtn {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.removeImgBtn:hover {
+    background: #dc2626;
+    transform: translate(-50%, -50%) scale(1.1) !important;
+}
+
+.uploadBtnBox {
+    aspect-ratio: 1 / 1;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #64748b;
+    background-color: #f8fafc;
+    transition: all 0.2s ease;
+    gap: 0.5rem;
+}
+
+.uploadBtnBox span {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.uploadBtnBox:hover {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+    color: #ef4444;
+}
+
+/* =========================================
+   Submit Button
+   ========================================= */
+
+.submitBtn {
+    width: 100%;
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: 12px; /* Mai modern decât pastila complet rotundă, se potrivește cu input-urile */
+    background-color: transparent;
+    color: #ef4444;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: 2px solid #ef4444;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.submitBtn:hover:not(:disabled) {
+    background-color: #ef4444;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px -3px rgba(239, 68, 68, 0.3);
+}
+
+.submitBtn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.submitBtn:disabled {
+    border-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+    background-color: #f1f5f9;
 }

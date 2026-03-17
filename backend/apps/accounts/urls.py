@@ -21,6 +21,7 @@ urlpatterns = [
 
     # --- UNIFIED PULSE SYSTEM ---
     path('add_pulse/', views.add_pulse, name='add_pulse'),
+    path("update_pulse/<int:pulse_id>/", views.update_pulse, name="update_pulse"),
     path('remove_pulse/<int:pulse_id>/', views.remove_pulse, name='remove_pulse'),
     path('get_latest_pulses/', views.get_latest_pulses, name='get_latest_pulses'),
     path("get_nearest_pulses/", views.get_nearest_pulses, name="get_nearest_pulses"),
@@ -54,6 +55,10 @@ urlpatterns = [
     # Warnings and shit
     path("alerts/", views.list_alerts, name="list_alerts"),
     path("alerts/create/", views.create_alert, name="create_alert"),
+    path("alerts/<int:alert_id>/", views.alert_details, name="alert_details"),
+    path("alerts/<int:alert_id>/confirm/", views.confirm_alert, name="confirm_alert"),
+    path("alerts/<int:alert_id>/unconfirm/", views.unconfirm_alert, name="unconfirm_alert"),
+    path("alerts/<int:alert_id>/report/", views.report_alert, name="report_alert"),
 
     #Urgent requests
     path("urgent-requests/", views.urgent_requests_list, name="urgent_requests_list"),

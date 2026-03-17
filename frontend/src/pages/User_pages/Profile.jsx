@@ -4,6 +4,7 @@ import styles from "../../styles/User_pages/profile.module.css";
 import Loading from "../../components/Loading";
 import { MapContainer, TileLayer, Marker, Circle, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { X, Plus, ShieldAlert, AlertTriangle } from 'lucide-react';
 
 function ChangeView({ center, radiusKm }) {
     const map = useMap();
@@ -72,6 +73,11 @@ export default function Profile() {
 
     const [pulseFilter, setPulseFilter] = useState("obiecte");
 
+    const [imagesPreview, setImagesPreview] = useState([]); // URLs for preview
+    const [newImages, setNewImages] = useState([]);         // File objects to send
+    const pulseFileInputRef = useRef(null);
+    const [removedImages, setRemovedImages] = useState([]);
+
     const [preview, setPreview] = useState(null);
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef(null);
@@ -90,6 +96,22 @@ export default function Profile() {
         lat: null,
         lng: null,
     });
+
+    const [deletePulseModal, setDeletePulseModal] = useState({
+        show: false,
+        id: null,
+    });
+    const [editingPulse, setEditingPulse] = useState(null);
+    const [pulseEditForm, setPulseEditForm] = useState({
+        title: "",
+        category: "",
+        price: "",
+        currencyType: "RON",
+        description: "",
+        phone_number: "",
+    });
+    const [editLoading, setEditLoading] = useState(false);
+    const [editError, setEditError] = useState(null);
 
     // rental offers state (offers for user's pulses)
     const [rentalOffers, setRentalOffers] = useState([]);
@@ -351,19 +373,128 @@ export default function Profile() {
         }
     };
 
-    const handleRemovePulse = async (id) => {
-        if (!window.confirm("Sigur vrei să ștergi acest anunț?")) return;
+    function handlePulseImageChange(e) {
+        const files = Array.from(e.target.files);
+        setNewImages((prev) => [...prev, ...files]);
+
+        // Create preview URLs
+        const newPreviews = files.map((file) => URL.createObjectURL(file));
+        setImagesPreview((prev) => [...prev, ...newPreviews]);
+    }
+
+// Remove image at index
+    function removePulseImageAt(idx) {
+        const removed = imagesPreview[idx];
+
+        // If it's an existing backend image (URL)
+        if (typeof removed === "string") {
+            setRemovedImages((prev) => [...prev, removed]);
+        }
+
+        setImagesPreview((prev) => prev.filter((_, i) => i !== idx));
+    }
+
+    function handleEditChange(e) {
+        const { name, value } = e.target;
+        setPulseEditForm((prev) => ({ ...prev, [name]: value }));
+    }
+
+    function handleEditPulse(pulse) {
+        setEditingPulse(pulse);
+        setPulseEditForm({
+            title: pulse.title || "",
+            category: pulse.category || "",
+            price: pulse.price ?? "",
+            currencyType: pulse.currencyType || "RON",
+            description: pulse.description || "",
+            phone_number: pulse.phone_number || "",
+        });
+        setImagesPreview(pulse.images || []);
+        setNewImages([]); // reset newly added
+        setEditLoading(false); // reset loading
+        setEditError(null);    // reset any previous error
+    }
+
+    async function handleSaveEdit(e) {
+        e.preventDefault();
+        setEditLoading(true);
+        setEditError(null);
+
         try {
-            const response = await fetch(`http://localhost:8000/accounts/remove_pulse/${id}/`, {
-                method: "DELETE",
-                headers: { "X-CSRFToken": getCookie("csrftoken") },
-                credentials: "include",
+            const formData = new FormData();
+            Object.entries(pulseEditForm).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    formData.append(key, value);
+                }
             });
+
+            removedImages.forEach((img) => formData.append("removed_images", img));
+            // Only append new images
+            newImages.forEach((file) => formData.append("images", file));
+
+            const res = await fetch(
+                `http://localhost:8000/accounts/update_pulse/${editingPulse.id}/`,
+                {
+                    method: "POST",
+                    headers: { "X-CSRFToken": getCookie("csrftoken") },
+                    credentials: "include",
+                    body: formData,
+                }
+            );
+
+            const data = await res.json();
+            if (!res.ok) {
+                setEditError(data.error || "Eroare la salvare");
+                setEditLoading(false);
+                return;
+            }
+
+            setUser((prev) => ({
+                ...prev,
+                pulses: prev.pulses.map((p) =>
+                    p.id === data.pulse.id ? data.pulse : p
+                ),
+            }));
+
+            setEditingPulse(null);
+            setImagesPreview([]);
+            setNewImages([]);
+            setEditLoading(false);
+        } catch (err) {
+            setEditError(err.message || "Eroare de rețea");
+            setEditLoading(false);
+        }
+    }
+
+    const openDeletePulseModal = (id) => {
+        setDeletePulseModal({ show: true, id });
+    };
+
+    const closeDeletePulseModal = () => {
+        setDeletePulseModal({ show: false, id: null });
+    };
+
+    const handleDeletePulse = async () => {
+        if (!deletePulseModal.id) return;
+
+        try {
+            const response = await fetch(
+                `http://localhost:8000/accounts/remove_pulse/${deletePulseModal.id}/`,
+                {
+                    method: "DELETE",
+                    headers: { "X-CSRFToken": getCookie("csrftoken") },
+                    credentials: "include",
+                }
+            );
+
             if (response.ok) {
                 setUser((prev) => ({
                     ...prev,
-                    pulses: prev.pulses.filter((p) => p.id !== id),
+                    pulses: prev.pulses.filter((p) => p.id !== deletePulseModal.id),
                 }));
+                closeDeletePulseModal();
+            } else {
+                console.error("Failed to delete pulse");
             }
         } catch (error) {
             console.error("Error removing pulse:", error);
@@ -855,13 +986,16 @@ export default function Profile() {
                                             <div className={styles.objectMeta}>
                                                 {pulse.price != null && (
                                                     <span className={styles.price}>
-                                                        {pulse.price} {pulse.currencyType || "lei"}
-                                                    </span>
+                  {pulse.price} {pulse.currencyType || "lei"}
+                </span>
                                                 )}
                                             </div>
                                         </div>
                                         <div className={styles.objectActions}>
-                                            <button onClick={() => handleRemovePulse(pulse.id)} className={styles.removeBtn}>
+                                            <button onClick={() => handleEditPulse(pulse)} className={styles.editBtn}>
+                                                Editează
+                                            </button>
+                                            <button onClick={() => openDeletePulseModal(pulse.id)} className={styles.removeBtn}>
                                                 Șterge
                                             </button>
                                         </div>
@@ -869,6 +1003,152 @@ export default function Profile() {
                                 ))}
                             </div>
                         </div>
+
+                        {/* — Place modal here, outside the card — */}
+                        {editingPulse && (
+                            <div className={styles.modalOverlay}>
+                                <div className={styles.modal}>
+                                    <form onSubmit={handleSaveEdit} className={styles.alertForm}>
+                                        <h2 className={styles.formTitle}>Editează anunț</h2>
+
+                                        {/* TITLE */}
+                                        <div className={styles.inputGroup}>
+                                            <label>Title *</label>
+                                            <input
+                                                name="title"
+                                                value={pulseEditForm.title}
+                                                onChange={(e) => setPulseEditForm(prev => ({ ...prev, title: e.target.value }))}
+                                                placeholder="Ex: Bicicletă de vânzare..."
+                                            />
+                                        </div>
+
+                                        {/* CATEGORY */}
+                                        <div className={styles.inputGroup}>
+                                            <label>Category</label>
+                                            <select
+                                                name="category"
+                                                value={pulseEditForm.category}
+                                                onChange={(e) => setPulseEditForm(prev => ({ ...prev, category: e.target.value }))}
+                                            >
+                                                <option value="">Selectează</option>
+                                                <option value="obiecte">Obiecte</option>
+                                                <option value="servicii">Servicii</option>
+                                            </select>
+                                        </div>
+
+                                        {/* IMAGE GRID */}
+                                        <div className={styles.imageUploadSection}>
+                                            <label className={styles.labelHeader}>Imagini</label>
+                                            <div className={styles.imageGrid}>
+                                                {/* Preview Images */}
+                                                {imagesPreview.map((img, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className={styles.imagePreviewBox}
+                                                        style={{ backgroundImage: `url(${img})` }}
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removePulseImageAt(idx)}
+                                                            className={styles.removeImgBtn}
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+
+                                                {/* Add Images Button */}
+                                                {imagesPreview.length < 4 && (
+                                                    <label className={styles.uploadBtnBox}>
+                                                        <input
+                                                            ref={pulseFileInputRef}
+                                                            type="file"
+                                                            multiple
+                                                            accept="image/*"
+                                                            onChange={handlePulseImageChange}
+                                                            hidden
+                                                        />
+                                                        <Plus size={24} />
+                                                        <span>Adaugă</span>
+                                                    </label>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* DESCRIPTION */}
+                                        <div className={styles.inputGroup}>
+                                            <label>Description *</label>
+                                            <textarea
+                                                name="description"
+                                                value={pulseEditForm.description}
+                                                onChange={(e) => setPulseEditForm(prev => ({ ...prev, description: e.target.value }))}
+                                                rows="4"
+                                            />
+                                        </div>
+
+                                        {/* PHONE NUMBER */}
+                                        <div className={styles.inputGroup}>
+                                            <label>Phone Number</label>
+                                            <input
+                                                name="phone_number"
+                                                value={pulseEditForm.phone_number}
+                                                onChange={(e) => setPulseEditForm(prev => ({ ...prev, phone_number: e.target.value }))}
+                                                placeholder="Ex: 07XXXXXXXX"
+                                            />
+                                        </div>
+
+                                        {/* PRICE */}
+                                        <div className={styles.inputGroup}>
+                                            <label>Price</label>
+                                            <input
+                                                name="price"
+                                                type="number"
+                                                step="0.01"
+                                                value={pulseEditForm.price}
+                                                onChange={(e) => setPulseEditForm(prev => ({ ...prev, price: e.target.value }))}
+                                            />
+                                        </div>
+
+                                        {/* CURRENCY */}
+                                        <div className={styles.inputGroup}>
+                                            <label>Currency</label>
+                                            <input
+                                                name="currencyType"
+                                                value={pulseEditForm.currencyType}
+                                                onChange={(e) => setPulseEditForm(prev => ({ ...prev, currencyType: e.target.value }))}
+                                            />
+                                        </div>
+
+                                        {/* ERROR DISPLAY */}
+                                        {editError && (
+                                            <p className={styles.error}>
+                                                {Array.isArray(editError) ? JSON.stringify(editError) : editError}
+                                            </p>
+                                        )}
+
+                                        {/* ACTION BUTTONS */}
+                                        <div className={styles.modalActions}>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setEditingPulse(null);
+                                                    setEditLoading(false);
+                                                    setEditError(null);
+                                                    setImagesPreview([]);
+                                                    setNewImages([]);
+                                                }}
+                                                disabled={editLoading}
+                                            >
+                                                Anulează
+                                            </button>
+                                            <button type="submit" disabled={editLoading}>
+                                                {editLoading ? "Se salvează..." : "Salvează"}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* RENTAL OFFERS SECTION */}
@@ -1141,6 +1421,25 @@ export default function Profile() {
                                     className={styles.saveButton}
                                 >
                                     Acceptă
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {deletePulseModal.show && (
+                    <div className={styles.modalOverlay}>
+                        <div className={styles.modal}>
+                            <h3 className={styles.modalTitle}>Șterge anunțul?</h3>
+                            <p className={styles.modalText}>
+                                Această acțiune nu poate fi anulată. Ești sigur că vrei să ștergi acest anunț?
+                            </p>
+                            <div className={styles.modalActions}>
+                                <button onClick={closeDeletePulseModal} className={styles.modalCancel}>
+                                    Anulează
+                                </button>
+                                <button onClick={handleDeletePulse} className={styles.modalDelete}>
+                                    Da, șterge
                                 </button>
                             </div>
                         </div>
