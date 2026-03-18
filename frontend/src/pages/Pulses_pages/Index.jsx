@@ -31,7 +31,7 @@ export default function Index() {
     // feeds
     const [latestPulses, setLatestPulses] = useState([]);
     const [nearestPulses, setNearestPulses] = useState([]);
-    const [bestPulses, setBestPulses] = useState([]);
+    const [urgentRequests, setUrgentRequests] = useState([]);
 
     // pagination / loading
     const [page, setPage] = useState(1);
@@ -169,10 +169,12 @@ export default function Index() {
         socketRef.current.onerror = (err) => console.error("WebSocket Error:", err);
         socketRef.current.onclose = () => console.warn("WebSocket disconnected");
 
+        const onHeroAlert = () => fetchUrgentRequests();
+        window.addEventListener("hero_alert", onHeroAlert);
+
         return () => {
-            if (socketRef.current) {
-                socketRef.current.close();
-            }
+            if (socketRef.current) socketRef.current.close();
+            window.removeEventListener("hero_alert", onHeroAlert);
         };
     }, []);
 
@@ -241,29 +243,29 @@ export default function Index() {
     };
 
     // -------------------------
-    // fetch best pulses
+    // fetch urgent requests
     // -------------------------
-    const fetchBestPulses = async () => {
+    const fetchUrgentRequests = async () => {
         try {
             const res = await fetch(
-                `http://localhost:8000/accounts/get_best_pulses/`,
+                `http://localhost:8000/accounts/urgent-requests/`,
                 { method: "GET", credentials: "include" }
             );
             const data = await res.json();
-            if (data.success) {
-                setBestPulses(data.pulses || []);
+            if (res.ok && data.success) {
+                setUrgentRequests(data.urgent_requests || []);
             } else {
-                console.error("get_best_pulses returned success:false", data);
+                console.error("urgent-requests returned error", data);
             }
         } catch (err) {
-            console.error("fetchBestPulses error:", err);
+            console.error("fetchUrgentRequests error:", err);
         }
     };
 
-    // initial load: latest page 1 + best
+    // initial load: latest page 1 + urgent requests
     useEffect(() => {
         fetchLatestPulses(1);
-        fetchBestPulses();
+        fetchUrgentRequests();
     }, []);
 
     // when user location appears, fetch nearest + latest + center map
@@ -615,47 +617,34 @@ export default function Index() {
                     </div>
                 </div>
 
-                {/* --- BEST PULSES SECTION --- */}
+                {/* --- URGENT REQUESTS SECTION --- */}
                 <div className={styles["lastest-news"]}>
-                    <h1>Best Pulses</h1>
+                    <h1>Urgent Requests</h1>
                     <div className={styles.aia}>
-                        {bestPulses.length === 0 ? (
-                            <p>Loading best pulses...</p>
+                        {urgentRequests.length === 0 ? (
+                            <p>No urgent requests at the moment.</p>
                         ) : (
-                            bestPulses.slice(0, 3).map((pulse) => (
-                                <div key={pulse.id} className={styles.one} onClick={() => openPulse(pulse)}>
-                                    <div className={styles.img}>
-                                        <img
-                                            src={pulse.image || DEFAULT_IMAGE}
-                                            alt="Pulse"
-                                            className={styles.aoleu}
-                                            onError={handleImageError}
-                                        />
-                                    </div>
-
+                            urgentRequests.slice(0, 3).map((req) => (
+                                <div key={req.id} className={styles.one}>
                                     <div className={styles.sus1}>
-                                        <div className={styles.profil}>
-                                            <img
-                                                src={pulse.user_avatar || DEFAULT_AVATAR}
-                                                alt="User"
-                                                className={styles.cafea}
-                                                onError={handleAvatarError}
-                                            />
-                                        </div>
-                                        <div className={styles.titlu}>{pulse.user}</div>
-                                        <div className={styles.timing}>• {formatPulseTime(pulse.timestamp)}</div>
+                                        <div className={styles.titlu}>@{req.user}</div>
+                                        <div className={styles.timing}>• {new Date(req.created_at).toLocaleString()}</div>
                                     </div>
 
                                     <div className={styles.scris}>
-                                        <div style={{ fontSize: '24px', lineHeight: '1.2' }}>{pulse.name} {pulse.pulse_type && <span className={styles.badge}>{pulse.pulse_type}</span>}</div>
+                                        <div style={{ fontSize: '24px', lineHeight: '1.2' }}>
+                                            {req.title}
+                                            {req.pulse_type && <span className={styles.badge}>{req.pulse_type}</span>}
+                                            {req.category && <span className={styles.badge}>{req.category}</span>}
+                                        </div>
                                     </div>
 
                                     <div className={styles["maimult-scris"]}>
-                                        {pulse.description && <p className={styles.descriptionLine}>{pulse.description}</p>}
+                                        {req.description && <p className={styles.descriptionLine}>{req.description}</p>}
 
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                                            <span className={styles.priceTag}>💰 {pulse.price} {pulse.currency}</span>
-                                            <span className={styles.ratingGroup}>⭐ {pulse.popularity_score || 0} ({pulse.total_reviews})</span>
+                                            {req.max_price && <span className={styles.priceTag}>💰 up to {req.max_price} €</span>}
+                                            {req.expires_at && <span className={styles.timing}>⏰ {new Date(req.expires_at).toLocaleDateString()}</span>}
                                         </div>
                                     </div>
                                 </div>

@@ -43,6 +43,28 @@ class User(AbstractUser):
     is_verified = models.BooleanField(default=False)
     private_account = models.BooleanField(default=False)
 
+    skills = models.JSONField(default=list, blank=True)
+
+    skills_embedding = models.BinaryField(null=True, blank=True)
+
+    #transform JSON list in an embedded vector
+    def get_skills_text(self):
+        if not self.skills:
+            return ""
+        return ", ".join([str(s).strip() for s in self.skills])
+
+
+    #helper function pentru quiet hours
+    def is_quiet_now(self):
+        from django.utils import timezone
+        if not self.quiet_hours_start or not self.quiet_hours_end:
+            return False
+        now = timezone.localtime().time()
+        if self.quiet_hours_start <= self.quiet_hours_end:
+            return self.quiet_hours_start <= now <= self.quiet_hours_end
+        else:
+            return now >= self.quiet_hours_start or now <= self.quiet_hours_end
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name", "username"]
 
@@ -505,7 +527,6 @@ class UrgentRequest(models.Model):
     )
 
     location = models.PointField(srid=4326, null=True, blank=True)
-    radius_km = models.IntegerField(default=10, help_text="Search radius in km")
 
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

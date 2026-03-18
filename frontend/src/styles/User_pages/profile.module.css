@@ -1030,3 +1030,83 @@
     cursor: not-allowed;
     background-color: #f1f5f9;
 }
+
+
+/* Containerul de tag-uri în Edit Mode */
+.tagsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.tagWithDelete {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.deleteTagBtn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 18px;
+    margin-left: 8px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.publicSkillsSection {
+    margin-top: 30px; /* Distanță mai mare față de biografie */
+    margin-bottom: 30px;
+    padding-top: 20px;
+}
+
+.heroSkillsLabel {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.publicTagsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Distanță egală între ele */
+    margin-top: 15px;
+    width: 100%;
+    justify-content: flex-start; /* Aliniere la stânga */
+}
+
+.publicTag {
+    flex: 0 1 auto;
+
+    background: #f8fafc;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+
+    padding: 8px 16px;
+
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.publicTag:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.noSkillsText {
+    color: #94a3b8;
+    font-size: 14px;
+    font-style: italic;
+}
