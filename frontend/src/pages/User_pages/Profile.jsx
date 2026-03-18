@@ -95,6 +95,7 @@ export default function Profile() {
         visibility_radius: 1,
         lat: null,
         lng: null,
+        skills: [],
     });
 
     const [deletePulseModal, setDeletePulseModal] = useState({
@@ -143,6 +144,38 @@ export default function Profile() {
         setDeleteProposalModal({ show: false, id: null });
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const value = e.target.value.trim();
+
+            if (!value) return;
+            if (value.length > 20) {
+                alert("Maxim 20 de caractere!");
+                return;
+            }
+
+            const exists = editForm.skills?.some(s => s.toLowerCase() === value.toLowerCase());
+
+            if (!exists) {
+                setEditForm(prev => ({
+                    ...prev,
+                    skills: [...(prev.skills || []), value]
+                }));
+                e.target.value = '';
+            } else {
+                alert("Ai adăugat deja acest skill!");
+            }
+        }
+    };
+
+    const removeSkill = (skillToRemove) => {
+        setEditForm(prev => ({
+            ...prev,
+            skills: prev.skills.filter(skill => skill !== skillToRemove)
+        }));
+    };
+
     useEffect(() => {
         const csrfToken = getCookie("csrftoken");
         fetch("http://localhost:8000/accounts/profile/", {
@@ -158,14 +191,14 @@ export default function Profile() {
                 if (data.user) {
                     setUser(data.user);
                     setPreview(data.user.profilePicture || null);
-
-                    if (data.user.location?.coordinates) {
-                        setEditForm((prev) => ({
-                            ...prev,
+                    setEditForm((prev) => ({
+                        ...prev,
+                        skills: data.user.skills || [],
+                        ...(data.user.location?.coordinates && {
                             lng: data.user.location.coordinates[0],
                             lat: data.user.location.coordinates[1],
-                        }));
-                    }
+                        }),
+                    }));
                 }
                 setLoading(false);
             })
@@ -278,6 +311,7 @@ export default function Profile() {
             if (response.ok) {
                 const data = await response.json();
                 setUser(data.user);
+                setEditForm((prev) => ({ ...prev, skills: data.user.skills || [] }));
                 setEditMode(false);
             } else {
                 const errorData = await response.json();
@@ -736,10 +770,13 @@ export default function Profile() {
                                     )}
                                 </div>
 
+
                                 <div className={styles.trustBadge}>
                                     <span className={styles.trustIcon}>🛡️</span>
                                     <span className={styles.trustValue}>{user.trustScore}% Trust</span>
                                 </div>
+
+
                             </div>
 
                             {/* Profile Info / Edit Form */}
@@ -827,6 +864,30 @@ export default function Profile() {
                                                 <option value="do_not_disturb">Do Not Disturb</option>
                                             </select>
                                         </div>
+
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.inputLabel}>Skills & Expertise</label>
+                                            <input
+                                                type="text"
+                                                className={styles.editInput}
+                                                placeholder="Adaugă un skill (ex: Lifting) și apasă Enter"
+                                                onKeyDown={handleKeyDown}
+                                                maxLength={20}
+                                            />
+                                            <div className={styles.tagsContainer}>
+                                                {editForm.skills?.map((skill, index) => (
+                                                    <span key={index} className={styles.tagWithDelete}>
+                                                         {skill}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeSkill(skill)}
+                                                            className={styles.deleteTagBtn}
+                                                        > × </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+
                                         <div className={styles.inputGroup}>
                                             <div className={styles.labelWrapper}>
                                                 <label htmlFor="visibility-range" className={styles.inputLabel}>
@@ -906,6 +967,16 @@ export default function Profile() {
 
                                         <p className={styles.biography}>{user.biography}</p>
 
+                                        <div className={styles.publicSkillsSection}>
+                                            <div className={styles.publicTagsContainer}>
+                                                {user?.skills?.map((skill, index) => (
+                                                    <span key={index} className={styles.publicTag}>
+                                                        {skill}
+                                                     </span>
+                                                ))}
+                                            </div>
+                                        </div>
+
                                         <button
                                             onClick={() => {
                                                 setEditForm((prev) => ({
@@ -920,6 +991,7 @@ export default function Profile() {
                                                     visibility_radius: user.visibility_radius || 1,
                                                     lat: user.location?.coordinates?.[1] ?? prev.lat,
                                                     lng: user.location?.coordinates?.[0] ?? prev.lng,
+                                                    skills: user.skills || [],
                                                 }));
                                                 setEditMode(true);
                                                 navigator.geolocation?.getCurrentPosition((position) => {
@@ -986,8 +1058,8 @@ export default function Profile() {
                                             <div className={styles.objectMeta}>
                                                 {pulse.price != null && (
                                                     <span className={styles.price}>
-                  {pulse.price} {pulse.currencyType || "lei"}
-                </span>
+                                                        {pulse.price} {pulse.currencyType || "lei"}
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>

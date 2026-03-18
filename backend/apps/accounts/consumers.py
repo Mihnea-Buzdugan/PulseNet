@@ -219,7 +219,19 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 }
             )
         )
+    async def send_hero_alert(self, event):
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "hero_alert",
+                    "title": event["title"],
+                    "request_id": event["request_id"],
+                    "score": event["score"],
+                    "message": "A neighbour needs your help!"
 
+                }
+            )
+        )
 
 class PulseConsumer(AsyncWebsocketConsumer):
     async def connect(self):

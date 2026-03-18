@@ -19,6 +19,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django.db import IntegrityError
+from networkx.algorithms.distance_measures import radius
+
 from .decorators import api_login_required
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
     PulseComment, PulseRating, Notification, UrgentRequest, AlertConfirm, AlertReport
@@ -29,7 +31,10 @@ from django.db import models
 from decimal import Decimal
 from django.shortcuts import get_object_or_404
 from django.contrib.gis.db.models.functions import Distance as GisDistance
+from celery import shared_task
 
+from .tasks import update_user_embedding, find_heroes_for_urgent_requests, get_model as _get_st_model
+from sentence_transformers import util as st_util
 def generate_password(length=12):
     alphabet = string.ascii_letters + string.digits + string.punctuation
     return ''.join(secrets.choice(alphabet) for _ in range(length))
@@ -262,6 +267,7 @@ def profile(request):
             "trustScore": user.trust_score,
             "isVerified": user.is_verified,
             "onlineStatus": user.online_status,
+            "skills": user.skills if isinstance(user.skills, list) else [],
             "pulses": pulses_data,
         }
 
@@ -278,8 +284,8 @@ def update_profile(request):
         data = json.loads(request.body)
         user = request.user
 
-        # 2. Update model fields based on React's camelCase keys
-        # Use .get() to keep current values if a field is missing
+        old_skills = list(user.skills) if user.skills else []
+
         user.first_name = data.get('firstName', user.first_name)
         user.last_name = data.get('lastName', user.last_name)
         user.username = data.get('username', user.username)
@@ -289,8 +295,12 @@ def update_profile(request):
         user.quiet_hours_start = data.get("quiet_hours_start") or None
         user.quiet_hours_end = data.get("quiet_hours_end") or None
         user.visibility_radius = data.get('visibility_radius', user.visibility_radius)
+        user.skills = data.get('skills', [])
         # 3. Validate and save
         user.save()
+
+        if old_skills != user.skills:
+            update_user_embedding.delay(user.id)
 
         # 2. Re-aducem pulsurile pentru a sincroniza complet frontend-ul
         # Folosim aceiași logică ca în view-ul de profile
@@ -323,7 +333,8 @@ def update_profile(request):
                 "trustScore": user.trust_score,
                 "isVerified": user.is_verified,
                 "onlineStatus": user.online_status,
-                "pulses": pulses_data, # Sincronizăm lista unificată
+                "skills": user.skills or [],
+                "pulses": pulses_data, 
             }
         }, status=200)
 
@@ -2057,24 +2068,54 @@ def delete_notification(request, notif_id):
 
 
 def urgent_requests_list(request):
-    """Return all active urgent requests as JSON."""
-    requests = UrgentRequest.objects.filter(is_active=True)
+    user = request.user
+
+    if not user.is_authenticated or not user.skills:
+        return JsonResponse({"success": True, "urgent_requests": []})
+
+    if not user.location:
+        return JsonResponse({"success": True, "urgent_requests": []})
+
+    skills = [str(s).strip() for s in user.skills if str(s).strip()]
+    skill_embeddings = [_get_st_model().encode(s, convert_to_tensor=True) for s in skills]
+
+    candidates = (
+        UrgentRequest.objects
+        .filter(is_active=True, location__isnull=False)
+        .exclude(user=user)
+        .select_related("user")
+        .annotate(dist=GisDistance("location", user.location))
+    )
+    # Show requests where the viewer is within the poster's visibility_radius
+    active_requests = [r for r in candidates if r.dist.m <= r.user.visibility_radius * 1000]
     data = []
-    for obj in requests:
-        data.append({
-            "id": obj.id,
-            "user_id": obj.user.id,
-            "user": obj.user.username,
-            "title": obj.title,
-            "description": obj.description,
-            "category": obj.category,
-            "pulse_type": obj.pulse_type,
-            "max_price": float(obj.max_price) if obj.max_price else None,
-            "location": [obj.location.x, obj.location.y] if obj.location else None,
-            "radius_km": obj.radius_km,
-            "created_at": obj.created_at.isoformat(),
-            "expires_at": obj.expires_at.isoformat() if obj.expires_at else None,
-        })
+
+    for obj in active_requests:
+        query_text = f"{obj.title} {obj.description}".strip()
+        query_emb = _get_st_model().encode(query_text, convert_to_tensor=True)
+
+        best_score = max(
+            st_util.cos_sim(query_emb, skill_emb).item()
+            for skill_emb in skill_embeddings
+        )
+
+        if best_score > 0.50:
+            data.append({
+                "id": obj.id,
+                "user_id": obj.user.id,
+                "user": obj.user.username,
+                "title": obj.title,
+                "description": obj.description,
+                "category": obj.category,
+                "pulse_type": obj.pulse_type,
+                "max_price": float(obj.max_price) if obj.max_price else None,
+                "location": [obj.location.x, obj.location.y] if obj.location else None,
+                "created_at": obj.created_at.isoformat(),
+                "expires_at": obj.expires_at.isoformat() if obj.expires_at else None,
+                "match_score": round(best_score * 100, 1),
+            })
+
+    data.sort(key=lambda x: x["match_score"], reverse=True)
     return JsonResponse({"success": True, "urgent_requests": data})
 
 def urgent_request_detail(request, request_id):
@@ -2094,8 +2135,26 @@ def urgent_request_detail(request, request_id):
         "pulse_type": obj.pulse_type,
         "max_price": float(obj.max_price) if obj.max_price else None,
         "location": [obj.location.x, obj.location.y] if obj.location else None,
-        "radius_km": obj.radius_km,
         "created_at": obj.created_at.isoformat(),
         "expires_at": obj.expires_at.isoformat() if obj.expires_at else None,
     }
     return JsonResponse({"success": True, "urgent_request": data})
+
+@login_required
+@require_POST
+def create_urgent_request(request):
+    data = json.loads(request.body)
+
+    new_request = UrgentRequest.objects.create(
+        user=request.user,
+        description=data.get("description"),
+        title=data.get("title"),
+        pulse_type=data.get("pulse_type"),
+        location=Point(float(data["lng"]), float(data["lat"])) if "lng" in data and "lat" in data else None,
+        max_price=data.get("max_price", 0),
+    )
+
+    find_heroes_for_urgent_requests.delay(new_request.id)
+
+    return JsonResponse({"success": True, "id": new_request.id})
+

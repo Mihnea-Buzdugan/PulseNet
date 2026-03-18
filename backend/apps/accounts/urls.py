@@ -62,6 +62,7 @@ urlpatterns = [
     path("alerts/<int:alert_id>/report/", views.report_alert, name="report_alert"),
 
     #Urgent requests
+    path('urgent-requests/create/', views.create_urgent_request, name='create_urgent_request'),
     path("urgent-requests/", views.urgent_requests_list, name="urgent_requests_list"),
     path("urgent-requests/<int:pk>/", views.urgent_request_detail, name="urgent_request_detail"),
 ]

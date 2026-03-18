@@ -180,6 +180,51 @@ const NotificationHandler = ({ currentUser }) => {
                     </div>
                 ), { duration: 15000 });
             }
+            else if (data.type === "hero_alert") {
+                window.dispatchEvent(new CustomEvent("hero_alert", { detail: data }));
+                toast.custom((t) => (
+                    <div
+                        onClick={() => { navigate(`/urgent-requests`); toast.dismiss(t.id); }}
+                        style={{
+                            display: 'flex',
+                            width: '384px',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            borderRadius: '16px',
+                            border: '1px solid rgba(0, 0, 0, 0.05)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                            cursor: 'pointer',
+                            overflow: 'hidden',
+                            borderLeft: '6px solid #ef4444',
+                            animation: t.visible ? 'enter 0.4s ease' : 'leave 0.4s ease',
+                        }}
+                    >
+                        <div style={{ flex: 1, padding: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <div style={{
+                                    height: '48px', width: '48px', borderRadius: '50%',
+                                    background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: 'white', fontWeight: 'bold', fontSize: '22px',
+                                    flexShrink: 0, boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                }}>!</div>
+                                <div style={{ marginLeft: '12px', flex: 1 }}>
+                                    <span style={{ fontSize: '14px', fontWeight: '800', color: '#111827' }}>
+                                        Urgent Request nearby
+                                    </span>
+                                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#4b5563', lineHeight: '1.4' }}>
+                                        {data.title}
+                                    </p>
+                                    <p style={{ marginTop: '4px', fontSize: '12px', color: '#ef4444', fontWeight: '600' }}>
+                                        Match: {data.score}%
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ), { duration: 15000 });
+            }
         };
 
         return () => socket.close();
