@@ -468,33 +468,46 @@ class Notification(models.Model):
     NOTIFICATION_TYPES = (
         ("rental_proposal", "Rental Proposal"),
         ("chat_message", "Chat Message"),
+        ("hero_alert", "Hero Alert"),
     )
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="sent_notifications")
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="notifications"
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_notifications"
+    )
 
     type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
 
     title = models.CharField(max_length=255)
     message = models.TextField()
 
-    # Optional references depending on notification type
     pulse_id = models.IntegerField(null=True, blank=True)
     rental_id = models.IntegerField(null=True, blank=True)
     conversation_id = models.IntegerField(null=True, blank=True)
 
-    # Flexible extra data
+    # For hero alerts / future flexible data
     metadata = models.JSONField(null=True, blank=True)
 
     is_read = models.BooleanField(default=False)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "is_read", "-created_at"]),
+            models.Index(fields=["type", "-created_at"]),
+        ]
 
     def __str__(self):
-        return f"{self.user.username} - {self.type}"
+        return f"{self.user} - {self.type}"
 
 
 class UrgentRequest(models.Model):

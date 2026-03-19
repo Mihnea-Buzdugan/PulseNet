@@ -1,0 +1,63 @@
+.container {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 25px;
+    background: #e9e6e6;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+input,
+textarea {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+}
+
+textarea {
+    resize: none;
+    min-height: 100px;
+}
+
+button {
+    padding: 10px;
+    border: none;
+    border-radius: 12px;
+    background: #00bfa5;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #009e88;
+}
+
+.locationBtn {
+    background: #ff8a65;
+}
+
+.locationBtn:hover {
+    background: #e76f51;
+}
+
+.locationStatus {
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 10px;
+    color: #555;
+}

@@ -3,6 +3,7 @@ version: "3.9"
 services:
   backend:
     build: ./backend
+    image: pulsenet_backend  # ✅ build once, reuse
     container_name: django_backend
     command: daphne -b 0.0.0.0 -p 8000 backend.asgi:application
     env_file:
@@ -22,7 +23,7 @@ services:
       - redis
 
   celery_worker:
-    build: ./backend
+    image: pulsenet_backend  # ✅ reuse image
     container_name: celery_worker
     command: celery -A backend worker --loglevel=info
     env_file:
@@ -30,11 +31,15 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=backend.settings
       - CELERY_BROKER_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    volumes:
+      - ./backend:/app
     depends_on:
       - redis
+      - db
 
   celery_beat:
-    build: ./backend
+    image: pulsenet_backend  # ✅ reuse image
     container_name: celery_beat
     command: celery -A backend beat --loglevel=info
     env_file:
@@ -42,8 +47,12 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=backend.settings
       - CELERY_BROKER_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    volumes:
+      - ./backend:/app
     depends_on:
       - redis
+      - db
 
   frontend:
     build: ./frontend

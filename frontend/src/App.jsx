@@ -22,7 +22,7 @@ const Alerts = React.lazy(() => import('./pages/Alerts/Alerts.jsx'));
 const AddAlerts = React.lazy(() => import('./pages/Alerts/AddAlerts.jsx'));
 const AlertPage = React.lazy(() => import('./pages/Alerts/AlertPage.jsx'));
 const UrgentRequests = React.lazy(() => import('./pages/Requests/UrgentRequests.jsx'));
-
+const CreateRequest = React.lazy(() => import('./pages/Requests/CreateRequest.jsx'));
 const NotificationHandler = ({ currentUser }) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -300,6 +300,7 @@ function App() {
                     <Route path="/add-alerts" element={<AddAlerts />} />
                     <Route path="/alert/:id" element={<AlertPage />} />
                     <Route path="/urgent-requests" element={<UrgentRequests />} />
+                    <Route path="/create-request" element={<CreateRequest />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </Suspense>

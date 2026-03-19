@@ -33,7 +33,8 @@ from django.shortcuts import get_object_or_404
 from django.contrib.gis.db.models.functions import Distance as GisDistance
 from celery import shared_task
 
-from .tasks import update_user_embedding, find_heroes_for_urgent_requests, get_model as _get_st_model
+from .tasks import update_user_embedding, find_heroes_for_urgent_requests, get_model as _get_st_model, \
+    run_hero_search_task
 from sentence_transformers import util as st_util
 def generate_password(length=12):
     alphabet = string.ascii_letters + string.digits + string.punctuation
@@ -2140,6 +2141,8 @@ def urgent_request_detail(request, request_id):
     }
     return JsonResponse({"success": True, "urgent_request": data})
 
+
+
 @login_required
 @require_POST
 def create_urgent_request(request):
@@ -2149,12 +2152,14 @@ def create_urgent_request(request):
         user=request.user,
         description=data.get("description"),
         title=data.get("title"),
+        category=data.get("category"),
+        expires_at=data.get("expires_at"),
         pulse_type=data.get("pulse_type"),
         location=Point(float(data["lng"]), float(data["lat"])) if "lng" in data and "lat" in data else None,
         max_price=data.get("max_price", 0),
     )
 
-    find_heroes_for_urgent_requests.delay(new_request.id)
+    run_hero_search_task.delay(new_request.id)
 
     return JsonResponse({"success": True, "id": new_request.id})
 

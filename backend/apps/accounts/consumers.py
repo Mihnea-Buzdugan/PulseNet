@@ -219,16 +219,30 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 }
             )
         )
+
     async def send_hero_alert(self, event):
         await self.send(
             text_data=json.dumps(
                 {
                     "type": "hero_alert",
+
+                    # Notification core fields
+                    "notification_id": event["notification_id"],
                     "title": event["title"],
+                    "message": event["message"],
+                    "created_at": event["created_at"],
+                    "is_read": False,
+
+                    # Sender info (optional but VERY useful for UI)
+                    "sender_id": event.get("sender_id"),
+                    "sender_username": event.get("sender_username"),
+
+                    # Hero-specific data
                     "request_id": event["request_id"],
                     "score": event["score"],
-                    "message": "A neighbour needs your help!"
 
+                    # Optional extras
+                    "metadata": event.get("metadata", {}),
                 }
             )
         )
