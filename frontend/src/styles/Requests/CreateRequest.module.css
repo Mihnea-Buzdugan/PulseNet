@@ -1,5 +1,30 @@
 /* --- Tailwind Utility Classes --- */
-.pageWrapper { @apply min-h-screen bg-slate-50 font-sans; }
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+
+.bodyContainer {
+    background-color: #e9e6e6;
+    color: black;
+}
+
+
+.main-container {
+    position: relative;
+}
+
+.navbarAdjust {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.pageWrapper { @apply min-h-screen  font-sans; }
 .mainContainer { @apply max-w-4xl mx-auto py-12 px-4 sm:px-6; }
 .formCard { @apply bg-white rounded-2xl shadow-sm border border-slate-100 p-8 sm:p-10; }
 .title { @apply text-xl font-semibold text-slate-800 mb-8; }

@@ -299,6 +299,7 @@ function App() {
                     <Route path="/alerts" element={<Alerts />} />
                     <Route path="/add-alerts" element={<AddAlerts />} />
                     <Route path="/alert/:id" element={<AlertPage />} />
+
                     <Route path="/urgent-requests" element={<UrgentRequests />} />
                     <Route path="/create-request" element={<CreateRequest />} />
                     <Route path="*" element={<Navigate to="/" />} />

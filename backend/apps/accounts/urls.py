@@ -65,4 +65,6 @@ urlpatterns = [
     path('urgent-requests/create/', views.create_urgent_request, name='create_urgent_request'),
     path("urgent-requests/", views.urgent_requests_list, name="urgent_requests_list"),
     path("urgent-requests/<int:pk>/", views.urgent_request_detail, name="urgent_request_detail"),
+    path('urgent-requests/comments/<int:request_id>/', views.get_request_comments, name='get_request_comments'),
+    path("list-all-requests/", views.list_all_requests, name="list_all_requests"),
 ]

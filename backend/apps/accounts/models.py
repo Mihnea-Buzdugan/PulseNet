@@ -550,3 +550,25 @@ class UrgentRequestImage(models.Model):
     )
     image = models.ImageField(upload_to="urgent_request_images/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+
+class RequestComment(models.Model):
+    request = models.ForeignKey(
+        UrgentRequest,
+        on_delete=models.CASCADE,
+    )
+
+    user = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="request_comments"
+    )
+
+    content = models.TextField()
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+    def can_delete(self, request_user):
+        return request_user == self.user or request_user.is_superuser
+
+    def __str__(self):
+        return f"{self.user} - {self.pub_date}"

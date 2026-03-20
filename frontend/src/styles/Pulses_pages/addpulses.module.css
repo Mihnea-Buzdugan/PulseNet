@@ -1,6 +1,33 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+
+.bodyContainer {
+    background-color: #e9e6e6;
+    color: black;
+    min-height: 160vh;
+}
+
+
+.main-container {
+    position: relative;
+}
+
+.navbarAdjust {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+
 .anunt-container {
     max-width: 1000px; /* Am făcut containerul mai lat */
-    margin: 40px auto;
+    margin: auto;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: #f2f4f5;
     padding: 20px;

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import styles from '../../styles/Pulses_pages/addpulses.module.css';
 import Navbar from "../../components/Navbar";
 import {Link} from "react-router-dom";
@@ -178,8 +178,10 @@ function AddPulses() {
     };
 
     return (
-        <div>
-            <Navbar />
+        <div className={styles.bodyContainer}>
+            <div className={styles.navbarAdjust}>
+                <Navbar />
+            </div>
             <div className={styles["anunt-container"]}>
                 <div className="flex justify-between items-center">
                 <h1 className={styles["anunt-header"]}>Publică un anunț</h1>

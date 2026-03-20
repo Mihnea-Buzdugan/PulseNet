@@ -160,8 +160,11 @@ export default function CreateRequest() {
     };
 
     return (
+        <div className={styles.bodyContainer}>
+            <div className={styles.navbarAdjust}>
+                <Navbar />
+            </div>
         <div className={styles.pageWrapper}>
-            <Navbar />
 
             <div className={styles.mainContainer}>
                 <div className={styles.formCard}>
@@ -290,6 +293,7 @@ export default function CreateRequest() {
                     </form>
                 </div>
             </div>
+        </div>
         </div>
     );
 }

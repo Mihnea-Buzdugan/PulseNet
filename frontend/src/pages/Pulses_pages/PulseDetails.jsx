@@ -63,14 +63,18 @@ function utcIsoToLocalDateString(isoOrDate) {
 }
 
 // Convert ISO timestamp to local human-readable string (for UI timestamps)
-function isoToLocalString(isoOrDate) {
-    try {
-        const d = new Date(isoOrDate);
-        return d.toLocaleString();
-    } catch (e) {
-        return String(isoOrDate);
-    }
-}
+const isoToLocalString = (isoString) => {
+    if (!isoString) return "N/A";
+    const date = new Date(isoString);
+
+    return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    }).format(date);
+};
 
 export default function PulseDetails() {
     const { type, id } = useParams();
@@ -102,7 +106,7 @@ export default function PulseDetails() {
     const [isPosting, setIsPosting] = useState(false);
 
     // local reviews state (for immediate UI preview)
-    const [localReviews, setLocalReviews] = useState([]);
+    const [formattedAddress, setFormattedAddress] = useState("Loading address...");
 
     const COMMENTS_PAGE_SIZE = 10;
 
@@ -281,6 +285,49 @@ export default function PulseDetails() {
         return () => (mounted = false);
     }, [id]);
 
+    useEffect(() => {
+        const getDetailedAddress = async () => {
+            if (!pulse?.location) return;
+
+            // Get coords regardless of format (Array or GeoJSON)
+            const coords = getLocationCoords(pulse.location);
+            const [lng, lat] = coords;
+
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
+                    {
+                        headers: {
+                            'Accept-Language': 'en',
+                            'User-Agent': 'YourApp/1.0'
+                        }
+                    }
+                );
+
+                if (!res.ok) throw new Error();
+
+                const data = await res.json();
+                const addr = data.address;
+
+                // Extract the fields you wanted
+                const street = addr.road || "";
+                const houseNumber = addr.house_number || "";
+                const city = addr.city || addr.town || addr.village || "";
+
+                const fullString = [street, houseNumber, city].filter(Boolean).join(", ");
+                setFormattedAddress(fullString || "Location found");
+            } catch (err) {
+                console.error("Geocoding error:", err);
+                // Fallback to coordinates if API fails
+                setFormattedAddress(`${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E`);
+            }
+        };
+
+        getDetailedAddress();
+    }, [pulse?.location]);
+
+
+
     // === TIMEZONE-FIXED: convert backend UTC ranges to local all-day events ===
     useEffect(() => {
         if (!pulse) {
@@ -450,7 +497,7 @@ export default function PulseDetails() {
                             {/* INFO GRID */}
                             <div className={styles.infoGrid}>
                                 <div><span>Posted</span><strong>{isoToLocalString(pulse.timestamp)}</strong></div>
-                                <div><span>Location</span><strong>{formatLocation(pulse.location)}</strong></div>
+                                <div><span>Location</span><strong>{formattedAddress}</strong></div>
                                 <div><span>Condition</span><strong>{pulse.condition || "N/A"}</strong></div>
                             </div>
 
@@ -527,7 +574,6 @@ export default function PulseDetails() {
                                 {/* ------- Comments (lazy-loaded from backend) ------- */}
                                 {showComments && (
                                     <div style={{ marginTop: 18 }}>
-                                        <h4>Comments</h4>
 
                                         {commentsLoading && <div>Loading comments...</div>}
                                         {commentsError && <div style={{ color: 'red' }}>{commentsError}</div>}

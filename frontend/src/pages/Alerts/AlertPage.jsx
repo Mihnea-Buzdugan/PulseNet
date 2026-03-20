@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 // IMPORTANT: You MUST import leaflet CSS for the map to render correctly
 import "leaflet/dist/leaflet.css";
 import Navbar from "@/components/Navbar";
@@ -51,7 +51,13 @@ export default function AlertPage() {
     const [loading, setLoading] = useState(true);
 
     // Comments only (persisted in localStorage per-alert)
+    const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState([]);
+    const [commentsLoading, setCommentsLoading] = useState(false);
+    const [commentsError, setCommentsError] = useState("");
+    const [commentsPage, setCommentsPage] = useState(1);
+    const [commentsHasMore, setCommentsHasMore] = useState(false);
+    const [isPosting, setIsPosting] = useState(false);
 
     const [imgIndex, setImgIndex] = useState(0);
     const [toast, setToast] = useState(null);
@@ -64,7 +70,113 @@ export default function AlertPage() {
     const [confirmLoading, setConfirmLoading] = useState(false);
     const [reportLoading, setReportLoading] = useState(false);
 
-    /* Load alert + comments */
+    const COMMENTS_PAGE_SIZE = 10;
+
+    const loadComments = useCallback(async (page = 1, append = false) => {
+        setCommentsLoading(true);
+        setCommentsError("");
+        try {
+            const res = await fetch(`http://localhost:8000/accounts/urgent-requests/comments/${id}/?page=${page}`, {
+                method: "GET",
+                credentials: "include",
+                headers: { "Accept": "application/json" },
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || "Failed to load comments");
+            const newComments = Array.isArray(data.comments) ? data.comments : (data.data || []);
+            if (append) setComments(prev => [...prev, ...newComments]);
+            else setComments(newComments);
+
+            if (typeof data.next !== "undefined") setCommentsHasMore(!!data.next);
+            else if (typeof data.has_more !== "undefined") setCommentsHasMore(!!data.has_more);
+            else setCommentsHasMore(newComments.length === COMMENTS_PAGE_SIZE);
+
+            setCommentsPage(page);
+        } catch (err) {
+            console.error("Comments load error:", err);
+            setCommentsError(err.message || "Error loading comments");
+        } finally {
+            setCommentsLoading(false);
+        }
+    }, [id]);
+
+    const handleToggleComments = () => {
+        const willShow = !showComments;
+        setShowComments(willShow);
+        if (willShow && comments.length === 0) loadComments(1, false);
+    };
+
+    const handleLoadMoreComments = () => {
+        if (commentsLoading) return;
+        loadComments(commentsPage + 1, true);
+    };
+
+    // POST a new comment to backend and prepend it
+    const handlePostComment = async (e) => {
+        e.preventDefault();
+        const text = (e?.target?.elements?.comment?.value ?? commentText).trim();
+        if (!text) return;
+        const csrftoken = getCookie("csrftoken");
+        setIsPosting(true);
+        setCommentsError("");
+        try {
+            const res = await fetch(`http://localhost:8000/accounts/urgent-requests/comments/${id}/`, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrftoken,
+                    "Accept": "application/json",
+                },
+                body: JSON.stringify({ content: text }),
+            });
+
+            const data = await res.json().catch(() => null);
+            if (!res.ok) {
+                const msg = (data && (data.error || data.message)) || `Failed to post comment (status ${res.status})`;
+                throw new Error(msg);
+            }
+
+            const created = (data && (data.comment || data)) || null;
+            const fallback = {
+                id: created?.id ?? `tmp-${Date.now()}`,
+                user: created?.user ?? (created?.user_username ?? "You"),
+                user_id: created?.user_id ?? null,
+                avatar: created?.avatar ?? null,
+                content: created?.content ?? text,
+                date: created?.date ?? new Date().toISOString(),
+                can_delete: created?.can_delete ?? true,
+            };
+
+            setComments(prev => [created || fallback, ...prev]);
+            setCommentText("");
+            setShowComments(true);
+        } catch (err) {
+            console.error("Post comment error:", err);
+            setCommentsError(err.message || "Could not post comment");
+        } finally {
+            setIsPosting(false);
+        }
+    };
+
+    const handleDeleteComment = async (commentId) => {
+        const csrftoken = getCookie("csrftoken");
+        try {
+            const res = await fetch(`http://localhost:8000/accounts/urgent-requests/comments/${commentId}/`, {
+                method: "DELETE",
+                credentials: "include",
+                headers: { "X-CSRFToken": csrftoken },
+            });
+            const data = await res.json().catch(() => null);
+            if (!res.ok || !data?.success) throw new Error(data?.error || "Failed to delete comment");
+            setComments(prev => prev.filter(c => c.id !== commentId));
+        } catch (err) {
+            console.error("Delete comment error:", err);
+            alert(err.message || "Could not delete comment");
+        }
+    };
+
+
     useEffect(() => {
         if (!id) return;
         setLoading(true);
@@ -91,24 +203,6 @@ export default function AlertPage() {
             .finally(() => setLoading(false));
     }, [id]);
 
-    /* load comments for this alert from localStorage */
-    useEffect(() => {
-        if (!id) return;
-        try {
-            const raw = localStorage.getItem(`alert_comments_${id}`);
-            if (raw) setComments(JSON.parse(raw));
-        } catch (e) {
-            console.warn("Could not load comments", e);
-        }
-    }, [id]);
-
-    const saveComments = (next) => {
-        try {
-            localStorage.setItem(`alert_comments_${id}`, JSON.stringify(next));
-        } catch (e) {
-            console.warn("Could not save comments", e);
-        }
-    };
 
     useEffect(() => {
         if (!toast) return;
@@ -214,23 +308,6 @@ export default function AlertPage() {
         }
     };
 
-    const submitComment = (e) => {
-        e.preventDefault();
-        if (!commentText.trim()) return setToast({ type: "error", text: "Write something first." });
-
-        const newComment = {
-            id: `local-${Date.now()}`,
-            user_name: "You (local)",
-            text: commentText.trim(),
-            created_at: new Date().toISOString()
-        };
-
-        const next = [newComment, ...comments];
-        setComments(next);
-        saveComments(next);
-        setCommentText("");
-        setToast({ type: "success", text: "Comment saved locally." });
-    };
 
     const openInMaps = () => {
         if (!alert.lat || !alert.lng) return;
@@ -256,8 +333,11 @@ export default function AlertPage() {
     const related = alert.related || [];
 
     return (
+        <div className={styles.bodyContainer}>
+            <div className={styles.navbarAdjust}>
+                <Navbar />
+            </div>
         <div className={styles.pageWrap}>
-            <Navbar />
 
             <div className={styles.container}>
                 <button className={styles.backBtn} onClick={() => navigate(-1)}>
@@ -371,28 +451,98 @@ export default function AlertPage() {
                         </div>
 
                         <div className={styles.commentsWrap}>
-                            <h3>Community Updates</h3>
-                            <form onSubmit={submitComment} className={styles.commentForm}>
-                                <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Provide additional details or updates..." />
+                            <h3 style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span>Community Updates</span>
+
+                                <button
+                                    onClick={handleToggleComments}
+                                    style={{
+                                        border: "none",
+                                        background: "transparent",
+                                        cursor: "pointer",
+                                        color: "#007bff",
+                                    }}
+                                >
+                                    {showComments
+                                        ? "Hide comments"
+                                        : `Show comments${comments.length ? ` (${comments.length})` : ""}`}
+                                </button>
+                            </h3>
+
+                            <form onSubmit={handlePostComment} className={styles.commentForm}>
+                            <textarea
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                            placeholder="Provide additional details or updates..."
+                            disabled={isPosting}
+                            />
                                 <div className={styles.commentBtns}>
-                                    <button type="submit" className={styles.postCommentBtn}>Post Update</button>
+                                    <button
+                                        type="submit"
+                                        className={styles.postCommentBtn}
+                                        disabled={isPosting || !commentText.trim()}
+                                    >
+                                        {isPosting ? "Posting..." : "Post Update"}
+                                    </button>
                                 </div>
                             </form>
 
-                            <div className={styles.commentList}>
-                                {comments && comments.length ? comments.map(c => (
-                                    <div className={styles.comment} key={c.id}>
-                                        <div className={styles.commentAvatar}>{c.user_name?.[0] || "U"}</div>
-                                        <div className={styles.commentBody}>
-                                            <div className={styles.commentHeader}>
-                                                <strong>@{c.user_name}</strong>
-                                                <span className={styles.commentTime}>{new Date(c.created_at).toLocaleString()}</span>
-                                            </div>
-                                            <div className={styles.commentText}>{c.text}</div>
+                            {showComments && (
+                                <div className={styles.commentsSection}>
+                                    {commentsLoading && <div className={styles.commentsLoading}>Loading updates...</div>}
+                                    {commentsError && <div className={styles.commentsError}>{commentsError}</div>}
+
+                                    {!commentsLoading && comments.length === 0 && (
+                                        <div className={styles.noComments}>
+                                            No updates yet. Be the first to add details.
                                         </div>
+                                    )}
+
+                                    <div className={styles.commentList}>
+                                        {comments.map((c) => (
+                                            <div className={styles.comment} key={c.id}>
+                                                <div className={styles.commentAvatar}>
+                                                    {c.user?.[0] || c.user_username?.[0] || "U"}
+                                                </div>
+
+                                                <div className={styles.commentBody}>
+                                                    <div className={styles.commentHeader}>
+                                                        <strong>@{c.user || "user"}</strong>
+                                                        <span className={styles.commentTime}>
+              {c.created_at ? new Date(c.created_at).toLocaleString() : c.date || ""}
+            </span>
+                                                    </div>
+
+                                                    <div className={styles.commentText}>
+                                                        {c.text || c.content}
+                                                    </div>
+
+                                                    {c.can_delete && (
+                                                        <button
+                                                            onClick={() => handleDeleteComment(c.id)}
+                                                            className={styles.deleteBtn}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                )) : <div className={styles.noComments}>No updates yet. Be the first to add details.</div>}
-                            </div>
+
+                                    {commentsHasMore && (
+                                        <div className={styles.loadMoreWrap}>
+                                            <button
+                                                onClick={handleLoadMoreComments}
+                                                disabled={commentsLoading}
+                                                className={styles.loadMoreBtn}
+                                            >
+                                                {commentsLoading ? "Loading..." : "Load more"}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -482,6 +632,7 @@ export default function AlertPage() {
                     {toast.text}
                 </div>
             )}
+        </div>
         </div>
     );
 }

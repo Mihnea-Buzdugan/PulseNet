@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 import json
 from django.db.models import Q, Prefetch
 from django.contrib.auth import get_user_model
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
@@ -20,10 +20,11 @@ from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django.db import IntegrityError
 from networkx.algorithms.distance_measures import radius
-
+from math import ceil
 from .decorators import api_login_required
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
-    PulseComment, PulseRating, Notification, UrgentRequest, UrgentRequestImage, AlertConfirm, AlertReport
+    PulseComment, PulseRating, Notification, UrgentRequest, UrgentRequestImage, AlertConfirm, AlertReport, \
+    RequestComment
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
@@ -2120,6 +2121,64 @@ def urgent_requests_list(request):
     data.sort(key=lambda x: x["match_score"], reverse=True)
     return JsonResponse({"success": True, "urgent_requests": data})
 
+@require_GET
+def list_all_requests(request):
+    page = int(request.GET.get("page", 1))
+    page_size = 15
+
+    qs = (
+        UrgentRequest.objects
+        .filter(is_active=True)
+        .select_related("user")
+        .prefetch_related("images")
+        .order_by("-created_at")
+    )
+
+    total_count = qs.count()
+    total_pages = ceil(total_count / page_size)
+
+    start = (page - 1) * page_size
+    end = start + page_size
+
+    urgent_requests = qs[start:end]
+
+    results = []
+    for req in urgent_requests:
+        images = [
+            request.build_absolute_uri(img.image.url)
+            for img in req.images.all()
+            if img.image
+        ]
+
+        location_data = None
+        if req.location:
+            location_data = {
+                "lat": req.location.y,
+                "lng": req.location.x,
+            }
+
+        results.append({
+            "id": req.id,
+            "user": req.user.username,
+            "title": req.title,
+            "description": req.description,
+            "category": req.category,
+            "max_price": str(req.max_price) if req.max_price else None,
+            "location": location_data,
+            "created_at": req.created_at.isoformat() if req.created_at else None,
+            "expires_at": req.expires_at.isoformat() if req.expires_at else None,
+            "images": images,
+        })
+
+    return JsonResponse({
+        "results": results,
+        "page": page,
+        "total_pages": total_pages,
+        "has_next": page < total_pages,
+        "has_previous": page > 1,
+    })
+
+
 def urgent_request_detail(request, request_id):
     """Return a single urgent request as JSON."""
     try:
@@ -2168,3 +2227,82 @@ def create_urgent_request(request):
 
     return JsonResponse({"success": True, "id": new_request.id})
 
+
+@login_required
+def get_request_comments(request, request_id):
+    if request.method == "GET":
+        comments = (
+            RequestComment.objects
+            .filter(request_id=request_id)
+            .select_related("user")
+            .order_by("-pub_date")
+        )
+
+        data = []
+
+        for comment in comments:
+            data.append({
+                "id": comment.id,
+                "user": comment.user.username,
+                "user_id": comment.user.id,
+                "avatar": request.build_absolute_uri(comment.user.profile_picture.url) if comment.user.profile_picture else None,
+                "content": comment.content,
+                "date": comment.pub_date.strftime("%d %b %Y, %H:%M"),
+                "can_delete": comment.can_delete(request.user),
+            })
+
+        return JsonResponse({
+            "success": True,
+            "comments": data
+        })
+
+
+    elif request.method == "POST":
+        data = json.loads(request.body)
+        content = data.get("content")
+        if not content:
+            return JsonResponse({
+                "success": False,
+                "error": "Content is required"
+            })
+
+        comment = RequestComment.objects.create(
+            request_id=request_id,
+            user=request.user,
+            content=content
+
+        )
+
+        return JsonResponse({
+            "success": True,
+            "comment": {
+                "id": comment.id,
+                "user": comment.user.username,
+                "user_id": comment.user.id,
+                "avatar": request.build_absolute_uri(
+                    comment.user.profile_picture.url) if comment.user.profile_picture else None,
+                "content": comment.content,
+                "date": comment.pub_date.strftime("%d %b %Y, %H:%M"),
+                "can_delete": comment.can_delete(request.user),
+            }
+        })
+    elif request.method == "DELETE":
+        # get comment_id from query params or body
+
+        comment_id = request_id
+        if not comment_id:
+            return JsonResponse({"success": False, "error": "Comment ID required"}, status=400)
+
+        try:
+            comment = RequestComment.objects.get(id=comment_id)
+            if comment.user != request.user:
+                return JsonResponse({"success": False, "error": "Not allowed"}, status=403)
+            comment.delete()
+            return JsonResponse({"success": True, "message": "Comment deleted"})
+        except RequestComment.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Comment not found"}, status=404)
+    else:
+        return JsonResponse({
+            "success": False,
+            "error": "Invalid request method"
+        }, status=405)

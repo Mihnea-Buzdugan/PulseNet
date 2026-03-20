@@ -156,8 +156,10 @@ export default function AddAlerts() {
     };
 
     return (
-        <div>
-            <Navbar />
+        <div className={styles.bodyContainer}>
+            <div className={styles.navbarAdjust}>
+                <Navbar />
+            </div>
             <div className={styles.container}>
                 <form onSubmit={handleSubmit} className={styles.alertForm}>
                     <h2 className={styles.formTitle}>New Community Alert</h2>

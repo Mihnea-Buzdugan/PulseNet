@@ -182,8 +182,12 @@ export default function Alerts() {
     };
 
     return (
+        <div className={styles.bodyContainer}>
+            <div className={styles.navbarAdjust}>
+                <Navbar />
+            </div>
         <div className={styles.body}>
-            <Navbar />
+
             <div className={styles.bgBloom1}></div>
             <div className={styles.bgBloom2}></div>
 
@@ -263,6 +267,7 @@ export default function Alerts() {
                     </div>
                 )}
             </div>
+        </div>
         </div>
     );
 }

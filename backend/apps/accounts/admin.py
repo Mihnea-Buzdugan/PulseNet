@@ -6,7 +6,7 @@ from .models import (
     User, Follow, Friendship, PendingFollow, Pulse, PulseImage,
     Group_Conversation, DirectConversation, FavoritePulse,
     PulseRental, Alert, AlertImage, PulseComment,
-    PulseRating, Notification, UrgentRequest, AlertReport, AlertConfirm, UrgentRequestImage,
+    PulseRating, Notification, UrgentRequest, AlertReport, AlertConfirm, UrgentRequestImage, RequestComment
 )
 
 class LocationAdminForm(forms.ModelForm):
@@ -57,5 +57,5 @@ admin.site.register([
     Follow, Friendship, PendingFollow, PulseImage,
     Group_Conversation, DirectConversation, FavoritePulse,
     PulseRental, AlertImage, PulseComment,
-    PulseRating, Notification, AlertReport, AlertConfirm, UrgentRequestImage
+    PulseRating, Notification, AlertReport, AlertConfirm, UrgentRequestImage, RequestComment
 ])

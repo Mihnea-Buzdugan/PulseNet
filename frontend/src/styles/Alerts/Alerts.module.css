@@ -1,8 +1,31 @@
 /* Alerts.module.css */
 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+
+.bodyContainer {
+    background-color: #e9e6e6;
+    color: black;
+}
+
+
+.main-container {
+    position: relative;
+}
+
+.navbarAdjust {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
 .body {
     min-height: 100vh;
-    color: #0f172a;
     font-family: system-ui, -apple-system, sans-serif;
     position: relative;
     overflow-x: hidden;
