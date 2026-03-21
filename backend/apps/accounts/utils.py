@@ -1,4 +1,6 @@
 import json
+import os
+
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
 from django.utils import timezone
@@ -11,12 +13,15 @@ from sentence_transformers import SentenceTransformer
 from .models import UrgentRequest, User, Notification
 
 _model = None
+MODEL_CACHE_PATH = os.getenv('SENTENCE_TRANSFORMERS_HOME', '/app/model_cache')
 
 def get_model():
     global _model
     if _model is None:
         # Note: loading this inside the task is usually safer for worker stability
-        _model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+        os.makedirs(MODEL_CACHE_PATH, exist_ok=True)
+
+        _model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2", cache_folder=MODEL_CACHE_PATH)
     return _model
 
 def find_heroes_for_urgent_requests(request_id):
