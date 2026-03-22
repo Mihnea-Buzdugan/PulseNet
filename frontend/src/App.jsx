@@ -3,7 +3,7 @@ import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-
 import { toast, Toaster } from 'react-hot-toast';
 import Loading from './components/Loading';
 import FavoritePulses from "./pages/User_pages/FavoritePulses";
-
+import './App.css';
 
 // Lazy loaded pages
 const Index = React.lazy(() => import('./pages/Pulses_pages/Index'));
@@ -23,6 +23,9 @@ const AddAlerts = React.lazy(() => import('./pages/Alerts/AddAlerts.jsx'));
 const AlertPage = React.lazy(() => import('./pages/Alerts/AlertPage.jsx'));
 const UrgentRequests = React.lazy(() => import('./pages/Requests/UrgentRequests.jsx'));
 const CreateRequest = React.lazy(() => import('./pages/Requests/CreateRequest.jsx'));
+const Admin = React.lazy(()=> import('./pages/Admin.jsx'));
+
+
 const NotificationHandler = ({ currentUser }) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -233,11 +236,11 @@ const NotificationHandler = ({ currentUser }) => {
     return null;
 };
 
-// --- MAIN APP COMPONENT ---
+
 function App() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-
+    const navigate = useNavigate();
     const fetchUser = () => {
         fetch('http://localhost:8000/accounts/user/', { credentials: 'include' })
             .then(response => {
@@ -245,7 +248,6 @@ function App() {
                 return response.json();
             })
             .then(data => {
-                // Correctly extracting the nested user object from your logs
                 const userData = data.user || data;
                 if (userData && userData.id) {
                     setUser(userData);
@@ -261,20 +263,66 @@ function App() {
 
     if (loading) return <Loading />;
 
+
+    const ProtectedRoute = ({ children }) => {
+        if (loading) return <Loading />;
+        return user ? children : <Navigate to="/please-login" />;
+    };
+
+
+    const AdminRoute = ({ children }) => {
+        if (loading) return <Loading />;
+        return user?.is_superuser ? children : <Navigate to="/" />;
+    };
+
+    // --- NEW: Check if user is banned ---
+    if (user && user.is_banned) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center px-4">
+                <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full border-t-4 border-red-500">
+                    <h1 className="text-3xl font-bold text-gray-800 mb-4">Account Suspended</h1>
+                    <p className="text-gray-600 mb-4">
+                        Your access to this application has been temporarily restricted due to a violation of our terms.
+                    </p>
+
+                    {/* If your backend sends the date, format and display it */}
+                    {user.banned_until && (() => {
+                        const date = new Date(user.banned_until);
+                        const day = String(date.getDate()).padStart(2, "0");
+                        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+                        const year = date.getFullYear();
+                        const hours = String(date.getHours()).padStart(2, "0");
+                        const minutes = String(date.getMinutes()).padStart(2, "0");
+
+                        return (
+                            <div className="bg-red-50 p-3 rounded text-red-700 font-medium mb-6">
+                                Ban lifts on: {`${day}.${month}.${year} ${hours}:${minutes}`}
+                            </div>
+                        );
+                    })()}
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setUser(null);        // Clear user first
+                            navigate('/login');   // Then navigate
+                        }}
+                        className="text-blue-600 hover:underline"
+                    >
+                        Return to Login
+                    </button>
+                </div>
+            </div>
+        );
+    }
+    // ------------------------------------
+
     return (
         <div className="min-h-screen bg-white">
             <Toaster
                 position="top-right"
-                containerStyle={{
-                    top: 24,
-                    right: 24,
-                    zIndex: 999999
-                }}
-                toastOptions={{
-                    custom: {
-                        duration: 5000,
-                    },
-                }}
+                containerStyle={{ top: 24, right: 24, zIndex: 999999 }}
+                toastOptions={{ custom: { duration: 5000 } }}
             />
 
             {user && <NotificationHandler currentUser={user} />}
@@ -286,22 +334,24 @@ function App() {
                     <Route path="/login" element={<Login onLoginSuccess={fetchUser} />} />
 
                     {/* Protected Routes */}
-                    <Route path="/profile" element={user ? <Profile user={user} /> : <Navigate to="/login" />} />
-                    <Route path="/search-users" element={user ? <SearchUsers user={user} /> : <Navigate to="/login" />} />
-                    <Route path="/follow-requests" element={user ? <FollowRequests user={user} /> : <Navigate to="/login" />} />
-                    <Route path="/user-profile/:id" element={user ? <UserProfile user={user} /> : <Navigate to="/login" />} />
-                    <Route path="/direct-chat/:id" element={user ? <DirectChat currentUser={user} /> : <Navigate to="/login" />} />
-                    <Route path="/add-pulse" element={<AddPulses/>} />
-                    <Route path="pulse/:type/:id" element={<PulseDetails />} />
-                    <Route path="/transaction/:pulseId" element={<PulseTransaction />} />
-                    <Route path="/messages" element={<Messages />} />
-                    <Route path="/favorites" element={<FavoritePulses />} />
-                    <Route path="/alerts" element={<Alerts />} />
-                    <Route path="/add-alerts" element={<AddAlerts />} />
-                    <Route path="/alert/:id" element={<AlertPage />} />
+                    <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                    <Route path="/search-users" element={<ProtectedRoute><SearchUsers /></ProtectedRoute>} />
+                    <Route path="/follow-requests" element={<ProtectedRoute><FollowRequests /></ProtectedRoute>} />
+                    <Route path="/user-profile/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+                    <Route path="/direct-chat/:id" element={<ProtectedRoute><DirectChat /></ProtectedRoute>} />
 
+                    {/* I noticed some routes below aren't protected. You might want to wrap them in `user ? ... : <Navigate to="/login" />` if they require auth! */}
+                    <Route path="/add-pulse" element={<ProtectedRoute><AddPulses/></ProtectedRoute>} />
+                    <Route path="pulse/:type/:id" element={<PulseDetails />} />
+                    <Route path="/transaction/:pulseId" element={<ProtectedRoute><PulseTransaction /></ProtectedRoute>} />
+                    <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+                    <Route path="/favorites" element={<ProtectedRoute><FavoritePulses /></ProtectedRoute>} />
+                    <Route path="/alerts" element={<Alerts />} />
+                    <Route path="/add-alerts" element={<ProtectedRoute><AddAlerts /></ProtectedRoute>} />
+                    <Route path="/alert/:id" element={<AlertPage />} />
+                    <Route path="/admin-page" element={<AdminRoute><Admin /></AdminRoute>} />
                     <Route path="/urgent-requests" element={<UrgentRequests />} />
-                    <Route path="/create-request" element={<CreateRequest />} />
+                    <Route path="/create-request" element={<ProtectedRoute><CreateRequest /></ProtectedRoute>} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </Suspense>

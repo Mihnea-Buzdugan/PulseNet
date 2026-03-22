@@ -621,7 +621,11 @@ export default function PulseDetails() {
                                     <h3>Seller</h3>
                                     <p>{pulse.user}</p>
                                     <div>
-                                        <button className={styles.contactBtn} onClick={(e) => { e.stopPropagation(); navigate(`/direct-chat/${pulse.user_id}`); }}>
+                                        <button className={styles.contactBtn} onClick={(e) => { e.stopPropagation(); navigate(`/direct-chat/${pulse.user_id}`, {
+                                            state: {
+                                                fromPulse: true,
+                                            }
+                                        }); }}>
                                             <MessageSquare size={16} /> Contact
                                         </button>
                                         <button onClick={() => { pulse.is_favorite ? delete_favorite() : handleFavorite(); }}

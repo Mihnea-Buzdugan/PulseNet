@@ -67,4 +67,8 @@ urlpatterns = [
     path("urgent-requests/<int:pk>/", views.urgent_request_detail, name="urgent_request_detail"),
     path('urgent-requests/comments/<int:request_id>/', views.get_request_comments, name='get_request_comments'),
     path("list-all-requests/", views.list_all_requests, name="list_all_requests"),
+
+    #Admin urls
+    path('admin_alert_reports/', views.admin_alert_reports, name='admin_reports'),
+    path('ban-user/<int:user_id>/', views.ban_user, name='ban_user'),
 ]

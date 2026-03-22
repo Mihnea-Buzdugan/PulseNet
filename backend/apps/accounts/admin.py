@@ -31,9 +31,25 @@ class LocationAdminForm(forms.ModelForm):
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     form = LocationAdminForm
+
+    # Adding 'banned_until' to your existing fieldsets
     fieldsets = UserAdmin.fieldsets + (
-        ('Custom Profile', {'fields': ('profile_picture', 'biography', 'lat', 'lng', 'visibility_radius', 'quiet_hours_start', 'quiet_hours_end', 'online_status')}),
+        ('Custom Profile', {
+            'fields': (
+                'profile_picture', 'biography', 'lat', 'lng',
+                'visibility_radius', 'quiet_hours_start', 'quiet_hours_end',
+                'online_status', 'private_account',
+                'banned_until'  # <--- Added here
+            )
+        }),
     )
+
+    # This makes the ban status visible in the main list view
+    list_display = ('email', 'username', 'is_banned_status', 'banned_until')
+
+    @admin.display(boolean=True, description='Currently Banned')
+    def is_banned_status(self, obj):
+        return obj.is_banned  # This calls your @property from models.py
 
 @admin.register(Pulse)
 class PulseAdmin(admin.ModelAdmin):

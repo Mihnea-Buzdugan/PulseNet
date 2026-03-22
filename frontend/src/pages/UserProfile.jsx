@@ -159,15 +159,25 @@ export default function Profile() {
                             </div>
 
                             <div className={styles.actionWrapper}>
-                                {(user.is_friend || !user.private_account) && (
+                                {(user.is_friend || !user.private_account) ? (
+                                    <button
+                                        className={styles.msgBtn}
+                                        onClick={(e) => { e.stopPropagation(); navigate(`/direct-chat/${pulse.user_id}`, {
+                                            state: {
+                                                fromPulse: false,
+                                            }
+                                        }); }}
+                                    >
+                                        DM
+                                    </button>
+                                ) : (
                                     <button
                                         className={styles.msgBtn}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            navigate(`/direct-chat/${id}`);
                                         }}
                                     >
-                                        DM
+                                        Can't contact until you are friends
                                     </button>
                                 )}
                                 {user.is_friend || user.is_following ? (
@@ -180,7 +190,7 @@ export default function Profile() {
                                     </button>
                                 ) : (
                                     <button className={styles.followBtn} onClick={(e) => handleUserAction(e, user, 'follow')}>
-                                        {user.private_account ? "Request" : "Follow"}
+                                        {user.private_account ? "Request to follow" : "Follow"}
                                     </button>
                                 )}
                             </div>
