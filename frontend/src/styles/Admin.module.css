@@ -1,0 +1,223 @@
+:root {
+    --bg-color: #0a0a0c;
+    --card-bg: rgba(25, 25, 30, 0.6);
+    --accent-color: #00f2ff;
+    --danger-color: #ff0055;
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+
+.container {
+    min-height: 100vh;
+    background-color: var(--bg-color);
+    background-image:
+            radial-gradient(circle at 50% 0%, rgba(0, 242, 255, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 0% 100%, rgba(255, 0, 85, 0.05) 0%, transparent 50%);
+    color: var(--text-primary);
+    padding: 2rem;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.header {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin: 0;
+}
+
+.accent {
+    color: var(--accent-color);
+    text-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.tableWrapper {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.table th {
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.row {
+    transition: background 0.2s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.row:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.table td {
+    padding: 1.25rem;
+    vertical-align: middle;
+}
+
+.idCell {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent-color);
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.email {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.uid {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.badge {
+    background: rgba(0, 242, 255, 0.1);
+    color: var(--accent-color);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid rgba(0, 242, 255, 0.2);
+}
+
+.description {
+    max-width: 300px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.banButton {
+    background: transparent;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.banButton:hover {
+    background: var(--danger-color);
+    color: white;
+    box-shadow: 0 0 15px rgba(255, 0, 85, 0.4);
+    transform: translateY(-2px);
+}
+
+.loader {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-color);
+    color: var(--accent-color);
+    font-family: monospace;
+    letter-spacing: 4px;
+}
+
+.searchContainer {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.searchInput {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    width: 350px;
+    outline: none;
+    transition: border 0.3s;
+}
+
+.searchInput:focus {
+    border-color: var(--accent-color);
+}
+
+.searchButton {
+    background: var(--accent-color);
+    color: #000;
+    font-weight: bold;
+    border: none;
+    padding: 0 25px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.banSettings {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.durationInput {
+    background: #111;
+    border: 1px solid var(--border-color);
+    color: var(--accent-color);
+    padding: 5px;
+    width: 60px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-color);
+    object-fit: cover;
+}
+
+.badgeContainer {
+    display: flex;
+    gap: 5px;
+}
+
+.friendBadge { background: #00ff8833; color: #00ff88; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; }
+.privateBadge { background: #ffffff22; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; }
+.followingBadge { background: #00f2ff33; color: #00f2ff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; }
+
+.noResults {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}

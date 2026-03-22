@@ -1,4 +1,5 @@
 from channels.layers import get_channel_layer
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import authenticate
 from django.core.paginator import Paginator
 from django.middleware.csrf import get_token
@@ -226,6 +227,8 @@ def user(request):
             'lastName': user.last_name,
             'is_superuser': user.is_superuser,
             'profile_picture': user.profile_picture.url if user.profile_picture else None,
+            "is_banned": user.is_banned,  # Calls your @property helper
+            "banned_until": user.banned_until.isoformat() if user.banned_until else None,
         }}, status=200)
     else:
         return JsonResponse({'message': 'Method not allowed'}, status=405)
@@ -1508,7 +1511,11 @@ def user_profile(request, user_id):
             "username": user.username,
             "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
             "biography": user.biography,
-            "location": user.location,
+            "location": (
+                {"lat": user.location.y, "lng": user.location.x}
+                if user.location
+                else None
+            ),
             "visibilityRadius": user.visibility_radius,
             "quiet_hours_start": user.quiet_hours_start,
             "quiet_hours_end": user.quiet_hours_end,
@@ -1520,12 +1527,10 @@ def user_profile(request, user_id):
                 follower=request.user,
                 following=user
             ).exists(),
-
             "pending_follow": PendingFollow.objects.filter(
                 requester=request.user,
                 target=user
             ).exists(),
-
             "is_friend": is_friend,
             "pulses": pulses_data,
         }
@@ -1674,13 +1679,16 @@ from .models import User, DirectConversation, Friendship, DirectMessage, Group_M
 # --- SYNC HELPERS ---
 
 def handle_create_conversation_sync(request, user2_id):
-    """
-    Accessing request.user here is safe because sync_to_async
-    has moved us to a standard synchronous thread.
-    """
     try:
         if not request.user.is_authenticated:
             return {"error": "Authentication required", "status": 401}
+
+        # Parse JSON body
+        try:
+            body = json.loads(request.body)
+            from_pulse = body.get("fromPulse", False)  # default to False
+        except json.JSONDecodeError:
+            from_pulse = False
 
         user1 = request.user
         try:
@@ -1697,11 +1705,12 @@ def handle_create_conversation_sync(request, user2_id):
         is_friend = Friendship.objects.filter(user1_id=u_first.id, user2_id=u_second.id).exists()
         is_public = not getattr(user2, 'private_account', False)
 
-        if is_friend or is_public:
+        if is_friend or is_public or from_pulse:
             conversation, created = DirectConversation.objects.get_or_create(
                 user1=u_first,
                 user2=u_second
             )
+
             return {
                 "conversation_id": conversation.id,
                 "created": created,
@@ -2306,3 +2315,53 @@ def get_request_comments(request, request_id):
             "success": False,
             "error": "Invalid request method"
         }, status=405)
+
+
+
+def admin_alert_reports(request):
+    if not request.user.is_staff:
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
+    reports = AlertReport.objects.select_related("alert", "user").all()
+    data = [
+        {
+            "id": r.id,
+            "alert_id": r.alert.id,
+            "alert_title": getattr(r.alert, "title", ""),
+            "user_id": r.user.id,
+            "user_email": r.user.email,
+            "reason": r.reason,
+            "description": r.description,
+            "created_at": r.created_at.isoformat(),
+        }
+        for r in reports
+    ]
+    return JsonResponse({"reports": data})
+
+@staff_member_required
+@require_POST
+def ban_user(request, user_id):
+    """
+    Deactivates a user account (Banning).
+    Only accessible by staff/admin users via a POST request.
+    """
+    # 1. Fetch the user or return 404
+    user_to_ban = get_object_or_404(User, id=user_id)
+
+    # 2. Prevent admins from accidentally banning themselves
+    if user_to_ban == request.user:
+        return JsonResponse({"error": "You cannot an admin."}, status=400)
+
+    # 3. Prevent banning other staff/superusers unless current user is superuser
+    if user_to_ban.is_staff and not request.user.is_superuser:
+        return JsonResponse({"error": "Insufficient permissions to ban staff."}, status=403)
+
+    # 4. Perform the "Ban"
+    user_to_ban.is_active = False
+    user_to_ban.save()
+
+    return JsonResponse({
+        "message": f"User {user_to_ban.email} has been terminated.",
+        "user_id": user_id,
+        "status": "inactive"
+    })

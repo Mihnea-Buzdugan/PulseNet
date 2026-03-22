@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Loading from "../../components/Loading";
 import styles from '../../styles/User_pages/directchat.module.css';
 import Navbar from "../../components/Navbar"; // 1. Import the styles
+import { useLocation } from "react-router-dom";
+
 
 function getCookie(name) {
     let cookieValue = null;
@@ -20,7 +22,9 @@ function getCookie(name) {
 }
 
 const DirectChat = ({ currentUser }) => {
-    const { id } = useParams();
+    const location = useLocation();
+
+    const {id} = useParams();
     const navigate = useNavigate();
     const [conversationId, setConversationId] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -32,15 +36,25 @@ const DirectChat = ({ currentUser }) => {
 
     useEffect(() => {
         const initializeChat = async () => {
+            const fromPulse = location.state?.fromPulse ?? false;
+
+            const bodyData = {
+                fromPulse: fromPulse,
+            };
+
             try {
-                const response = await fetch(`http://localhost:8000/accounts/direct_conversations/create/${id}/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken'),
-                    },
-                    credentials: 'include',
-                });
+                const response = await fetch(
+                    `http://localhost:8000/accounts/direct_conversations/create/${id}/`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(bodyData) // <-- stringify here
+                    }
+                );
                 const data = await response.json();
                 if (response.ok) setConversationId(data.conversation_id);
                 else {
