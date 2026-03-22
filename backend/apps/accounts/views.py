@@ -22,7 +22,7 @@ from django.contrib.gis.db.models.functions import Distance
 from django.db import IntegrityError
 from networkx.algorithms.distance_measures import radius
 from math import ceil
-from .decorators import api_login_required
+from .decorators import api_login_required, check_hate_speech
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
     PulseComment, PulseRating, Notification, UrgentRequest, UrgentRequestImage, AlertConfirm, AlertReport, \
     RequestComment
@@ -448,9 +448,13 @@ def delete_profile_picture(request):
 @login_required
 @require_POST
 @csrf_protect
+@check_hate_speech
 def add_pulse(request):
     try:
         data = request.POST
+
+        should_flag = getattr(request, 'needs_review', False)
+        ai_score = getattr(request, 'toxicity_score', 0.0)
 
         # coordonatele de unde a fost facuta postarea
         lat = data.get('lat')
@@ -469,7 +473,11 @@ def add_pulse(request):
             currencyType=data.get('currencyType', 'RON'),
             phone_number=data.get('phone_number', ''),
             location=location_point,
-            is_available=data.get('is_available', 'true').lower() == 'true'
+            is_available=data.get('is_available', 'true').lower() == 'true',
+
+            is_flagged=should_flag,
+            is_approved=not should_flag,
+            toxicity_score=ai_score,
         )
 
         images = request.FILES.getlist('images')
@@ -1855,9 +1863,13 @@ def list_alerts(request):
 
 
 @login_required
+@check_hate_speech
 def create_alert(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
+
+    should_flag = getattr(request, 'needs_review', False)
+    ai_score = getattr(request, 'toxicity_score', 0.0)
 
     try:
         title = request.POST.get("title")
@@ -1880,7 +1892,11 @@ def create_alert(request):
             title=title,
             description=description,
             category=category,
-            location=location
+            location=location,
+
+            is_flagged = should_flag,
+            is_approved = not should_flag,
+            toxicity_score = ai_score,
         )
 
         # 2. Save the images
@@ -2215,8 +2231,12 @@ def urgent_request_detail(request, request_id):
 
 @login_required
 @require_POST
+@check_hate_speech
 def create_urgent_request(request):
     data = request.POST
+
+    should_flag = getattr(request, 'needs_review', False)
+    ai_score = getattr(request, 'toxicity_score', 0.0)
 
     new_request = UrgentRequest.objects.create(
         user=request.user,
@@ -2226,6 +2246,10 @@ def create_urgent_request(request):
         expires_at=data.get("expires_at"),
         location=Point(float(data["lng"]), float(data["lat"])) if "lng" in data and "lat" in data else None,
         max_price=data.get("max_price", 0),
+
+        is_flagged=should_flag,
+        is_approved=not should_flag,
+        toxicity_score=ai_score,
     )
 
     images = request.FILES.getlist("images")
@@ -2365,3 +2389,26 @@ def ban_user(request, user_id):
         "user_id": user_id,
         "status": "inactive"
     })
+
+@staff_member_required
+@require_GET
+def get_posts(request):
+
+    def get_flagged_data(model_class, extra_fields=None):
+
+        if extra_fields is None:
+            extra_fields = []
+
+        fields = ['id', 'title', 'description', 'category', 'toxicity_score', 'created_at',
+                  'user__username'] + extra_fields
+        return list(model_class.objects.filter(is_flagged=True).values(*fields))
+
+    return JsonResponse({
+        "success": True,
+        "flagged": {
+            "pulses": get_flagged_data(Pulse, ['pulse_type']),
+            "alerts": get_flagged_data(Alert),
+            "urgent_requests": get_flagged_data(UrgentRequest),
+        }
+    })
+

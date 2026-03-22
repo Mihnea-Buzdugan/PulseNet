@@ -92,6 +92,10 @@ class Pulse(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 
+    is_approved = models.BooleanField(default=True)
+    is_flagged = models.BooleanField(default=False)
+    toxicity_score = models.FloatField(default=0.0)
+
     #category in cazu in care adaugam categorii de obiecte pe viitor
     category = models.CharField(max_length=150, blank=True)
 
@@ -360,8 +364,14 @@ class Alert(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notices")
+
     title = models.CharField(max_length=150)
     description = models.TextField()
+
+    is_approved = models.BooleanField(default=True)
+    is_flagged = models.BooleanField(default=False)
+    toxicity_score = models.FloatField(default=0.0)
+
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="other")
     created_at = models.DateTimeField(auto_now_add=True)
     location = models.PointField(srid=4326, null=True, blank=True)
@@ -529,6 +539,10 @@ class UrgentRequest(models.Model):
     )
     title = models.CharField(max_length=200)  # optional description of request
     description = models.TextField(blank=True)
+
+    is_approved = models.BooleanField(default=True)
+    is_flagged = models.BooleanField(default=False)
+    toxicity_score = models.FloatField(default=0.0)
 
     category = models.CharField(max_length=150, blank=True)
 

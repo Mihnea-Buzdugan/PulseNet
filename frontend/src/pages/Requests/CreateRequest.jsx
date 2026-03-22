@@ -149,7 +149,7 @@ export default function CreateRequest() {
             } else {
                 const err = await response.json().catch(() => null);
                 console.error("Server error:", err || response.statusText);
-                alert("An error occurred. See console for details.");
+                alert(err?.error || "An error occurred. See console for details.");
             }
         } catch (err) {
             console.error("Request failed:", err);

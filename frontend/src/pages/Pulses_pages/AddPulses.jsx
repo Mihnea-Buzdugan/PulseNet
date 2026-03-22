@@ -167,7 +167,7 @@ function AddPulses() {
                     console.error("Nu s-a putut converti eroarea la JSON.", e);
                 }
                 console.error("Eroare de la server:", errorData || response.statusText);
-                alert("A apărut o eroare la server. Vezi consola pentru detalii.");
+                alert(errorData?.error || "A apărut o eroare la server. Vezi consola pentru detalii.");
             }
         } catch (error) {
             console.error("Error adding pulse:", error);

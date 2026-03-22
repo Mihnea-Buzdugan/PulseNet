@@ -71,4 +71,6 @@ urlpatterns = [
     #Admin urls
     path('admin_alert_reports/', views.admin_alert_reports, name='admin_reports'),
     path('ban-user/<int:user_id>/', views.ban_user, name='ban_user'),
+    path('get_posts', views.get_posts, name='get_posts'),
+
 ]

@@ -146,7 +146,8 @@ export default function AddAlerts() {
                 setImagesPreview([]);
                 setSelectedFiles([]);
             } else {
-                alert("Eroare la salvare.");
+                const err = await response.json().catch(() => null);
+                alert(err?.error || "Eroare la salvare.");
             }
         } catch (error) {
             console.error(error);

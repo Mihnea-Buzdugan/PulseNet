@@ -8,6 +8,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from sentence_transformers import util
 from sentence_transformers import SentenceTransformer
+from transformers import pipeline
 
 # Import your models here - update paths as necessary
 from .models import UrgentRequest, User, Notification
@@ -18,11 +19,24 @@ MODEL_CACHE_PATH = os.getenv('SENTENCE_TRANSFORMERS_HOME', '/app/model_cache')
 def get_model():
     global _model
     if _model is None:
-        # Note: loading this inside the task is usually safer for worker stability
         os.makedirs(MODEL_CACHE_PATH, exist_ok=True)
 
         _model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2", cache_folder=MODEL_CACHE_PATH)
     return _model
+
+_toxicity_model = None
+
+def get_toxicity_model():
+    global _toxicity_model
+    if _toxicity_model is None:
+        os.makedirs(MODEL_CACHE_PATH, exist_ok=True)
+        _toxicity_model = pipeline(
+            "text-classification",
+            model="unitary/toxic-bert",
+            model_kwargs={"cache_dir": MODEL_CACHE_PATH},
+            top_k=None
+        )
+    return _toxicity_model
 
 def find_heroes_for_urgent_requests(request_id):
     print(f"\n[START] request_id={request_id}")
