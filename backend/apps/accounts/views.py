@@ -1460,6 +1460,7 @@ def search_users(request):
 
         results.append({
             "id": user.id,
+            "email": user.email,
             "username": user.username,
             "first_name": user.first_name,
             "last_name": user.last_name,
@@ -1479,6 +1480,7 @@ def search_users(request):
             ).exists(),
 
             "is_friend": is_friend,
+            "is_banned": user.is_banned,
         })
 
     return JsonResponse({"users": results})
@@ -2015,7 +2017,7 @@ def unconfirm_alert(request, alert_id):
 
 
 @login_required
-@csrf_exempt  # if you're using fetch with CSRF token
+@csrf_exempt
 def report_alert(request, alert_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid method"}, status=405)
@@ -2029,6 +2031,7 @@ def report_alert(request, alert_id):
         if not reason:
             return JsonResponse({"success": False, "error": "Reason is required"}, status=400)
 
+        # Create the report
         report = AlertReport.objects.create(
             alert=alert,
             user=request.user,
@@ -2036,17 +2039,56 @@ def report_alert(request, alert_id):
             description=description
         )
 
-        # Increment report_count (your model's save already does this)
-        alert.refresh_from_db()
+        # Increase toxicity_score by 3, capped at 100
+        alert.toxicity_score = min(alert.toxicity_score + 3, 100)
+
+        # Flag the alert if toxicity_score reaches 40 or more
+        if alert.toxicity_score >= 40:
+            alert.is_flagged = True
+
+        alert.save()
 
         return JsonResponse({
             "success": True,
             "report_id": report.id,
-            "report_count": alert.report_count
+            "toxicity_score": alert.toxicity_score,
+            "is_flagged": alert.is_flagged
         })
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
+
+@csrf_exempt  # Only if calling from React fetch without CSRF token
+def delete_report(request, report_id):
+    """
+    Deletes a single AlertReport by ID and returns JSON responses.
+    """
+    if request.method != "DELETE":
+        return JsonResponse(
+            {"success": False, "message": "Method not allowed. Use DELETE."},
+            status=405
+        )
+
+    try:
+        report = get_object_or_404(AlertReport, pk=report_id)
+        report.delete()
+        return JsonResponse(
+            {"success": True, "message": f"Report {report_id} deleted successfully."},
+            status=200
+        )
+
+    except AlertReport.DoesNotExist:
+        # This should not occur because get_object_or_404 raises 404 automatically
+        return JsonResponse(
+            {"success": False, "message": "Report not found."},
+            status=404
+        )
+
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": f"An error occurred: {str(e)}"},
+            status=500
+        )
 
 @login_required
 def get_notifications(request):
@@ -2365,37 +2407,60 @@ def admin_alert_reports(request):
     ]
     return JsonResponse({"reports": data})
 
+
 @staff_member_required
 @require_POST
 def ban_user(request, user_id):
-    """
-    Deactivates a user account (Banning).
-    Only accessible by staff/admin users via a POST request.
-    """
-    # 1. Fetch the user or return 404
     user_to_ban = get_object_or_404(User, id=user_id)
 
-    # 2. Prevent admins from accidentally banning themselves
     if user_to_ban == request.user:
-        return JsonResponse({"error": "You cannot an admin."}, status=400)
+        return JsonResponse({"error": "You cannot ban yourself."}, status=400)
 
-    # 3. Prevent banning other staff/superusers unless current user is superuser
     if user_to_ban.is_staff and not request.user.is_superuser:
         return JsonResponse({"error": "Insufficient permissions to ban staff."}, status=403)
 
-    # 4. Perform the "Ban"
-    user_to_ban.is_active = False
-    user_to_ban.save()
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON body."}, status=400)
+
+    ban_until_str = data.get("ban_until")
+    if not ban_until_str:
+        return JsonResponse({"error": "ban_until required"}, status=400)
+
+    ban_until = parse_datetime(ban_until_str)
+    if ban_until is None:
+        return JsonResponse({"error": "Invalid ban_until datetime."}, status=400)
+
+    # IMPORTANT: use the real model field name
+    user_to_ban.banned_until = ban_until
+    user_to_ban.save(update_fields=["banned_until"])
 
     return JsonResponse({
-        "message": f"User {user_to_ban.email} has been terminated.",
-        "user_id": user_id,
-        "status": "inactive"
+        "message": f"User {user_to_ban.email} banned until {ban_until.isoformat()}",
+        "status": "banned",
+        "banned_until": ban_until.isoformat(),
     })
+
+
+@staff_member_required
+@require_POST
+def unban_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+
+    user.banned_until = None
+    user.save(update_fields=["banned_until"])
+
+    return JsonResponse({
+        "message": f"User {user.email} has been unbanned."
+    })
+
 
 @staff_member_required
 @require_GET
-def get_posts(request):
+def flagged_posts(request):
+    if not request.user.is_staff:
+        return JsonResponse({"error": "Unauthorized"}, status=403)
 
     def get_flagged_data(model_class, extra_fields=None):
 

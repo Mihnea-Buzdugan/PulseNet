@@ -71,6 +71,8 @@ urlpatterns = [
     #Admin urls
     path('admin_alert_reports/', views.admin_alert_reports, name='admin_reports'),
     path('ban-user/<int:user_id>/', views.ban_user, name='ban_user'),
-    path('get_posts', views.get_posts, name='get_posts'),
+    path('unban-user/<int:user_id>/', views.unban_user, name='unban_user'),
+    path('flagged_posts/', views.flagged_posts, name='flagged_posts'),
+    path('delete_report/<int:report_id>/', views.delete_report, name='delete_report'),
 
 ]

@@ -172,4 +172,3 @@ def process_pet_image_and_find_matches(alert_instance):
     except Exception as e:
         print(f"[ERROR AI MATCHING] {e}")
         return []
-
