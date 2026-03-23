@@ -10,6 +10,8 @@ const CATEGORIES = [
     { value: "weather", label: "Weather Alert" },
     { value: "lost", label: "Lost Item" },
     { value: "found", label: "Found Item" },
+    { value: "lost_pet", label: "Lost Pet" },
+    { value: "found_pet", label: "Found Pet" },
     { value: "traffic", label: "Traffic Alert" },
     { value: "safety", label: "Safety Notice" },
     { value: "event", label: "Event" },

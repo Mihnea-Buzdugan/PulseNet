@@ -183,6 +183,9 @@ const NotificationHandler = ({ currentUser }) => {
                     </div>
                 ), { duration: 15000 });
             }
+            else if (data.type === "pet_match") {
+                window.dispatchEvent(new CustomEvent("pet_match_notification", { detail: data }));
+            }
             else if (data.type === "hero_alert") {
                 window.dispatchEvent(new CustomEvent("hero_alert", { detail: data }));
                 toast.custom((t) => (

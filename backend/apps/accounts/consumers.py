@@ -220,6 +220,20 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    async def send_pet_match_notification(self, event):
+        notification = event["notification"]
+        metadata = notification.get("metadata", {})
+        await self.send(text_data=json.dumps({
+            "type": "pet_match",
+            "notification_id": notification["id"],
+            "title": notification["title"],
+            "message": notification["message"],
+            "metadata": metadata,
+            "similarity_score": metadata.get("similarity_score"),
+            "match_alert_id": metadata.get("match_alert_id"),
+            "is_read": False,
+        }))
+
     async def send_hero_alert(self, event):
         await self.send(
             text_data=json.dumps(

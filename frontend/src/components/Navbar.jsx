@@ -78,6 +78,12 @@ function Navbar() {
         return () => clearInterval(interval);
     }, [isAuthenticated]);
 
+    useEffect(() => {
+        const handler = () => fetchData();
+        window.addEventListener("pet_match_notification", handler);
+        return () => window.removeEventListener("pet_match_notification", handler);
+    }, [isAuthenticated]);
+
     // 3. Search Logic (Debounced)
     useEffect(() => {
         if (!query.trim()) {

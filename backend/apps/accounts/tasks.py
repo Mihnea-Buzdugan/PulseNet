@@ -1,12 +1,17 @@
 import pickle
+
+from asgiref.sync import async_to_sync
 from celery import shared_task
+from channels.layers import get_channel_layer
 from django.utils import timezone
 from datetime import timedelta
+
+from kombu.transport.sqlalchemy import metadata
 from sentence_transformers import SentenceTransformer
 
 # Import your models and logic
 from .models import Alert, UrgentRequest, User, Notification
-from .utils import find_heroes_for_urgent_requests
+from .utils import find_heroes_for_urgent_requests, process_pet_image_and_find_matches
 
 # Lazy loader for the model to keep worker memory clean
 _model = None
@@ -74,3 +79,62 @@ def bulk_update_all_user_embeddings():
     users = User.objects.all()
     for user in users:
         update_user_embedding.delay(user.id)
+
+@shared_task(name="alerts.process_pet_match")
+def process_pet_match_task(alert_id):
+    try:
+
+        alert = Alert.objects.get(id=alert_id)
+
+        matches = process_pet_image_and_find_matches(alert)
+
+        if not matches:
+            return
+
+        channel_layer = get_channel_layer()
+
+        for match in matches:
+            recipient = None
+            msg = ""
+            target_id = None
+
+            # CAZUL A: Cineva a postat un animal GĂSIT
+            # Vrem să anunțăm stăpânii care au animale PIERDUTE (Lost)
+            if alert.category == "found_pet" and match.category == "lost_pet":
+                recipient = match.user
+                target_id = alert.id
+                msg = f"Cineva a găsit un animal care seamănă cu cel pierdut de tine ({alert.title})!"
+
+            elif alert.category == "lost_pet" and match.category == "found_pet":
+                recipient = alert.user
+                target_id = match.id
+                msg = f"Există deja un anunț cu un animal găsit care seamănă cu al tău! Verifică-l aici."
+
+            if recipient:
+                notification = Notification.objects.create(
+                    user=recipient,
+                    sender=alert.user if alert.user != recipient else None,
+                    type="pet_match",
+                    title="Potrivire detectata!",
+                    message=msg,
+                    metadata={
+                        "match_alert_id": target_id,
+                        "similarity_score": round(1 - getattr(match, 'distance', 0), 2)
+                    }
+                )
+
+                async_to_sync(channel_layer.group_send)(
+                    f"user_notifications_{recipient.id}",
+                    {
+                        "type": "send_pet_match_notification",
+                        "notification": {
+                            "id": notification.id,
+                            "type": notification.type,
+                            "title": notification.title,
+                            "message": notification.message,
+                            "metadata": notification.metadata,
+                        }
+                    }
+                )
+    except Exception as e:
+        print(e)

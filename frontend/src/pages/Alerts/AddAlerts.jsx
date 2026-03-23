@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styles from "../../styles/Alerts/addAlerts.module.css";
 import Navbar from "@/components/Navbar";
-import { X, Plus, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { X, Plus, ChevronDown } from 'lucide-react';
 
 function getCookie(name) {
     if (typeof document === "undefined") return null;
@@ -16,6 +16,8 @@ export default function AddAlerts() {
         { value: "weather", label: "Weather Alert" },
         { value: "lost", label: "Lost Item" },
         { value: "found", label: "Found Item" },
+        { value: "lost_pet", label: "Lost Pet" },
+        { value: "found_pet", label: "Found Pet" },
         { value: "traffic", label: "Traffic Alert" },
         { value: "safety", label: "Safety Notice" },
         { value: "event", label: "Event" },
@@ -37,9 +39,27 @@ export default function AddAlerts() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [imagesPreview, setImagesPreview] = useState([]);
     const [selectedFiles, setSelectedFiles] = useState([]);
+    const [isCategoryOpen, setIsCategoryOpen] = useState(false);
     const fileInputRef = useRef(null);
+    const categoryRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (categoryRef.current && !categoryRef.current.contains(e.target)) {
+                setIsCategoryOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleCategorySelect = (value) => {
+        setFormData({ ...formData, category: value });
+        setIsCategoryOpen(false);
     };
 
     const handleImageChange = (e) => {
@@ -48,7 +68,6 @@ export default function AddAlerts() {
 
         if (selectedFiles.length + files.length > 4) {
             alert("Poți adăuga maxim 4 imagini.");
-            // reset input so user can reselect
             e.target.value = null;
             return;
         }
@@ -57,13 +76,11 @@ export default function AddAlerts() {
         setImagesPreview((prev) => [...prev, ...newPreviews]);
         setSelectedFiles((prev) => [...prev, ...files]);
 
-        // clear file input value so the same file can be selected again if needed
         e.target.value = null;
     };
 
     const removeImageAt = (index) => {
         setImagesPreview((prev) => {
-            // revoke object URL to free memory
             try {
                 URL.revokeObjectURL(prev[index]);
             } catch (e) {}
@@ -119,8 +136,6 @@ export default function AddAlerts() {
             data.append("description", formData.description);
             data.append("category", formData.category);
 
-            // LOGICA POINT TYPE (GeoJSON pentru PostGIS)
-            // PostGIS/GeoJSON folosește formatul [longitude, latitude]
             const geoJsonPoint = JSON.stringify({
                 type: "Point",
                 coordinates: [coords.lng, coords.lat]
@@ -156,6 +171,8 @@ export default function AddAlerts() {
         }
     };
 
+    const selectedLabel = categories.find(c => c.value === formData.category)?.label;
+
     return (
         <div className={styles.bodyContainer}>
             <div className={styles.navbarAdjust}>
@@ -172,16 +189,35 @@ export default function AddAlerts() {
 
                     <div className={styles.inputGroup}>
                         <label>Category</label>
-                        <select name="category" value={formData.category} onChange={handleChange}>
-                            {categories.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                        </select>
+                        <div className={styles.customSelect} ref={categoryRef}>
+                            <button
+                                type="button"
+                                className={styles.customSelectBtn}
+                                onClick={() => setIsCategoryOpen(prev => !prev)}
+                            >
+                                <span>{selectedLabel}</span>
+                                <ChevronDown size={16} className={`${styles.chevron} ${isCategoryOpen ? styles.chevronOpen : ''}`} />
+                            </button>
+                            {isCategoryOpen && (
+                                <ul className={styles.customSelectList}>
+                                    {categories.map(c => (
+                                        <li
+                                            key={c.value}
+                                            className={`${styles.customSelectItem} ${c.value === formData.category ? styles.customSelectItemActive : ''}`}
+                                            onClick={() => handleCategorySelect(c.value)}
+                                        >
+                                            {c.label}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                     </div>
 
                     {/* SECTIUNE IMAGINI (Grid similar cu AddPulses) */}
                     <div className={styles.imageUploadSection}>
                         <label className={styles.labelHeader}>Imagini</label>
                         <div className={styles.imageGrid}>
-                            {/* Preview Imagini */}
                             {imagesPreview.map((img, idx) => (
                                 <div key={idx} className={styles.imagePreviewBox} style={{ backgroundImage: `url(${img})` }}>
                                     <button type="button" onClick={() => removeImageAt(idx)} className={styles.removeImgBtn}>
@@ -190,7 +226,6 @@ export default function AddAlerts() {
                                 </div>
                             ))}
 
-                            {/* Al 6-lea patrat / Buton adaugare */}
                             {imagesPreview.length < 4 && (
                                 <label className={styles.uploadBtnBox}>
                                     <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageChange} hidden />

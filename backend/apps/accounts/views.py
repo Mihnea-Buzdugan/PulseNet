@@ -36,7 +36,7 @@ from django.contrib.gis.db.models.functions import Distance as GisDistance
 from celery import shared_task
 
 from .tasks import update_user_embedding, find_heroes_for_urgent_requests, get_model as _get_st_model, \
-    run_hero_search_task
+    run_hero_search_task, process_pet_match_task
 from sentence_transformers import util as st_util
 def generate_password(length=12):
     alphabet = string.ascii_letters + string.digits + string.punctuation
@@ -1906,6 +1906,9 @@ def create_alert(request):
             img_obj = AlertImage.objects.create(alert=alert, image=img_file)
             saved_images.append(request.build_absolute_uri(img_obj.image.url))
 
+        if alert.category in ["lost_pet", "found_pet"] and not should_flag:
+            process_pet_match_task.delay(alert.id)
+
         # 3. Prepare data for WebSocket (Match your JSX keys!)
         user_avatar = None
         if hasattr(request.user, 'profile_picture') and request.user.profile_picture:
@@ -2058,7 +2061,7 @@ def get_notifications(request):
             "pulse_id": n.pulse_id,
             "rental_id": n.rental_id,
             "conversation_id": n.conversation_id,
-            "sender_id": n.sender.id,
+            "sender_id": n.sender.id if n.sender else None,
             "is_read": n.is_read,
             "created_at": n.created_at.strftime("%b %d, %H:%M"),
             "sender_name": n.sender.username if n.sender else "System"

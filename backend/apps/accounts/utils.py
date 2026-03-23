@@ -9,9 +9,10 @@ from channels.layers import get_channel_layer
 from sentence_transformers import util
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline
-
+from PIL import Image
+from pgvector.django import CosineDistance
 # Import your models here - update paths as necessary
-from .models import UrgentRequest, User, Notification
+from .models import UrgentRequest, User, Notification, AlertImage
 
 _model = None
 MODEL_CACHE_PATH = os.getenv('SENTENCE_TRANSFORMERS_HOME', '/app/model_cache')
@@ -37,6 +38,14 @@ def get_toxicity_model():
             top_k=None
         )
     return _toxicity_model
+
+_clip_model = None
+def get_clip_model():
+    global _clip_model
+    if _clip_model is None:
+        os.makedirs(MODEL_CACHE_PATH, exist_ok=True)
+        _clip_model = SentenceTransformer("clip-ViT-B-32", cache_folder=MODEL_CACHE_PATH)
+    return _clip_model
 
 def find_heroes_for_urgent_requests(request_id):
     print(f"\n[START] request_id={request_id}")
@@ -113,3 +122,54 @@ def find_heroes_for_urgent_requests(request_id):
             )
     except Exception as e:
         print(f"[ERROR] {e}")
+
+
+def process_pet_image_and_find_matches(alert_instance):
+    model = get_clip_model()
+    alert_images = alert_instance.images.all()
+
+    if not alert_images.exists():
+        return []
+
+    try:
+        all_matches = []
+        primary_embedding = None
+
+        search_category = "found_pet" if alert_instance.category == "lost_pet" else "lost_pet"
+
+        for img_obj in alert_images:
+            img = Image.open(img_obj.image.path).convert('RGB')
+            embedding = model.encode(img).tolist()
+
+            img_obj.embedding = embedding
+            img_obj.save(update_fields=['embedding'])
+
+            if primary_embedding is None:
+                primary_embedding = embedding
+
+            similar_images = AlertImage.objects.filter(
+                alert__category=search_category,
+                embedding__isnull=False,
+            ).exclude(
+                alert=alert_instance
+            ).annotate(
+                distance=CosineDistance('embedding', embedding)
+            ).filter(
+                distance__lte=0.15
+            ).select_related('alert')[:5]
+
+            for img_match in similar_images:
+                all_matches.append(img_match.alert)
+
+        if primary_embedding:
+            alert_instance.embedding = primary_embedding
+            alert_instance.save(update_fields=["embedding"])
+
+        unique_matches = {m.id: m for m in all_matches}.values()
+
+        return list(unique_matches)
+
+    except Exception as e:
+        print(f"[ERROR AI MATCHING] {e}")
+        return []
+

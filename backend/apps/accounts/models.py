@@ -4,6 +4,9 @@ from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.utils.crypto  import get_random_string
 from django.db.models import F
+from pgvector.django import VectorField
+
+
 # Create your models here.
 
 class User(AbstractUser):
@@ -352,6 +355,8 @@ class Alert(models.Model):
         ("weather", "Weather Alert"),
         ("lost", "Lost Item"),
         ("found", "Found Item"),
+        ("lost_pet", "Lost Pet"),
+        ("found_pet", "Found Pet"),
         ("traffic", "Traffic Alert"),
         ("safety", "Safety Notice"),
         ("event", "Event"),
@@ -367,6 +372,8 @@ class Alert(models.Model):
 
     title = models.CharField(max_length=150)
     description = models.TextField()
+
+    embedding = VectorField(dimensions=512, null=True, blank=True)
 
     is_approved = models.BooleanField(default=True)
     is_flagged = models.BooleanField(default=False)
@@ -399,6 +406,7 @@ class AlertImage(models.Model):
         related_name="images"
     )
     image = models.ImageField(upload_to="alert_images/")
+    embedding = VectorField(dimensions=512, null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 class AlertConfirm(models.Model):
@@ -490,6 +498,7 @@ class Notification(models.Model):
         ("rental_proposal", "Rental Proposal"),
         ("chat_message", "Chat Message"),
         ("hero_alert", "Hero Alert"),
+        ("pet_match", "Pet Match Found"),
     )
 
     user = models.ForeignKey(
