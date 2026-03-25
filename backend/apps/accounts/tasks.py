@@ -1,11 +1,14 @@
+import os
 import pickle
 
 from asgiref.sync import async_to_sync
 from celery import shared_task
+from celery.worker.state import requests
 from channels.layers import get_channel_layer
+from django.contrib.gis.geos import Point
 from django.utils import timezone
 from datetime import timedelta
-
+from django.core.cache import cache
 from kombu.transport.sqlalchemy import metadata
 from sentence_transformers import SentenceTransformer
 
@@ -36,12 +39,20 @@ def delete_expired_urgent_requests():
 
 @shared_task(name="apps.accounts.tasks.delete_old_alerts")
 def delete_old_alerts():
-    cutoff_date = timezone.now() - timedelta(days=20)
-    expired_alerts = Alert.objects.filter(created_at__lte=cutoff_date)
-    count = expired_alerts.count()
-    if count:
-        expired_alerts.delete()
-    return f"Deleted {count} alerts older than 20 days"
+    now = timezone.now()
+
+    weather_cutoff = now - timedelta(hours=24)
+    deactivated_count = Alert.objects.filter(
+        category="weather",
+        is_active=True,
+        created_at__lte=weather_cutoff
+    ).update(is_active=False)
+
+    hard_delete_cutoff = now - timedelta(days=20)
+    expired_alerts = Alert.objects.filter(created_at__lte=hard_delete_cutoff)
+
+    deleted_count, _ = expired_alerts.delete()
+    return f"Deactivated {deactivated_count} weather alerts (older than 24h). Deleted {deleted_count} alerts (older than 20 days)."
 
 # --- HERO SEARCH TASKS ---
 
@@ -138,3 +149,129 @@ def process_pet_match_task(alert_id):
                 )
     except Exception as e:
         print(e)
+
+
+@shared_task
+def fetch_severe_weather_alerts():
+    key = os.getenv("openweather_api_key")
+    user_locations = User.objects.exclude(location__isnull=True).values_list('location', flat=True)
+
+    if not user_locations:
+        return "No users with locations found."
+
+    # 1. Cluster users into ~11km grids to save API calls
+    unique_cluster_locations = set()
+    for loc in user_locations:
+        lat_rounded = round(loc.y, 1)
+        lon_rounded = round(loc.x, 1)
+        unique_cluster_locations.add((lat_rounded, lon_rounded))
+
+    alerts_created = 0
+    channel_layer = get_channel_layer()
+    recent_time_limit = timezone.now() - timedelta(hours=12)
+
+    for lat, lon in unique_cluster_locations:
+        url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=minutely,daily&appid={key}&units=metric"
+
+        try:
+            response = requests.get(url)
+            data = response.json()
+            alert_location = Point(lat, lon, srid=4326)
+
+            # --- A. CACHE THE WEATHER FOR THE FRONTEND VIEW ---
+            current = data.get("current", {})
+            hourly_forecast = []
+            for hour in data.get("hourly", [])[:4]:
+                hourly_forecast.append({
+                    "time": hour.get("dt"),
+                    "temp": hour.get("temp"),
+                    "description": hour.get("weather", [{}])[0].get("description", ""),
+                    "pop": hour.get("pop", 0)  # Probability of precipitation
+                })
+
+            cache_key = f"weather_cluster_{lat}_{lon}"
+            cache.set(cache_key, {
+                "current": {
+                    "temp": current.get("temp"),
+                    "feels_like": current.get("feels_like"),
+                    "description": current.get("weather", [{}])[0].get("description", ""),
+                    "icon": current.get("weather", [{}])[0].get("icon", ""),
+                },
+                "upcoming": hourly_forecast
+            }, timeout=1800)  # Cache for 30 minutes
+
+            # --- B. HANDLE OFFICIAL SEVERE WEATHER (Safety Check-in) ---
+            if "alerts" in data:
+                for weather_alert in data["alerts"]:
+                    event_name = weather_alert.get("event", "Severe Weather")
+                    description = weather_alert.get("description", "Please stay safe!")
+
+                    alert_exists = Alert.objects.filter(
+                        category="severe_weather",
+                        title=f"Safety Check-in: {event_name}",
+                        created_at__gte=recent_time_limit,
+                        location__distance_lte=(alert_location, 11000)
+                    ).exists()
+
+                    if not alert_exists:
+                        Alert.objects.create(
+                            user_id=1,
+                            title=f"Safety Check-in: {event_name}",
+                            description=description,
+                            category="severe_weather",
+                            location=alert_location,
+                            is_active=True
+                        )
+                        alerts_created += 1
+
+                        # Broadcast HIGH priority WebSocket message
+                        async_to_sync(channel_layer.group_send)(
+                            "alerts_feed",
+                            {
+                                "type": "weather_message",
+                                "message": f"SEVERE ALERT: {event_name}. Please check in.",
+                                "priority": "high"
+                            }
+                        )
+
+            # --- C. HANDLE PREEMPTIVE WARNINGS (Upcoming bad weather) ---
+            elif "hourly" in data:
+                for hour_data in data["hourly"][:3]:
+                    weather_code = hour_data.get("weather", [{}])[0].get("id", 800)
+                    pop = hour_data.get("pop", 0)
+
+                    # Code < 700 = Rain/Snow/Storms, pop > 0.7 = 70%+ chance
+                    if weather_code < 700 or pop > 0.70:
+                        weather_desc = hour_data.get("weather", [{}])[0].get("description", "bad weather")
+
+                        warning_exists = Alert.objects.filter(
+                            category="weather_warning",
+                            created_at__gte=recent_time_limit,
+                            location__distance_lte=(alert_location, 11000)
+                        ).exists()
+
+                        if not warning_exists:
+                            Alert.objects.create(
+                                user_id=1,
+                                title="Upcoming Weather Warning",
+                                description=f"Heads up! High probability of {weather_desc} starting soon.",
+                                category="weather_warning",
+                                location=alert_location,
+                                is_active=True
+                            )
+                            alerts_created += 1
+
+                            # Broadcast MEDIUM priority WebSocket message
+                            async_to_sync(channel_layer.group_send)(
+                                "alerts_feed",
+                                {
+                                    "type": "weather_message",
+                                    "message": f"Heads up! {weather_desc.capitalize()} expected soon.",
+                                    "priority": "medium"
+                                }
+                            )
+                        break  # Found bad weather, warn once, then stop checking hours
+
+        except Exception as e:
+            print(f"Error fetching weather for cluster {lat}, {lon}: {e}")
+

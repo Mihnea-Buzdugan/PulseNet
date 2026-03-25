@@ -33,6 +33,11 @@ app.conf.beat_schedule = {
         "task": "apps.accounts.tasks.bulk_update_all_user_embeddings",
         "schedule": crontab(hour=2, minute=0),
     },
+
+    "check-weather-alerts-30-min": {
+        "task": "apps.accounts.tasks.fetch_severe_weather_alerts",
+        "schedule": crontab(minute="*/30"),
+    }
 }
 
 

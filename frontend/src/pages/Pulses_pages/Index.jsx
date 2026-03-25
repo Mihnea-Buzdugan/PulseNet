@@ -42,11 +42,17 @@ export default function Index() {
     const [userLocation, setUserLocation] = useState(null);
     const [userRadius, setUserRadius] = useState(1);
     const [locationDenied, setLocationDenied] = useState(false);
-
+    const [weatherWarning, setWeatherWarning] = useState("Nimic momentan");
+    const [alertPriority, setAlertPriority] = useState("normal");
+    const [currentWeather, setCurrentWeather] = useState(null);
+    const [weatherAlerts, setWeatherAlerts] = useState([]);
     // map popup
     const [selectedPoint, setSelectedPoint] = useState(null);
 
+    //weather
+
     // map ref for imperative control
+
     const mapRef = useRef(null);
 
     // -------------------------
@@ -194,6 +200,84 @@ export default function Index() {
         }
     }, [userLocation, userRadius]);
 
+    useEffect(() => {
+        let socket;
+        let reconnectTimeout;
+
+        const connectWebSocket = () => {
+            socket = new WebSocket("ws://localhost:8000/ws/alerts/");
+
+            socket.onopen = () => {
+                console.log("Connected to Alerts WebSocket");
+            };
+
+            socket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === "weather_alert" || data.action === "new_weather_alert") {
+                        if (data.id && data.title) {
+                            setWeatherAlerts((prev) =>
+                                prev.find((a) => a.id === data.id) ? prev : [data, ...prev]
+                            );
+                        }
+                        setWeatherWarning(`${data.title || "Alertă"}: ${data.message}`);
+
+                        setTimeout(() => {
+                            setWeatherWarning("Nimic momentan");
+                        }, 1000 * 60 * 30);
+
+                    } else if (data.type === "clear_alerts") {
+                        setWeatherWarning("Nimic momentan");
+                    }
+                } catch (err) {
+                    console.error("Error parsing alert message:", err);
+                }
+            };
+
+            socket.onerror = (err) => {
+                console.error("WebSocket Alert Error:", err);
+            };
+
+            socket.onclose = (e) => {
+                console.warn("Alerts WebSocket closed. Reconnecting in 5s...", e.reason);
+                reconnectTimeout = setTimeout(connectWebSocket, 5000);
+            };
+        };
+
+        connectWebSocket();
+
+        return () => {
+            if (socket) {
+                socket.close();
+            }
+            if (reconnectTimeout) {
+                clearTimeout(reconnectTimeout);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if(userLocation) {
+            const fetchWeather = async () => {
+
+                try {
+                    const res = await fetch(`http://localhost:8000/accounts/alerts/weather?lat=${userLocation.lat}&lon=${userLocation.lng}`);
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        setCurrentWeather(data.current);
+                    } else {
+                        console.error("Server error:", res.status);
+                    }
+                } catch (err) {
+                    console.error("Error parsing weather location:", err);
+                }
+            };
+            fetchWeather();
+        }
+    }, [userLocation]);
+
     // -------------------------
     // fetch latest pulses (paginated)
     // -------------------------
@@ -266,6 +350,18 @@ export default function Index() {
             console.error("fetchUrgentRequests error:", err);
         }
     };
+
+    // fetch admin-posted weather alerts
+    useEffect(() => {
+        fetch("http://localhost:8000/accounts/alerts/?category=weather", {
+            credentials: "include",
+        })
+            .then((r) => r.json())
+            .then((data) => {
+                if (data.success) setWeatherAlerts(data.alerts || []);
+            })
+            .catch(() => {});
+    }, []);
 
     // initial load: latest page 1 + urgent requests
     useEffect(() => {
@@ -419,12 +515,60 @@ export default function Index() {
 
             <div className={styles["main-container"]}>
                 <div className={styles.another}>
-                    <header className={styles["news-bar"]}>
-                        <span className={styles["news-update"]}>News Update:</span>
-                        <div className={styles["marquee-container"]}>
-                            <div className={styles.marquee}>Nimic momentan</div>
-                        </div>
-                    </header>
+                    {(() => {
+                        // Setările implicite (când pagina abia se încarcă)
+                        let label = "News Update:";
+                        let text = "Se caută actualizări...";
+                        let barStyle = {};
+                        let labelStyle = {};
+
+                        // 1. Admin-posted weather alerts take highest priority
+                        if (weatherAlerts.length > 0) {
+                            label = "⚠️ Weather Alert:";
+                            text = weatherAlerts.map((a) => a.title).join("  •  ");
+                            barStyle = { backgroundColor: "#dc2626", color: "white" };
+                            labelStyle = { color: "white" };
+                        }
+                        // 2. Verificăm dacă avem o alertă activă de la WebSocket
+                        else if (weatherWarning !== "Nimic momentan") {
+                            text = `🚨 ${weatherWarning}`;
+
+                            if (alertPriority === "high") {
+                                label = "URGENT:";
+                                barStyle = { backgroundColor: "#dc2626", color: "white" }; // Roșu pentru Safety Check-in
+                                labelStyle = { color: "white" };
+                            } else if (alertPriority === "medium") {
+                                label = "WARNING:";
+                                barStyle = { backgroundColor: "#f59e0b", color: "black" }; // Portocaliu pentru vreme rea iminentă
+                            }
+                        }
+                        // 3. Dacă nu avem alertă, dar s-a încărcat vremea din REST API
+                        else if (currentWeather) {
+                            label = "Vremea Locală:";
+                            text = `${currentWeather.temp}°C (Se simte ca ${currentWeather.feels_like}°C) - ${currentWeather.description}`;
+                        }
+
+                        return (
+                            <header className={styles["news-bar"]} style={barStyle}>
+                <span className={styles["news-update"]} style={labelStyle}>
+                    {label}
+                </span>
+                                <div className={styles["marquee-container"]}>
+                                    <div className={styles.marquee}>
+                                        {/* Dacă avem iconița de vreme și nu e alertă, o putem afișa */}
+                                        {!weatherWarning && currentWeather?.icon && (
+                                            <img
+                                                src={`https://openweathermap.org/img/wn/${currentWeather.icon}.png`}
+                                                alt="weather icon"
+                                                style={{ verticalAlign: "middle", height: "24px", marginRight: "8px" }}
+                                            />
+                                        )}
+                                        {text}
+                                    </div>
+                                </div>
+                            </header>
+                        );
+                    })()}
                 </div>
 
                 <div className={styles.wholeContaining}>

@@ -11,16 +11,12 @@ from django.http import JsonResponse
 from django.contrib.auth import get_user_model, login as django_login,logout as django_logout
 from django.core.exceptions import ValidationError
 import json
-from django.db.models import Q, Prefetch
 from django.contrib.auth import get_user_model
 from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
-from django.contrib.gis.geos import Point
-from django.contrib.gis.db.models.functions import Distance
 from django.db import IntegrityError
-from networkx.algorithms.distance_measures import radius
 from math import ceil
 from .decorators import api_login_required, check_hate_speech
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
@@ -33,8 +29,8 @@ from django.db import models
 from decimal import Decimal
 from django.shortcuts import get_object_or_404
 from django.contrib.gis.db.models.functions import Distance as GisDistance
-from celery import shared_task
-
+from django.core.cache import cache
+import requests
 from .tasks import update_user_embedding, find_heroes_for_urgent_requests, get_model as _get_st_model, \
     run_hero_search_task, process_pet_match_task
 from sentence_transformers import util as st_util
@@ -1898,10 +1894,18 @@ def list_alerts(request):
     """Return all active alerts with their images"""
 
     # Get alerts, include user in one join, and prefetch images
-    alerts = Alert.objects.filter(is_active=True)\
+    qs = Alert.objects.filter(is_active=True)\
         .select_related("user")\
         .prefetch_related("images")\
         .order_by("-created_at")
+
+    category = request.GET.get("category")
+    if category:
+        qs = qs.filter(category=category)
+        if category == "weather":
+            qs = qs.filter(user__is_staff=True)
+
+    alerts = qs
 
     data = [
         {
@@ -1981,13 +1985,14 @@ def create_alert(request):
             "description": alert.description,
             "category": alert.category,
             "category_display": alert.get_category_display(),
-            "user_name": request.user.username,  # Matches a.user_name in JSX
+            "user_name": request.user.username,
             "user_avatar": user_avatar,
             "created_at": alert.created_at.isoformat(),
             "lat": location.y if location else None,
             "lng": location.x if location else None,
-            "images": saved_images, # List of full URLs
+            "images": saved_images,
             "image": saved_images[0] if saved_images else None,
+            "is_admin_alert": request.user.is_staff,
         }
 
         # 4. Broadcast to Channels
@@ -2148,6 +2153,66 @@ def delete_report(request, report_id):
             {"success": False, "message": f"An error occurred: {str(e)}"},
             status=500
         )
+
+@require_GET
+def get_current_weather(request):
+
+    lat_str = request.GET.get('lat')
+    lon_str = request.GET.get('lon')
+
+    if not lat_str or not lon_str:
+        return JsonResponse({"error": "Latitude and longitude are required."}, status=400)
+
+    try:
+        # Round the exact coordinates to match the Celery cluster format
+        lat_rounded = round(float(lat_str), 1)
+        lon_rounded = round(float(lon_str), 1)
+    except ValueError:
+        return JsonResponse({"error": "Invalid coordinates format."}, status=400)
+
+    # 1. Try fetching from cache first
+    cache_key = f"weather_cluster_{lat_rounded}_{lon_rounded}"
+    cached_weather = cache.get(cache_key)
+
+    if cached_weather:
+        return JsonResponse(cached_weather)
+
+    # 2. Fallback: If cache is empty (new cluster), fetch manually
+    key = os.getenv("openweather_api_key")
+    url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat_rounded}&lon={lon_rounded}&exclude=minutely,daily&appid={key}&units=metric"
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+
+        current = data.get("current", {})
+        hourly_forecast = []
+        for hour in data.get("hourly", [])[:4]:
+            hourly_forecast.append({
+                "time": hour.get("dt"),
+                "temp": hour.get("temp"),
+                "description": hour.get("weather", [{}])[0].get("description", ""),
+                "pop": hour.get("pop", 0)
+            })
+
+        weather_payload = {
+            "current": {
+                "temp": current.get("temp"),
+                "feels_like": current.get("feels_like"),
+                "description": current.get("weather", [{}])[0].get("description", ""),
+                "icon": current.get("weather", [{}])[0].get("icon", ""),
+            },
+            "upcoming": hourly_forecast
+        }
+
+        # Save to cache for the next user
+        cache.set(cache_key, weather_payload, timeout=1800)
+
+        return JsonResponse(weather_payload)
+
+    except Exception as e:
+        return JsonResponse({"error": "Failed to fetch weather data."}, status=500)
+
 
 @login_required
 def get_notifications(request):
