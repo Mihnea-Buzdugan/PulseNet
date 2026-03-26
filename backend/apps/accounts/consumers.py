@@ -355,8 +355,41 @@ class AlertConsumer(AsyncWebsocketConsumer):
         Receive alert broadcast from signal and send it to the WebSocket client
         """
         alert_data = event.get("data")
-        if alert_data:
+        if not alert_data:
+            return
+
+        # Admin-posted weather alerts go to the news bar
+        if alert_data.get("category") == "weather" and alert_data.get("is_admin_alert"):
+            await self.send(text_data=json.dumps({
+                "type": "weather_alert",
+                "action": "new_weather_alert",
+                "id": alert_data.get("id"),
+                "title": alert_data.get("title"),
+                "message": alert_data.get("description", ""),
+                "category": "weather",
+            }))
+        else:
             await self.send(text_data=json.dumps({
                 "type": "alert",
                 "data": alert_data
             }))
+
+    async def weather_message(self, event):
+
+        message = event.get("message")
+
+        priority = event.get("priority", "medium")
+
+        if priority == "high":
+            title = "Safety Check-in "
+        else:
+            title = "Weather Update "
+
+        await self.send(text_data=json.dumps({
+            "type": "weather_alert",
+            "action": "new_weather_alert",
+            "title": title,
+            "message": message,
+            "priority": priority,
+            "category": "weather"
+        }))

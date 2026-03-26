@@ -351,6 +351,8 @@ class DirectMessage(models.Model):
 class Alert(models.Model):
     CATEGORY_CHOICES = [
         ("weather", "Weather Alert"),
+        ("severe_weather", "Severe Weather (Safety Check-in)"),
+        ("weather_warning", "Weather Warning (Preemptive)"),
         ("lost", "Lost Item"),
         ("found", "Found Item"),
         ("lost_pet", "Lost Pet"),
@@ -392,6 +394,9 @@ class Alert(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=['location']),
+        ]
 
     def __str__(self):
         return f"{self.title} ({self.get_category_display()})"
