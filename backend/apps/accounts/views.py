@@ -2547,7 +2547,7 @@ def create_urgent_request(request):
 
     trust_required = False
     max_price = data.get('max_price', 0)
-    if max_price > 1000:
+    if int(max_price) > 1000:
         trust_required = True
 
     new_request = UrgentRequest.objects.create(
