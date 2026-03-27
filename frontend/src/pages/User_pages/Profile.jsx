@@ -786,10 +786,20 @@ export default function Profile() {
     // open/close accept/decline confirmation modals
     const openAcceptModal = (offer) => setAcceptModal({ show: true, id: offer.id });
     const closeAcceptModal = () => setAcceptModal({ show: false, id: null });
-
+    const openAcceptOfferModal = (offer) => setAcceptOfferModal({ show: true, id: offer.id });
+    const closeAcceptOfferModal = () => setAcceptOfferModal({ show: false, id: null });
     const openDeclineModal = (offer) => setDeclineModal({ show: true, id: offer.id });
     const closeDeclineModal = () => setDeclineModal({ show: false, id: null });
+    const openDeclineOfferModal = (offer) => setDeclineOfferModal({ show: true, id: offer.id });
+    const closeDeclineOfferModal = () => setDeclineOfferModal({ show: false, id: null });
 
+    const openDeleteOfferModal = (proposal) => {
+        setDeleteOfferModal({ show: true, id: proposal.id });
+    };
+
+    const closeDeleteOfferModal = () => {
+        setDeleteOfferModal({ show: false, id: null });
+    };
     // --- end rental offers actions ---
 
     const openCounterOfferModal = (offer) => {
@@ -843,6 +853,8 @@ export default function Profile() {
             }
         } catch (err) {
             console.error("Network error:", err);
+        } finally {
+            setAcceptOfferModal({ show: false, id: null });
         }
     };
 
@@ -871,6 +883,8 @@ export default function Profile() {
             }
         } catch (err) {
             console.error("Network error:", err);
+        } finally {
+            setDeclineOfferModal({ show: false, id: null });
         }
     };
 
@@ -935,6 +949,8 @@ export default function Profile() {
             }
         } catch (err) {
             console.error("Network error:", err);
+        } finally {
+            setDeleteOfferModal({ show: false, id: null });
         }
     };
 
@@ -1704,10 +1720,10 @@ export default function Profile() {
                                         <div className={styles.offerActions}>
                                             {offer.status === "pending" && offer.last_offer_by !== user.id ? (
                                                 <>
-                                                    <button onClick={() => handleAcceptRequestOffer(offer.id)} className={styles.acceptBtn}>
+                                                    <button onClick={() => openAcceptOfferModal(offer)} className={styles.acceptBtn}>
                                                         Acceptă
                                                     </button>
-                                                    <button onClick={() => handleDeclineRequestOffer(offer.id)} className={styles.rejectBtn}>
+                                                    <button onClick={() => openDeclineOfferModal(offer)} className={styles.rejectBtn}>
                                                         Refuză
                                                     </button>
                                                     <button onClick={() => openCounterOfferModal(offer)} className={styles.counterBtn}>
@@ -1766,7 +1782,7 @@ export default function Profile() {
                                             {/* Option to cancel if still pending and you made the last move */}
                                             {proposal.status === "pending" && (
                                                 <button
-                                                    onClick={() => handleDeleteRequestOffer(proposal.id)}
+                                                    onClick={() => openDeleteOfferModal(proposal)}
                                                     className={styles.rejectBtn}
                                                 >
                                                     Retrage oferta
@@ -1779,7 +1795,7 @@ export default function Profile() {
                                                 proposal.last_offer_by !== user.id && (
                                                     <>
                                                         <button
-                                                            onClick={() => handleAcceptRequestOffer(proposal.id)}
+                                                            onClick={() => openAcceptOfferModal(proposal)}
                                                             className={styles.acceptBtn}
                                                             style={{ marginLeft: "8px" }}
                                                         >
@@ -1907,6 +1923,26 @@ export default function Profile() {
                     </div>
                 )}
 
+                {acceptOfferModal.show && (
+                    <div className={styles.modalOverlay}>
+                        <div className={styles.modal}>
+                            <h3 className={styles.modalTitle}>Acceptă oferta?</h3>
+                            <p className={styles.modalText}>Ești sigur că vrei să accepți această ofertă?</p>
+                            <div className={styles.modalActions}>
+                                <button onClick={closeAcceptOfferModal} className={styles.modalCancel}>
+                                    Anulează
+                                </button>
+                                <button
+                                    onClick={() => handleAcceptRequestOffer(acceptOfferModal.id)}
+                                    className={styles.saveButton}
+                                >
+                                    Acceptă
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {deletePulseModal.show && (
                     <div className={styles.modalOverlay}>
                         <div className={styles.modal}>
@@ -1946,6 +1982,29 @@ export default function Profile() {
                     </div>
                 )}
 
+
+                {deleteOfferModal.show && (
+                    <div className={styles.modalOverlay}>
+                        <div className={styles.modal}>
+                            <h3 className={styles.modalTitle}>Anulează propunerea?</h3>
+                            <p className={styles.modalText}>
+                                Această acțiune nu poate fi anulată. Ești sigur că vrei să retragi propunerea?
+                            </p>
+                            <div className={styles.modalActions}>
+                                <button onClick={closeDeleteOfferModal} className={styles.modalCancel}>
+                                    Anulează
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteRequestOffer(deleteOfferModal.id)}
+                                    className={styles.modalDelete}
+                                >
+                                    Da, retrage
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Decline Confirmation Modal */}
                 {declineModal.show && (
                     <div className={styles.modalOverlay}>
@@ -1958,6 +2017,26 @@ export default function Profile() {
                                 </button>
                                 <button
                                     onClick={() => handleDeclineOffer(declineModal.id)}
+                                    className={styles.modalDelete}
+                                >
+                                    Refuză
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {declineOfferModal.show && (
+                    <div className={styles.modalOverlay}>
+                        <div className={styles.modal}>
+                            <h3 className={styles.modalTitle}>Refuză oferta?</h3>
+                            <p className={styles.modalText}>Ești sigur că vrei să refuzi această ofertă?</p>
+                            <div className={styles.modalActions}>
+                                <button onClick={closeDeclineOfferModal} className={styles.modalCancel}>
+                                    Anulează
+                                </button>
+                                <button
+                                    onClick={() => handleDeclineRequestOffer(declineOfferModal.id)}
                                     className={styles.modalDelete}
                                 >
                                     Refuză
