@@ -9,6 +9,7 @@ import {
     Dog, Hammer, Leaf, Zap, MoreHorizontal, ArrowRight, X, Plus
 } from 'lucide-react';
 import {useNavigate} from "react-router-dom";
+import Footer from "@/components/Footer";
 
 const CATEGORIES = [
     { id: 'transport', label: 'Transport', icon: Truck },
@@ -294,6 +295,7 @@ export default function CreateRequest() {
                 </div>
             </div>
         </div>
+            <Footer />
         </div>
     );
 }

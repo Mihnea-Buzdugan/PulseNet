@@ -9,6 +9,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import Footer from "@/components/Footer";
 
 function getLocationCoords(location) {
     // default coords (lon, lat)
@@ -535,6 +536,7 @@ export default function PulseTransaction() {
 
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

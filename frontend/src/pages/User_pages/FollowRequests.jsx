@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import styles from "../../styles/User_pages/followRequests.module.css";
 import Navbar from "../../components/Navbar";
 import {useNavigate} from "react-router-dom";
+import Footer from "@/components/Footer";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -145,6 +146,7 @@ export default function FollowRequests() {
             </div>
         </div>
             </div>
+            <Footer />
         </div>
     );
 }

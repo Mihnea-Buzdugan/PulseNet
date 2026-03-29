@@ -12,6 +12,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import Loading from "@/components/Loading";
+import Footer from "@/components/Footer";
 
 function formatLocation(location) {
     if (!location) return "Not specified";
@@ -693,6 +694,7 @@ export default function PulseDetails() {
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

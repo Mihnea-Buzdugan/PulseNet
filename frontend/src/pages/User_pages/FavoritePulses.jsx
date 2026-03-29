@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "../../styles/User_pages/favoritePulses.module.css";
 import Navbar from "../../components/Navbar";
 import Loading from "../../components/Loading";
+import Footer from "@/components/Footer";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -423,6 +424,7 @@ export default function FavoritePulses() {
                 </div>
             )}
             </div>
+            <Footer />
         </div>
     );
 }

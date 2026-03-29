@@ -101,7 +101,7 @@
 .body {
     background-color: var(--color-bg);
     color: var(--color-text);
-    min-height: 100vh;
+    min-height: 170vh;
     width: 100%;
     position: relative;
 }
@@ -654,10 +654,10 @@
    MODALS (generic)
    ============================================================ */
 .modalOverlay {
-    @apply fixed inset-0 flex items-start justify-center z-50;
+    @apply fixed inset-0 flex items-center justify-center z-50;
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
-    z-index: 1000;
+    z-index: 5000;
     padding: 24px;
     overflow-y: auto;
 }
@@ -668,7 +668,6 @@
     max-height: calc(100vh - 48px);
     overflow-y: auto;
 }
-
 .modalTitle   { @apply text-lg font-semibold mb-2; color: var(--color-text-medium); }
 .modalText    { @apply text-sm mb-6;                color: var(--color-text); }
 .modalActions { @apply flex justify-end gap-3; }

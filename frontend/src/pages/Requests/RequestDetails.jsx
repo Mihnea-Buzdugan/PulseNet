@@ -7,6 +7,7 @@ import Navbar from "../../components/Navbar";
 import { Map, MapMarker, MarkerContent } from "@/components/ui/map";
 import "maplibre-gl/dist/maplibre-gl.css";
 import Loading from "@/components/Loading";
+import Footer from "@/components/Footer";
 
 
 function getLocationCoords(location) {
@@ -504,6 +505,7 @@ export default function RequestDetails() {
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

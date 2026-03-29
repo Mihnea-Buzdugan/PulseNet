@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import styles from '../../styles/Pulses_pages/addpulses.module.css';
 import Navbar from "../../components/Navbar";
 import {Link} from "react-router-dom";
+import Footer from "@/components/Footer";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -355,6 +356,7 @@ function AddPulses() {
                     </div>
                 </section>
             </div>
+            <Footer />
         </div>
     );
 }

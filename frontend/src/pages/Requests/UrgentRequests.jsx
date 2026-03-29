@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import {useNavigate} from "react-router-dom";
 import Loading from "@/components/Loading";
 import {Dog, Hammer, Leaf, Monitor, MoreHorizontal, Package, Sparkles, Truck, Wrench, Zap} from "lucide-react";
+import Footer from "@/components/Footer";
 
 const CATEGORIES = [
     { id: 'transport', label: 'Transport', icon: Truck },
@@ -234,6 +235,7 @@ export default function UrgentRequests() {
                 </div>
             )}
         </div>
+            <Footer />
         </div>
     );
 }

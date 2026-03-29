@@ -19,6 +19,8 @@ import {
     Handshake,
     Repeat, Undo, Save
 } from 'lucide-react';
+import {useNavigate} from "react-router-dom";
+import Footer from "@/components/Footer";
 function ChangeView({ center, radiusKm }) {
     const map = useMap();
     useEffect(() => {
@@ -88,6 +90,7 @@ export default function Profile() {
     const [loading, setLoading] = useState(true);
     const [editMode, setEditMode] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const navigate = useNavigate();
 
     const [pulseFilter, setPulseFilter] = useState("obiecte");
 
@@ -1344,6 +1347,7 @@ export default function Profile() {
                                     <motion.div
                                                 key={pulse.id}
                                                 className={styles.objectCard}
+                                                onClick={() => navigate(`/pulse/${pulse.pulseType}/${pulse.id}`)}
                                                 initial={{ opacity: 0, y: 16 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.3}}
@@ -1386,11 +1390,26 @@ export default function Profile() {
                                             </div>
                                         </div>
                                         <div className={styles.objectActions}>
-                                            <motion.button {...btnMotion} onClick={() => handleEditPulse(pulse)} className={styles.editBtn}>
-                                                <SquarePen className="mr-1"/>Edit Post
+                                            <motion.button
+                                                {...btnMotion}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditPulse(pulse);
+                                                }}
+                                                className={styles.editBtn}
+                                            >
+                                                <SquarePen className="mr-1" />Edit Post
                                             </motion.button>
-                                            <motion.button {...btnMotion} onClick={() => openDeletePulseModal(pulse.id)} className={styles.removeBtn}>
-                                                <X/>Delete
+
+                                            <motion.button
+                                                {...btnMotion}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openDeletePulseModal(pulse.id);
+                                                }}
+                                                className={styles.removeBtn}
+                                            >
+                                                <X />Delete
                                             </motion.button>
                                         </div>
                                     </motion.div>
@@ -1772,21 +1791,21 @@ export default function Profile() {
                                                             className={styles.counterBtn}
                                                             style={{ marginLeft: "8px" }}
                                                         >
-                                                            Counteroffer
+                                                            <Repeat className='mr-1'/>Counteroffer
                                                         </motion.button>
 
                                                         <motion.button {...btnMotion}
                                                             onClick={() => openAcceptModal(proposal)}
                                                             className={styles.acceptBtn}
                                                         >
-                                                            Accept the offer
+                                                            <Handshake className='mr-1'/>Accept the offer
                                                         </motion.button>
 
                                                         <motion.button {...btnMotion}
                                                             onClick={() => openDeclineModal(proposal)}
                                                             className={styles.rejectBtn}
                                                         >
-                                                            Refuse the offer
+                                                            <X/>Refuse the offer
                                                         </motion.button>
                                                     </>
                                                 )}
@@ -1860,20 +1879,20 @@ export default function Profile() {
                                             {offer.status === "pending" && offer.last_offer_by !== user.id ? (
                                                 <>
                                                     <motion.button {...btnMotion} onClick={() => openAcceptOfferModal(offer)} className={styles.acceptBtn}>
-                                                        Accept
+                                                        <Handshake className='mr-1'/>Accept
                                                     </motion.button>
                                                     <motion.button {...btnMotion} onClick={() => openDeclineOfferModal(offer)} className={styles.rejectBtn}>
-                                                        Decline
+                                                        <X/>Decline
                                                     </motion.button>
                                                     <motion.button {...btnMotion} onClick={() => openCounterOfferModal(offer)} className={styles.counterBtn}>
-                                                        Counteroffer
+                                                        <Repeat className='mr-1'/>Counteroffer
                                                     </motion.button>
                                                 </>
                                             ) : (
                                                 <div className={styles.smallNote}>
-                                                    {offer.status === "confirmed" && "Ofertă acceptată"}
-                                                    {offer.status === "declined" && "Ofertă refuzată"}
-                                                    {offer.status === "pending" && offer.last_offer_by === user.id && "Așteaptă răspuns la contraofertă"}
+                                                    {offer.status === "confirmed" && "Offer accepted"}
+                                                    {offer.status === "declined" && "Offer refused"}
+                                                    {offer.status === "pending" && offer.last_offer_by === user.id && "Waiting for counteroffer"}
                                                 </div>
                                             )}
                                         </div>
@@ -1942,14 +1961,14 @@ export default function Profile() {
                                                             className={styles.acceptBtn}
                                                             style={{ marginLeft: "8px" }}
                                                         >
-                                                            Accept new price
+                                                            <Handshake className='mr-1'/>Accept new price
                                                         </motion.button>
                                                         <motion.button {...btnMotion}
                                                             onClick={() => openCounterOfferModal(proposal)}
                                                             className={styles.counterBtn}
                                                             style={{ marginLeft: "8px" }}
                                                         >
-                                                            Negotiate
+                                                            <Repeat className='mr-1'/>Negotiate
                                                         </motion.button>
                                                     </>
                                                 )}
@@ -2296,6 +2315,7 @@ export default function Profile() {
                     </div>
                 )}
             </div>
+            <Footer />
         </div>
     );
 }

@@ -3,6 +3,7 @@ import Navbar from "../../components/Navbar";
 import { AlertTriangle, MapPin, Clock, ShieldAlert, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import styles from "../../styles/Alerts/Alerts.module.css";
 import { useNavigate } from "react-router-dom";
+import Footer from "@/components/Footer";
 
 // --- Categoriile pentru Dropdown ---
 const CATEGORIES = [
@@ -279,6 +280,7 @@ export default function Alerts() {
                 )}
             </div>
         </div>
+            <Footer />
         </div>
     );
 }

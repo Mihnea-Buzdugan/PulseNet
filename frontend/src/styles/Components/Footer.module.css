@@ -1,0 +1,85 @@
+
+.footer {
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    text-align: center;
+    padding: 22px 15px;
+    font-size: 14px;
+    margin-top: 50px;
+
+    border-top: 1px solid var(--color-border);
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+
+    box-shadow: var(--shadow-md);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Optional subtle top accent line (very modern touch) */
+.footer::before {
+    content: "";
+    width: 60px;
+    height: 4px;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    margin-bottom: 8px;
+}
+
+/* Rating */
+.rating {
+    font-size: 1.4rem;
+    color: var(--color-primary);
+    font-weight: 600;
+    letter-spacing: 1px;
+
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    animation: fadeIn 1.2s ease-in-out;
+    margin-bottom: 4px;
+}
+
+.rating svg {
+    transition: var(--transition-bounce);
+}
+
+.rating:hover svg {
+    transform: scale(1.2);
+}
+
+/* Footer text */
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text-medium);
+}
+
+/* Quote */
+.footer-quote {
+    font-style: italic;
+    font-size: 14px;
+    color: var(--color-text-subtle);
+    margin-top: 6px;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

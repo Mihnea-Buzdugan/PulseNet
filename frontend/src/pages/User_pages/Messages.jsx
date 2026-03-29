@@ -3,6 +3,7 @@ import styles from "../../styles/User_pages/messages.module.css";
 import Navbar from "../../components/Navbar";
 import Loading from "../../components/Loading";
 import {useNavigate} from "react-router-dom";
+import Footer from "@/components/Footer";
 
 const Messages = ({ currentUser }) => {
     const [conversations, setConversations] = useState([]);
@@ -299,6 +300,7 @@ const Messages = ({ currentUser }) => {
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 };

@@ -18,6 +18,7 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import Loading from "../../components/Loading";
+import Footer from "@/components/Footer";
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -690,6 +691,7 @@ export default function AlertPage() {
 
 
         </div>
+            <Footer />
         </div>
     );
 }

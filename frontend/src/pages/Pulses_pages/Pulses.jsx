@@ -3,6 +3,7 @@ import styles from '../../styles/Requests/UrgentRequests.module.css';
 import Navbar from "@/components/Navbar";
 import {useNavigate} from "react-router-dom";
 import Loading from "@/components/Loading";
+import Footer from "@/components/Footer";
 
 export default function Pulses() {
     const [pulses, setPulses] = useState([]);
@@ -219,6 +220,7 @@ export default function Pulses() {
                     </div>
                 )}
             </div>
+            <Footer />
         </div>
     );
 }

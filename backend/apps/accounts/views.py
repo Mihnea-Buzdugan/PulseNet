@@ -1654,6 +1654,7 @@ def user_profile(request, user_id):
                 "description": p.description,
                 "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
                 "phone_number": p.phone_number,
+                "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
             } for p in pulses
         ]
 

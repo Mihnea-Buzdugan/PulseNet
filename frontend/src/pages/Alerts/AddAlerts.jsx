@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import styles from "../../styles/Alerts/addAlerts.module.css";
 import Navbar from "@/components/Navbar";
 import { X, Plus, ChevronDown } from 'lucide-react';
+import Footer from "@/components/Footer";
 
 function getCookie(name) {
     if (typeof document === "undefined") return null;
@@ -246,6 +247,7 @@ export default function AddAlerts() {
                     </button>
                 </form>
             </div>
+            <Footer />
         </div>
     );
 }

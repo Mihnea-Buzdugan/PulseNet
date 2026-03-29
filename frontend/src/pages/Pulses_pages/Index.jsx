@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Map, MapClusterLayer, MapPopup, MapControls } from "@/components/ui/map";
 import "../../App.css";
 import Loading from "@/components/Loading";
+import Footer from "@/components/Footer";
 
 // Placeholder images (adjust paths as needed)
 const DEFAULT_AVATAR = "/defaultImage.png";
@@ -875,6 +876,7 @@ export default function Index() {
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

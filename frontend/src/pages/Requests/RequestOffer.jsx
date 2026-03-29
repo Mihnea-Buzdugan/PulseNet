@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, MessageSquare, MapPin, CreditCard } from "lucide
 import styles from "../../styles/Pulses_pages/pulseTransaction.module.css";
 import { Map, MapMarker, MarkerContent } from "@/components/ui/map";
 import "maplibre-gl/dist/maplibre-gl.css";
+import Footer from "@/components/Footer";
 
 function getLocationCoords(location) {
     const defaultCoords = [27.5766, 47.1585];
@@ -340,6 +341,7 @@ export default function RequestOffer() {
 
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

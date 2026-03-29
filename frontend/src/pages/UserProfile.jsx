@@ -4,6 +4,23 @@ import styles from "../styles/User_pages/profile.module.css";
 import Loading from "../components/Loading";
 import {useParams} from "react-router-dom";
 import { useNavigate } from 'react-router-dom';
+import {AnimatePresence, motion} from "framer-motion";
+import {
+    X,
+    Plus,
+    SquarePen,
+    Shield,
+    Phone,
+    Pencil,
+    CalendarDays,
+    DollarSign,
+    Boxes,
+    BriefcaseBusiness,
+    Handshake,
+    Repeat, Undo, Save
+} from 'lucide-react';
+import {Circle, MapContainer, Marker, TileLayer} from "react-leaflet";
+import Footer from "@/components/Footer";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -20,6 +37,11 @@ function getCookie(name) {
     return cookieValue;
 }
 
+const btnMotion = {
+    whileHover: {scale: 1.05},
+    whileTap: {scale: 0.95},
+    transition: {duration: 0.15}
+}
 
 export default function Profile() {
     const [user, setUser] = useState(null);
@@ -119,23 +141,52 @@ export default function Profile() {
     }, [user, pulseFilter]);
 
 
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    const itemsPerPage = 4;
+
+    const handleFilterChange = (type) => {
+        setPulseFilter(type);
+        setCurrentIndex(0);
+    };
+
+    const currentPulses = filteredPulses.slice(currentIndex, currentIndex + itemsPerPage);
+
+    const handleNext = () => {
+        if (currentIndex + itemsPerPage < filteredPulses.length) {
+            setCurrentIndex(prev => prev + itemsPerPage);
+        }
+    };
+
+    const handlePrev = () => {
+        if (currentIndex - itemsPerPage >= 0) {
+            setCurrentIndex(prev => prev - itemsPerPage);
+        }
+    };
 
     if (loading) return <Loading />;
     if (!user) return <div className={styles.error}>Could not load user data.</div>;
 
     return (
         <div className={styles.body}>
+            <div className={styles.topGreenBar}></div>
+
             <div className={styles.mainContainer}>
-                <Navbar />
+                <div className={styles.navWrapper}>
+                    <Navbar />
+                </div>
 
                 <div className={styles.container}>
-                    {/* Cover Photo */}
-                    <div className={styles.coverPhoto}></div>
 
                     {/* HEADER CARD */}
-                    <div className={styles.headerCard}>
-                        <div className={styles.headerLayout}>
+                    <motion.div
+                        className={styles.headerCard}
+                        whileHover={{scale: 1.02}}
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}>
 
+                        <div className={styles.headerLayout}>
                             {/* Avatar & Trust Score */}
                             <div className={styles.avatarSection}>
                                 <div className={styles.avatarWrapper}>
@@ -146,17 +197,16 @@ export default function Profile() {
                                                 ? `url(${preview})`
                                                 : user.profilePicture
                                                     ? `url(${user.profilePicture})`
-                                                    : "url(/defaultImage.png)"
+                                                    : "url(/defaultImage.png)",
                                         }}
                                     />
-
                                 </div>
 
-                                <div className={`${styles.trustBadge} ${styles["comments" + user.trustLevel]}`}>
-                                    <span className={styles.trustIcon}>🛡️</span>
-                                    <span className={styles.trustValue}>
-                                {user.trustLevel} • {user.trustScore}
-                                </span>
+                                <div className={styles.resWrapperForButtonAndTag}>
+                                    <div className={`${styles.trustBadge} ${styles["comments" + user.trustLevel]}`}>
+                                        <span className={styles.trustIcon}><Shield size={16}/></span>
+                                        <span className={styles.trustValue}>{user.trustLevel} • {user.trustScore} </span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -196,131 +246,149 @@ export default function Profile() {
                                     </button>
                                 )}
                             </div>
+
                             {/* Profile Info / Edit Form */}
                             <div className={styles.profileInfo}>
                                     <div className={styles.infoContent}>
-                                        <div className={styles.statusBottomRight}>
-                                            <div className={styles.statusRowInline}>
-                                                <div className={styles.statusItem}>
-                                                    <span
-                                                        className={
-                                                            user.onlineStatus === "online"
-                                                                ? styles.statusOnline
-                                                                : user.onlineStatus === "away"
-                                                                    ? styles.statusAway
-                                                                    : user.onlineStatus === "do_not_disturb"
-                                                                        ? styles.statusDnd
-                                                                        : styles.statusOffline
-                                                        }
-                                                    >
-                                                        ●
-                                                    </span>
-                                                    <span className={styles.statusText}>
-                                                        {user.onlineStatus?.replace("_", " ")}
-                                                    </span>
-                                                </div>
-                                                {user.quiet_hours_start &&
-                                                    user.quiet_hours_end &&
-                                                    isUserSleeping() && (
-                                                        <div className={styles.sleepingBadge}>
-                                                            😴 Sleeping
-                                                        </div>
-                                                    )}
-                                            </div>
-                                        </div>
-
+                                        {/* ...same display as before... */}
                                         <div className={styles.titleRow}>
                                             <h1 className={styles.title}>
                                                 {user.firstName} {user.lastName}
                                             </h1>
-                                            {user.isVerified && (
-                                                <span className={styles.verified}>✓ Verified</span>
-                                            )}
+                                            {user.isVerified && <span className={styles.verified}>✓ Verified neighbour</span>}
                                         </div>
 
                                         <p className={styles.username}>
                                             @{user.username} • {user.email}
                                         </p>
 
-                                        <p className={styles.biography}>
-                                            {user.biography}
-                                        </p>
+                                        <p className={styles.biography}>{user.biography}</p>
+
+                                        <div className={styles.publicTagsContainer}>
+                                            {user?.skills?.map((skill, index) => (
+                                                <span key={index} className={styles.publicTag}>
+                                                    {skill}
+                                                 </span>
+                                            ))}
+                                        </div>
+
+
                                     </div>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* PULSES SECTION */}
-                    <div className={styles.contentArea}>
-                        <div className={styles.card}>
+                    <motion.div className={styles.contentArea}>
+                        <motion.div
+                            className={styles.card}
+                            whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            {/* Header modificat cu butoane */}
                             <div className={styles.pulsesHeader}>
-                                <h2 className={styles.sectionTitle}>Anunțurile mele</h2>
-                                <select
-                                    className={styles.pulseTypeDropdown}
-                                    value={pulseFilter}
-                                    onChange={(e) => setPulseFilter(e.target.value)}
-                                >
-                                    <option value="obiecte">Obiecte</option>
-                                    <option value="servicii">Servicii</option>
-                                </select>
+                                <h2 className={styles.sectionTitle}>User listings</h2>
+                                <div className={styles.filterButtonsRow}>
+                                    <motion.button {...btnMotion}
+                                                   className={`${styles.filterBtn} ${pulseFilter === "obiecte" ? styles.activeFilter : ""}`}
+                                                   onClick={() => handleFilterChange("obiecte")}
+                                    >
+                                        Objects
+                                    </motion.button>
+                                    <motion.button {...btnMotion}
+                                                   className={`${styles.filterBtn} ${pulseFilter === "servicii" ? styles.activeFilter : ""}`}
+                                                   onClick={() => handleFilterChange("servicii")}
+                                    >
+                                        Services
+                                    </motion.button>
+                                </div>
                             </div>
 
-                            {/* Pulse list */}
+                            {/* Pulse list - Acum mapează doar elementele din pagina curentă (currentPulses) */}
                             <div className={styles.objectGrid}>
                                 {filteredPulses.length === 0 && (
-                                    <p className={styles.emptyState}>
-                                        Niciun anunț de tip „{pulseFilter}" încă.
-                                    </p>
+                                    <p className={styles.emptyState}>No posts of type „{pulseFilter}” yet.</p>
                                 )}
-                                {filteredPulses.map((pulse) => (
-                                    <div key={pulse.id} className={styles.objectCard}>
+
+                                {currentPulses.map((pulse) => (
+                                    <motion.div
+                                        key={pulse.id}
+                                        className={styles.objectCard}
+                                        onClick={() => navigate(`/pulse/${pulse.pulseType}/${pulse.id}`)}
+                                        initial={{ opacity: 0, y: 16 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.3}}
+                                        whileHover={{ y: -3, cursor: "pointer", boxShadow: "0 8px 24px rgba(0,0,0,0.1)" }} >
                                         <div className={styles.objectImage}>
                                             {pulse.images && pulse.images.length > 0 ? (
-                                                <img
-                                                    src={pulse.images[0]}
-                                                    alt={pulse.title}
-                                                    className={styles.pulseImage}
-                                                />
+                                                <img src={pulse.images[0]} alt={pulse.title} className={styles.pulseImage} />
                                             ) : (
-                                                <span className={styles.imagePlaceholder}>
-                    {pulseFilter === "obiecte" ? "📦" : "🛠️"}
-                </span>
+                                                <span className={styles.imagePlaceholder}>{pulseFilter === "obiecte" ? <Boxes size={80} color={'black'}/> : <BriefcaseBusiness size={80} color={'black'}/>}</span>
                                             )}
                                         </div>
                                         <div className={styles.objectInfo}>
                                             <h3 className={styles.objectName}>{pulse.title}</h3>
-                                            {pulse.category && (
-                                                <p className={styles.pulseCategory}>{pulse.category}</p>
-                                            )}
                                             {pulse.phone_number && (
-                                                <p className={styles.pulsePhone}>📞 {pulse.phone_number}</p>
+                                                <p className={styles.pulsePhone}>
+                                                    <Phone size={16} color={'black'} style={{marginTop: '2px', marginRight: '5px'}}/>
+                                                    {pulse.phone_number}
+                                                </p>
                                             )}
-                                            <p className={styles.pulseDate}>
-                                                Postat: {new Date(pulse.created_at || Date.now()).toLocaleString('ro-RO', {
-                                                day: '2-digit',
-                                                month: '2-digit',
-                                                year: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}
-                                            </p>
-                                            <div className={styles.objectMeta}>
+                                            <div className='flex'>
+                                                <CalendarDays color={'black'}/>
+                                                <p className={styles.pulseDate}>
+                                                    Postat:{" "}
+                                                    {pulse.timestamp ? new Date(pulse.timestamp.replace(" ", "T") + "Z").toLocaleString("ro-RO", {
+                                                        day: "2-digit",
+                                                        month: "2-digit",
+                                                        year: "numeric",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    }) : "—"}
+                                                </p>
+                                            </div>
+                                            <div className='flex'>
+                                                <DollarSign color={'green'}/>
                                                 {pulse.price != null && (
-                                                    <span className={styles.price}>
-                        {pulse.price} {pulse.currencyType || "lei"}
-                    </span>
+                                                    <span className="font-bold">
+                                    {pulse.price} {pulse.currencyType || "lei"}
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
-                                        <div className={styles.objectActions}>
-                                        </div>
-                                    </div>
+                                    </motion.div>
                                 ))}
                             </div>
-                        </div>
-                    </div>
-                </div>
+
+                            {filteredPulses.length > itemsPerPage && (
+                                <div className={styles.carouselControls}>
+                                    <motion.button {...btnMotion}
+                                                   onClick={handlePrev}
+                                                   disabled={currentIndex === 0}
+                                                   className={styles.carouselBtn}
+                                    >
+                                        &larr; Prev
+                                    </motion.button>
+
+                                    <span className={styles.carouselIndicator}>
+                    {Math.floor(currentIndex / itemsPerPage) + 1} / {Math.ceil(filteredPulses.length / itemsPerPage)}
+                </span>
+
+                                    <motion.button {...btnMotion}
+                                                   onClick={handleNext}
+                                                   disabled={currentIndex + itemsPerPage >= filteredPulses.length}
+                                                   className={styles.carouselBtn}
+                                    >
+                                        Next &rarr;
+                                    </motion.button>
+                                </div>
+                            )}
+                        </motion.div>
+                    </motion.div>
+
             </div>
+        </div>
+            <Footer />
         </div>
     );
 }
