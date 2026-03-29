@@ -699,12 +699,33 @@ def list_all_pulses(request):
     page = int(request.GET.get("page", 1))
     page_size = 15
 
+    search = request.GET.get("search", "")
+    pulse_type = request.GET.get("pulse_type", "")
+    min_price = request.GET.get("min_price")
+    max_price = request.GET.get("max_price")
+
     qs = (
         Pulse.objects
         .select_related("user")
         .prefetch_related("images")
         .order_by("-created_at")
     )
+
+    # 🔍 SEARCH (title + description)
+    if search:
+        qs = qs.filter(
+            Q(title__icontains=search) |
+            Q(description__icontains=search)
+        )
+
+    if pulse_type:
+        qs = qs.filter(pulse_type=pulse_type)
+
+    if min_price:
+        qs = qs.filter(price__gte=min_price)
+
+    if max_price:
+        qs = qs.filter(price__lte=max_price)
 
     total_count = qs.count()
     total_pages = ceil(total_count / page_size)
@@ -735,7 +756,7 @@ def list_all_pulses(request):
             "title": pulse.title,
             "description": pulse.description,
             "pulseType": pulse.pulse_type,
-            "category": pulse.category,
+            "category": pulse.pulse_type,
             "currencyType": pulse.currencyType,
             "price": str(pulse.price) if pulse.price else None,
             "location": location_data,
@@ -1988,7 +2009,16 @@ def list_alerts(request):
             "created_at": alert.created_at.isoformat(),
             "lat": float(alert.location.y) if alert.location else None,
             "lng": float(alert.location.x) if alert.location else None,
-            "images": [request.build_absolute_uri(img.image.url) for img in alert.images.all()]
+            "images": [request.build_absolute_uri(img.image.url) for img in alert.images.all()],
+
+            "is_verified": (
+            alert.is_verified
+            or alert.user.is_superuser
+            or AlertConfirm.objects.filter(
+                alert=alert,
+                user__is_superuser=True
+            ).exists()
+        ),
         }
         for alert in alerts
     ]
@@ -2086,23 +2116,38 @@ def create_alert(request):
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+
 def alert_details(request, alert_id):
     alert = get_object_or_404(Alert, id=alert_id)
 
-    # Increment views if the user is not the owner
-
-    # Fetch all related images and build absolute URLs for the frontend
-    image_urls = [
-        request.build_absolute_uri(img.image.url)
-        for img in alert.images.all()
-    ]
-
+    # 1. Determine if the current user has confirmed this alert
     is_confirmed = False
+    if request.user.is_authenticated:
+        is_confirmed = AlertConfirm.objects.filter(
+            user=request.user,
+            alert=alert
+        ).exists()
+
+    # 2. Check if ANY admin (superuser) confirmed this alert
+    admin_confirm = AlertConfirm.objects.filter(
+        alert=alert,
+        user__is_superuser=True
+    ).exists()
+
+    # 3. Update view count logic
     if request.user.is_authenticated and request.user != alert.user:
         if request.user.id not in alert.viewed_users:
             alert.views_count += 1
             alert.viewed_users.append(request.user.id)
             alert.save()
+
+    # 4. Fetch absolute URLs for images
+    image_urls = [
+        request.build_absolute_uri(img.image.url)
+        for img in alert.images.all()
+    ]
 
     data = {
         "id": alert.id,
@@ -2118,7 +2163,8 @@ def alert_details(request, alert_id):
         "images": image_urls,
         "confirm_count": alert.confirm_count,
         "report_count": alert.report_count,
-        "views_count": alert.views_count,  # <-- use the actual field
+        "views_count": alert.views_count,
+        "is_verified": alert.is_verified or admin_confirm or alert.user.is_superuser,
         "is_confirmed": is_confirmed,
     }
 
@@ -2399,6 +2445,11 @@ def list_all_requests(request):
     page = int(request.GET.get("page", 1))
     page_size = 15
 
+    search = request.GET.get("search", "")
+    category = request.GET.get("category", "")
+    min_price = request.GET.get("min_price")
+    max_price = request.GET.get("max_price")
+
     qs = (
         UrgentRequest.objects
         .filter(is_active=True)
@@ -2406,6 +2457,21 @@ def list_all_requests(request):
         .prefetch_related("images")
         .order_by("-created_at")
     )
+
+    if search:
+        qs = qs.filter(
+            Q(title__icontains=search) |
+            Q(description__icontains=search)
+        )
+
+    if category:
+        qs = qs.filter(category__iexact=category)
+
+    if min_price:
+        qs = qs.filter(max_price__gte=min_price)
+
+    if max_price:
+        qs = qs.filter(max_price__lte=max_price)
 
     total_count = qs.count()
     total_pages = ceil(total_count / page_size)

@@ -202,9 +202,9 @@
 /* Card Content */
 .cardHeader {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-top: 0.5rem;
+    gap: 8px; /* Spacing between badges */
+    margin-bottom: 12px;
 }
 
 .categoryBadge {
@@ -221,10 +221,29 @@
     border: 1px solid #fee2e2;
 }
 
+.verifiedBadge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #eff6ff; /* Light blue bg */
+    color: #1d4ed8; /* Dark blue text */
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid #bfdbfe;
+}
+
+.verifiedText {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Ensure user name stays pushed to the right if needed */
 .user {
+    margin-left: auto;
+    font-size: 13px;
     color: #64748b;
-    font-size: 0.875rem;
-    font-weight: 600;
 }
 
 .alertTitle {

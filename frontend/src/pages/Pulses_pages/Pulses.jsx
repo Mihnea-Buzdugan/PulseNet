@@ -12,6 +12,20 @@ export default function Pulses() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    const [search, setSearch] = useState("");
+    const [category, setCategory] = useState("");
+    const [pulseType, setPulseType] = useState("");
+    const [minPrice, setMinPrice] = useState("");
+    const [maxPrice, setMaxPrice] = useState("");
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            fetchPulses(1);
+        }, 400);
+
+        return () => clearTimeout(delay);
+    }, [search, category, pulseType, minPrice, maxPrice]);
+
     const navigate = useNavigate();
     const fetchDetailedAddress = async (lat, lng) => {
         try {
@@ -53,22 +67,35 @@ export default function Pulses() {
         }
     };
 
-    const fetchPulses = async (pageNumber) => {
+    const fetchPulses = async (pageNumber = 1) => {
         try {
             setLoading(true);
             setError("");
 
-            const res = await fetch(`http://localhost:8000/accounts/list-all-pulses/?page=${pageNumber}`);
+            const params = new URLSearchParams({
+                page: pageNumber,
+                search,
+                category,
+                pulse_type: pulseType,
+                min_price: minPrice,
+                max_price: maxPrice,
+            });
+
+            const res = await fetch(
+                `http://localhost:8000/accounts/list-all-pulses/?${params}`
+            );
+
             if (!res.ok) throw new Error("Failed to load pulses");
 
             const data = await res.json();
-            const fetchedResults = data.results || [];
 
-            // Run geocoding for all items in parallel
             const pulsesWithDetails = await Promise.all(
-                fetchedResults.map(async (pulse) => {
+                data.results.map(async (pulse) => {
                     if (pulse.location) {
-                        const address = await fetchDetailedAddress(pulse.location.lat, pulse.location.lng);
+                        const address = await fetchDetailedAddress(
+                            pulse.location.lat,
+                            pulse.location.lng
+                        );
                         return { ...pulse, address };
                     }
                     return { ...pulse, address: "Global / Online" };
@@ -114,6 +141,37 @@ export default function Pulses() {
                         {loading && <span className={styles.loadingPulse}>Scanning Locations...</span>}
                         {error && <span className={styles.errorMessage}>{error}</span>}
                     </div>
+                </div>
+
+                <div className={styles.filterBar}>
+                    <input
+                        type="text"
+                        placeholder="Search pulses..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+
+                    <select value={pulseType} onChange={(e) => setPulseType(e.target.value)}>
+                        <option value="">All Types</option>
+                        <option value="servicii">Servicii</option>
+                        <option value="obiecte">Obiecte</option>
+                    </select>
+
+                    <input
+                        type="number"
+                        placeholder="Min Price"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(e.target.value)}
+                    />
+
+                    <input
+                        type="number"
+                        placeholder="Max Price"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(e.target.value)}
+                    />
+
+                    <button className={styles.filterBtn} onClick={() => fetchPulses(1)}>Search</button>
                 </div>
 
                 <div className={styles.urgentRequestsGrid}>

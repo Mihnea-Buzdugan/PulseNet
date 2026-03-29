@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styles from "../../styles/User_pages/followRequests.module.css";
 import Navbar from "../../components/Navbar";
+import {useNavigate} from "react-router-dom";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -23,6 +24,7 @@ export default function FollowRequests() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const navigate = useNavigate();
     const fetchRequests = async () => {
         setLoading(true);
         try {
@@ -106,7 +108,7 @@ export default function FollowRequests() {
 
                 <div className={styles.list}>
                     {requests.map((req) => (
-                        <div key={req.id} className={styles.card}>
+                        <div key={req.id} className={styles.card} onClick={() => navigate(`/user-profile/${req.id}`)}>
                             <div className={styles.userInfo}>
                                 <div className={styles.username}>
                                     {req.requester.first_name} {req.requester.last_name}
@@ -118,14 +120,20 @@ export default function FollowRequests() {
 
                             <div className={styles.actions}>
                                 <button
-                                    onClick={() => acceptRequest(req.id)}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // <-- This stops the card from being clicked
+                                        acceptRequest(req.id);
+                                    }}
                                     className={styles.acceptBtn}
                                 >
                                     Accept
                                 </button>
 
                                 <button
-                                    onClick={() => rejectRequest(req.id)}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // <-- Apply it to the reject button too!
+                                        rejectRequest(req.id);
+                                    }}
                                     className={styles.rejectBtn}
                                 >
                                     Reject

@@ -3,6 +3,20 @@ import styles from '../../styles/Requests/UrgentRequests.module.css';
 import Navbar from "@/components/Navbar";
 import {useNavigate} from "react-router-dom";
 import Loading from "@/components/Loading";
+import {Dog, Hammer, Leaf, Monitor, MoreHorizontal, Package, Sparkles, Truck, Wrench, Zap} from "lucide-react";
+
+const CATEGORIES = [
+    { id: 'transport', label: 'Transport', icon: Truck },
+    { id: 'labor', label: 'Help / Labor', icon: Wrench },
+    { id: 'cleaning', label: 'Cleaning', icon: Sparkles },
+    { id: 'tech', label: 'IT Support', icon: Monitor },
+    { id: 'delivery', label: 'Delivery', icon: Package },
+    { id: 'pet_care', label: 'Pet Care', icon: Dog },
+    { id: 'repair', label: 'Home Repair', icon: Hammer },
+    { id: 'landscaping', label: 'Landscaping', icon: Leaf },
+    { id: 'electrical', label: 'Electrical', icon: Zap },
+    { id: 'other', label: 'Other', icon: MoreHorizontal },
+];
 
 export default function UrgentRequests() {
     const [requests, setRequests] = useState([]);
@@ -12,15 +26,28 @@ export default function UrgentRequests() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    const [search, setSearch] = useState("");
+    const [category, setCategory] = useState("");
+    const [minPrice, setMinPrice] = useState("");
+    const [maxPrice, setMaxPrice] = useState("");
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            fetchRequests(1);
+        }, 400);
+
+        return () => clearTimeout(delay);
+    }, [search, category, minPrice, maxPrice]);
+
     const navigate = useNavigate();
     const fetchDetailedAddress = async (lat, lng) => {
         try {
+
             const res = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
                 {
                     headers: {
-                        'Accept-Language': 'en',
-                        'User-Agent': 'YourAppName/1.0'
+                        'Accept-Language': 'en'
                     }
                 }
             );
@@ -58,7 +85,15 @@ export default function UrgentRequests() {
             setLoading(true);
             setError("");
 
-            const res = await fetch(`http://localhost:8000/accounts/list-all-requests/?page=${pageNumber}`);
+            const params = new URLSearchParams({
+                page: pageNumber,
+                search,
+                category,
+                min_price: minPrice,
+                max_price: maxPrice,
+            });
+
+            const res = await fetch(`http://localhost:8000/accounts/list-all-requests/?${params}`);
             if (!res.ok) throw new Error("Failed to load requests");
 
             const data = await res.json();
@@ -114,6 +149,41 @@ export default function UrgentRequests() {
                     {loading && <span className={styles.loadingPulse}>Scanning Locations...</span>}
                     {error && <span className={styles.errorMessage}>{error}</span>}
                 </div>
+            </div>
+
+            <div className={styles.filterBar}>
+                <input
+                    type="text"
+                    placeholder="Search pulses..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+
+                <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                    <option value="">All Categories</option>
+
+                    {CATEGORIES.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                            {cat.label}
+                        </option>
+                    ))}
+                </select>
+
+                <input
+                    type="number"
+                    placeholder="Min Price"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                />
+
+                <input
+                    type="number"
+                    placeholder="Max Price"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                />
+
+                <button className={styles.filterBtn} onClick={() => fetchRequests(1)}>Search</button>
             </div>
 
             <div className={styles.urgentRequestsGrid}>

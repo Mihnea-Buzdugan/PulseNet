@@ -80,7 +80,33 @@ h1, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.02em; color: #0f172
 }
 
 /* Meta Data */
-.badgeContainer { display: flex; align-items: center; gap: 1rem; }
+.badgeContainer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.verifiedBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid #bfdbfe;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* Optional: Add a subtle pulse to the verified badge to draw eyes */
+.verifiedBadge svg {
+    filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3));
+}
+
 .badge {
     background: rgba(37, 99, 235, 0.1);
     color: #2563eb;

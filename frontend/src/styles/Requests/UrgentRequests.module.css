@@ -75,6 +75,118 @@
     border: 1px dashed #ccc;
 }
 
+/* Filter / Search Bar */
+.filterBar {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr 1fr 0.8fr 0.8fr auto;
+    gap: 1rem;
+    align-items: center;
+    background: #ffffff;
+    padding: 1rem;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.filterBar input,
+.filterBar select {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    border: 1px solid #e2e2e2;
+    border-radius: 12px;
+    background: #fafafa;
+    color: #222;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.25s ease;
+}
+
+.filterBar input::placeholder {
+    color: #999;
+}
+
+.filterBar input:focus,
+.filterBar select:focus {
+    border-color: #ff4b2b;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(255, 75, 43, 0.08);
+}
+
+.filterBtn {
+    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    color: #fff;
+    border: none;
+    padding: 0.95rem 1.4rem;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    white-space: nowrap;
+}
+
+.filterBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255, 75, 43, 0.18);
+}
+
+.filterBtn:active {
+    transform: translateY(0);
+}
+
+.filterBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Optional helper row for active filters / reset */
+.filterActions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.clearFiltersBtn {
+    background: #f3f3f3;
+    color: #333;
+    border: 1px solid #e0e0e0;
+    padding: 0.95rem 1.2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clearFiltersBtn:hover {
+    background: #ededed;
+    border-color: #d5d5d5;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .filterBar {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .filterBtn {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 640px) {
+    .filterBar {
+        grid-template-columns: 1fr;
+    }
+
+    .filterBtn {
+        grid-column: auto;
+        width: 100%;
+    }
+}
+
 /* Grid Layout */
 .urgentRequestsGrid {
     display: grid;

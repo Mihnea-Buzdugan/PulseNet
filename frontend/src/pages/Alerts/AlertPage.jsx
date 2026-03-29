@@ -10,8 +10,9 @@ import {
     Marker,
     Popup,
     Circle,
-    useMap
+    useMap,
 } from "react-leaflet";
+import { CheckCircle } from "lucide-react";
 import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -66,6 +67,7 @@ export default function AlertPage() {
     const [reportDescription, setReportDescription] = useState("");
     const [commentText, setCommentText] = useState("");
     const carouselRef = useRef(null);
+    const [address, setAddress] = useState("Loading address...");
 
     const [confirmLoading, setConfirmLoading] = useState(false);
     const [reportLoading, setReportLoading] = useState(false);
@@ -99,6 +101,51 @@ export default function AlertPage() {
             setCommentsLoading(false);
         }
     }, [id]);
+
+    const fetchDetailedAddress = async (lat, lng) => {
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
+                {
+                    headers: {
+                        'Accept-Language': 'en'
+                    }
+                }
+            );
+
+            if (!res.ok) return "Location unavailable";
+
+            const data = await res.json();
+            const addr = data.address || {};
+
+            // Try to build a clean short address first
+            const street = addr.road || addr.pedestrian || addr.path || "";
+            const number = addr.house_number || "";
+            const city = addr.city || addr.town || addr.village || addr.suburb || "";
+            const county = addr.county || "";
+            const country = addr.country || "";
+
+            const shortAddress = [street, number, city]
+                .filter(Boolean)
+                .join(", ");
+
+            // 🧠 Smart fallback chain
+            if (shortAddress) return shortAddress;
+            if (city) return city;
+            if (county) return county;
+            if (country) return country;
+
+            // 🔥 LAST fallback (always works)
+            if (data.display_name) {
+                return data.display_name.split(",").slice(0, 3).join(", ");
+            }
+
+            return "Unknown location";
+        } catch (err) {
+            console.error("Geocoding error:", err);
+            return "Unknown location";
+        }
+    };
 
     const handleToggleComments = () => {
         const willShow = !showComments;
@@ -202,6 +249,14 @@ export default function AlertPage() {
             })
             .finally(() => setLoading(false));
     }, [id]);
+
+    useEffect(() => {
+        if (alert?.lat && alert?.lng) {
+            fetchDetailedAddress(alert.lat, alert.lng).then(setAddress);
+        } else {
+            setAddress("No location provided");
+        }
+    }, [alert]);
 
 
     useEffect(() => {
@@ -348,6 +403,12 @@ export default function AlertPage() {
                     <div className={styles.headerLeft}>
                         <div className={styles.badgeContainer}>
                             <span className={styles.badge}>{alert.category_display || "General"}</span>
+                            {alert.is_verified && (
+                                <span className={styles.verifiedBadge}>
+                            <CheckCircle size={14} fill="#3b82f6" color="white" />
+                            Verified Alert
+                            </span>
+                            )}
                             <span className={styles.time}>
                                 {new Intl.DateTimeFormat('en-US', {
                                     month: 'short',
@@ -563,8 +624,8 @@ export default function AlertPage() {
                                     <dd>@{alert.user}</dd>
                                 </div>
                                 <div className={styles.detailItem}>
-                                    <dt>Coordinates</dt>
-                                    <dd>{alert.lat ? `${alert.lat.toFixed(5)}, ${alert.lng.toFixed(5)}` : "N/A"}</dd>
+                                    <dt>Address</dt>
+                                    <dd>{address}</dd>
                                 </div>
                             </dl>
                         </div>
@@ -627,11 +688,7 @@ export default function AlertPage() {
                 </div>
             )}
 
-            {toast && (
-                <div className={`${styles.toast} ${styles[toast.type]}`}>
-                    {toast.text}
-                </div>
-            )}
+
         </div>
         </div>
     );

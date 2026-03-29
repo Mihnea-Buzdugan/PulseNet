@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import Navbar from "../../components/Navbar";
-import { AlertTriangle, MapPin, Clock, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, MapPin, Clock, ShieldAlert, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import styles from "../../styles/Alerts/Alerts.module.css";
 import { useNavigate } from "react-router-dom";
 
@@ -73,6 +73,15 @@ const AlertCard = ({ a, formatDate, navigate }) => {
                     <AlertTriangle size={14} />
                     {a.category?.toUpperCase() || "FLAG"}
                 </span>
+
+                {/* --- VERIFIED BADGE --- */}
+                {a.is_verified && (
+                    <span className={styles.verifiedBadge} title="Verified Alert">
+                        <CheckCircle size={14} fill="#3b82f6" color="white" />
+                        <span className={styles.verifiedText}>Verified</span>
+                    </span>
+                )}
+
                 <span className={styles.user}>@{a.user_name}</span>
             </div>
 

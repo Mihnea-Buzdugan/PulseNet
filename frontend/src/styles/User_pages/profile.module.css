@@ -654,14 +654,19 @@
    MODALS (generic)
    ============================================================ */
 .modalOverlay {
-    @apply fixed inset-0 flex items-center justify-center z-50;
-    background: rgba(0,0,0,.4);
+    @apply fixed inset-0 flex items-start justify-center z-50;
+    background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
+    z-index: 1000;
+    padding: 24px;
+    overflow-y: auto;
 }
 
 .modal {
     @apply bg-white rounded-2xl w-full max-w-md p-6;
     box-shadow: var(--shadow-lg);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
 }
 
 .modalTitle   { @apply text-lg font-semibold mb-2; color: var(--color-text-medium); }
