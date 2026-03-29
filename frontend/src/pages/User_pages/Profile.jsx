@@ -1368,7 +1368,7 @@ export default function Profile() {
                                                 </p>
                                             )}
                                             <div className='flex'>
-                                            <CalendarDays color={'black'}/>
+                                            <CalendarDays color={'#475064'}/>
                                                 <p className={styles.pulseDate}>
                                                     Postat:{" "}
                                                     {pulse.timestamp ? new Date(pulse.timestamp.replace(" ", "T") + "Z").toLocaleString("ro-RO", {
@@ -1381,7 +1381,7 @@ export default function Profile() {
                                                 </p>
                                             </div>
                                             <div className='flex'>
-                                                <DollarSign color={'green'}/>
+                                                <DollarSign color={'#99cb91'}/>
                                                 {pulse.price != null && (
                                                     <span className="font-bold">
                                     {pulse.price} {pulse.currencyType || "lei"}

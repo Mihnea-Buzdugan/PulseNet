@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
 import {GoogleLogin} from "@react-oauth/google";
+import {initializeE2EE} from "@/utils/cryptoUtils";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -102,6 +103,8 @@ const SignUp = () => {
 
             if (response.ok) {
                 const expirationTime = new Date();
+
+                await initializeE2EE();
                 expirationTime.setHours(expirationTime.getHours() + 6);
                 localStorage.setItem('auth-token', 'true');
                 localStorage.setItem('token-expiration', expirationTime.toString());
@@ -140,6 +143,7 @@ const SignUp = () => {
         if (resp.ok) {
             const data = await resp.json();
             console.log(data);
+            await initializeE2EE();
             navigate('/');
             const exp = new Date();
             exp.setHours(exp.getHours() + 6);
@@ -199,7 +203,7 @@ const SignUp = () => {
                         </div>
                     </div>
 
-                    <div className={styles.username}>
+                    <div>
                         <input
                             type="text"
                             className={styles.inputs}
@@ -235,14 +239,14 @@ const SignUp = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                             <span
-                                className={styles["toggle-password"]}
+                                className={styles["toggle-passwords"]}
                                 onClick={() => togglePasswordVisibility('password1')}
                             >
-                <FontAwesomeIcon
-                    icon={showPassword1 ? faEye : faEyeSlash}
-                    className={styles.customIcon}
-                />
-              </span>
+                                <FontAwesomeIcon
+                                    icon={showPassword1 ? faEye : faEyeSlash}
+                                    className={styles.customIcon}
+                                />
+                            </span>
                         </div>
                         <div className={styles["password-field"]}>
                             <input
@@ -255,14 +259,14 @@ const SignUp = () => {
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                             />
                             <span
-                                className={styles["toggle-password"]}
+                                className={styles["toggle-passwords"]}
                                 onClick={() => togglePasswordVisibility('password2')}
                             >
-                <FontAwesomeIcon
-                    icon={showPassword2 ? faEye : faEyeSlash}
-                    className={styles.customIcon}
-                />
-              </span>
+                                <FontAwesomeIcon
+                                    icon={showPassword2 ? faEye : faEyeSlash}
+                                    className={styles.customIcon}
+                                />
+                            </span>
                         </div>
                     </div>
 

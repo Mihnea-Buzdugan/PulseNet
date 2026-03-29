@@ -51,6 +51,17 @@ body {
     margin-bottom: 15px;
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: black !important;
+    background-color: white !important;
+}
+
+
 input:focus {
     border-color: #00bfa5; /* Primary */
     box-shadow: 0px 0px 10px rgba(32, 120, 110, 0.5); /* Accent hint */
@@ -86,7 +97,7 @@ input:focus {
 
 .password-fields{
     width: 100%;
-    margin-bottom: 0;
+    position: relative;
 }
 
 /* make room for eye icon */
@@ -95,35 +106,18 @@ input:focus {
 }
 
 /* EYE ICON */
-.toggle-password {
-    position: absolute;
-    right: 5%;
-    top: 35%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 20px;
-    user-select: none;
-}
+
 
 .toggle-passwords{
     position: absolute;
-    right: 13%;
-    top: 48.7%;
     transform: translateY(-50%);
     cursor: pointer;
     font-size: 20px;
     user-select: none;
+    right: 10px;
+    top: 50%;
 }
 
-.toggle-passworde{
-    position: absolute;
-    right: 13%;
-    top: 52%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 20px;
-    user-select: none;
-}
 
 /* TRANSPORT DROPDOWN */
 .transport {
@@ -473,6 +467,6 @@ input:checked + .slider:before {
 .customIcon {
     color: grey;
     font-size: 20px;
-    margin-left: 5px;
-    margin-top: 5px;
+    margin-left: 2rem;
+    margin-bottom: 10px;
 }

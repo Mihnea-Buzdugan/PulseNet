@@ -342,14 +342,14 @@ function App() {
                     <Route path="/search-users" element={<ProtectedRoute><SearchUsers /></ProtectedRoute>} />
                     <Route path="/follow-requests" element={<ProtectedRoute><FollowRequests /></ProtectedRoute>} />
                     <Route path="/user-profile/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-                    <Route path="/direct-chat/:id" element={<ProtectedRoute><DirectChat /></ProtectedRoute>} />
+                    <Route path="/direct-chat/:id" element={<ProtectedRoute><DirectChat currentUser={user} /></ProtectedRoute>} />
 
                     {/* I noticed some routes below aren't protected. You might want to wrap them in `user ? ... : <Navigate to="/login" />` if they require auth! */}
                     <Route path="/add-pulse" element={<ProtectedRoute><AddPulses/></ProtectedRoute>} />
                     <Route path="/pulses" element={<Pulses />} />
                     <Route path="pulse/:type/:id" element={<PulseDetails />} />
                     <Route path="/transaction/:pulseId" element={<ProtectedRoute><PulseTransaction /></ProtectedRoute>} />
-                    <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+                    <Route path="/messages" element={<ProtectedRoute><Messages currentUser={user} /></ProtectedRoute>} />
                     <Route path="/favorites" element={<ProtectedRoute><FavoritePulses /></ProtectedRoute>} />
                     <Route path="/alerts" element={<Alerts />} />
                     <Route path="/add-alerts" element={<ProtectedRoute><AddAlerts /></ProtectedRoute>} />

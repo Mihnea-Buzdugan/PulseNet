@@ -1928,6 +1928,63 @@ async def get_message_history(request, chat_type, conversation_id):
 
 
 @login_required
+@require_http_methods(["POST"])
+def upload_public_key(request):
+
+    try:
+        body = json.loads(request.body)
+        public_key = body.get("publicKey")
+
+        if not public_key:
+            return JsonResponse({"error": "Public key is missing", "status": 400})
+
+        user = request.user
+        user.public_key = public_key
+        user.save(update_fields=['public_key'])
+
+        return JsonResponse({
+            "message": "Public key saved successfully",
+            "status": 200
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON", "status": 400})
+    except Exception as e:
+        return JsonResponse({"error": str(e), "status": 500})
+
+@login_required
+@require_http_methods(["GET"])
+def get_my_public_key(request):
+    if not request.user.public_key:
+        return JsonResponse({"error": "No key found"}, status=404)
+    return JsonResponse({"public_key": request.user.public_key})
+
+@login_required
+@require_http_methods(["GET"])
+def get_public_key(request, user_id):
+
+    try:
+        target_user = User.objects.get(id=user_id)
+
+        if not target_user.public_key:
+            return JsonResponse({
+                "error": "This user does not have a public key set up yet.",
+                "status": 404
+            })
+
+        return JsonResponse({
+            "user_id": target_user.id,
+            "public_key": target_user.public_key,
+            "status": 200
+        })
+
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User not found", "status": 404})
+    except Exception as e:
+        return JsonResponse({"error": str(e), "status": 500})
+
+
+@login_required
 def my_conversations(request):
     if request.method != "GET":
         return JsonResponse({"error": "Invalid request method"}, status=405)
@@ -1948,8 +2005,10 @@ def my_conversations(request):
             "id": convo.id,
             "type": "direct",
             "name": f"{other_user.first_name} {other_user.last_name}",
+            "other_user_id": other_user.id,
             "username": other_user.username,
             "last_message": last_msg.content if last_msg else "No messages yet",
+            "last_message_sender_id": last_msg.sender.id if last_msg else None,
             "timestamp": last_msg.timestamp.isoformat() if last_msg else convo.created_at.isoformat(),
             "unread": convo.messages.filter(is_read=False)
                                      .exclude(sender=user)
@@ -1965,7 +2024,7 @@ def my_conversations(request):
         results.append({
             "id": convo.id,
             "type": "group",
-            "name": f"Group Chat {convo.id}",  # change later if you add name field
+            "name": f"Group Chat {convo.id}",
             "last_message": last_msg.content if last_msg else "No messages yet",
             "timestamp": last_msg.timestamp.isoformat() if last_msg else convo.created_at.isoformat(),
             "unread": convo.messages.filter(is_read=False)

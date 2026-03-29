@@ -2,10 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Loading from "../../components/Loading";
 import styles from '../../styles/User_pages/directchat.module.css';
-import Navbar from "../../components/Navbar"; // 1. Import the styles
+import Navbar from "../../components/Navbar";
 import { useLocation } from "react-router-dom";
 import Footer from "@/components/Footer";
-
+import {encryptMessage, decryptMessage} from "@/utils/cryptoUtils";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -35,6 +35,9 @@ const DirectChat = ({ currentUser }) => {
     const socketRef = useRef(null);
     const scrollRef = useRef(null);
 
+    const [receiverPublicKey, setReceiverPublicKey] = useState(null);
+    const [myPublicKey, setMyPublicKey] = useState(null);
+
     useEffect(() => {
         const initializeChat = async () => {
             const fromPulse = location.state?.fromPulse ?? false;
@@ -53,11 +56,31 @@ const DirectChat = ({ currentUser }) => {
                             'X-CSRFToken': getCookie('csrftoken'),
                         },
                         credentials: 'include',
-                        body: JSON.stringify(bodyData) // <-- stringify here
+                        body: JSON.stringify(bodyData)
                     }
                 );
                 const data = await response.json();
-                if (response.ok) setConversationId(data.conversation_id);
+                if (response.ok) {
+                    setConversationId(data.conversation_id);
+
+                    const keyRes = await fetch(`http://localhost:8000/accounts/message_keys/get/${id}/`, {
+                        credentials: 'include',
+                    });
+
+                    if (keyRes.ok) {
+                        const keyData = await keyRes.json();
+                        setReceiverPublicKey(keyData.public_key);
+                    } else {
+                        console.error("Message Key error: ", response.error);
+                    }
+                    const myKeyRes = await fetch(`http://localhost:8000/accounts/message_keys/get/${currentUser.id}/`, {
+                        credentials: 'include'
+                    });
+                    if (myKeyRes.ok) {
+                        const myKeyData = await myKeyRes.json();
+                        setMyPublicKey(myKeyData.public_key);
+                    }
+                }
                 else {
                     setError(data.error || "Initialization failed");
                     setLoading(false);
@@ -68,7 +91,33 @@ const DirectChat = ({ currentUser }) => {
             }
         };
         if (id) initializeChat();
-    }, [id]);
+    }, [id, currentUser]);
+
+    const processMessagesE2EE = async (rawMessages) => {
+        const processed = [];
+
+        for (let msg of rawMessages) {
+            let decryptedText = "[Message cannot be read]";
+
+            try {
+                const contentObj = JSON.parse(msg.content);
+
+                if (msg.is_mine || msg.sender_id === currentUser?.id) {
+                    decryptedText = await decryptMessage(contentObj.for_sender);
+                }
+                else {
+                    decryptedText = await decryptMessage(contentObj.for_receiver);
+                }
+            } catch (e) {
+                console.warn("Could not parse or decrypt message:", msg.content);
+                decryptedText = msg.content;
+            }
+
+            processed.push({ ...msg, content: decryptedText });
+        }
+
+        return processed;
+    };
 
     useEffect(() => {
         if (!conversationId) return;
@@ -78,7 +127,11 @@ const DirectChat = ({ currentUser }) => {
                     credentials: 'include'
                 });
                 const data = await response.json();
-                if (response.ok) setMessages(data.history);
+                if (response.ok) {
+                    setMessages(data.history);
+                    const decriptedHistory = await processMessagesE2EE(data.history);
+                    setMessages(decriptedHistory);
+                }
             } catch (err) {
                 console.error("History load error:", err);
             } finally {
@@ -92,9 +145,12 @@ const DirectChat = ({ currentUser }) => {
         if (!conversationId) return;
         const wsUrl = `ws://localhost:8000/ws/chat/direct/${conversationId}/`;
         socketRef.current = new WebSocket(wsUrl);
-        socketRef.current.onmessage = (e) => {
+        socketRef.current.onmessage = async (e) => {
             const data = JSON.parse(e.data);
-            setMessages((prev) => [...prev, data]);
+
+            const [decryptedMessage] = await processMessagesE2EE([data]);
+
+            setMessages((prev) => [...prev, decryptedMessage]);
         };
         return () => socketRef.current?.close();
     }, [conversationId]);
@@ -103,11 +159,34 @@ const DirectChat = ({ currentUser }) => {
         scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const handleSend = (e) => {
+
+
+    const handleSend = async (e) => {
         e.preventDefault();
         if (!newMessage.trim() || !socketRef.current) return;
-        socketRef.current.send(JSON.stringify({ 'message': newMessage }));
+
+        if (!receiverPublicKey || !myPublicKey) {
+            return;
+        }
+
+        const rawText = newMessage;
         setNewMessage("");
+
+        try {
+            const encryptedForReceiver = await encryptMessage(rawText, receiverPublicKey);
+
+            const encryptedForSender = await encryptMessage(rawText, myPublicKey);
+
+            const payloadContent = JSON.stringify({
+                for_sender: encryptedForSender,
+                for_receiver: encryptedForReceiver
+            });
+
+            socketRef.current.send(JSON.stringify({ message: payloadContent }));
+
+        } catch (error) {
+            setNewMessage(rawText);
+        }
     };
 
     if (error) return <div className="p-10 text-center text-red-500">{error}</div>;
@@ -127,19 +206,14 @@ const DirectChat = ({ currentUser }) => {
 
             <div className={styles.messageWindow}>
                 {messages.map((msg, idx) => {
-                    // 1. Extract the Sender ID from all possible fields (DirectMessage vs GroupMessage)
-                    // Checks msg.sender_id (from your sync view) or msg.sender (common in WS)
                     const rawSenderId = msg.sender_id || (msg.sender && (msg.sender.id || msg.sender));
 
-                    // 2. Extract the Current User ID
                     const rawCurrentUserId = currentUser?.id || currentUser?.pk;
 
                     // 3. Stringify and compare
                     const msgSenderId = String(rawSenderId || "");
                     const currentUserId = String(rawCurrentUserId || "");
 
-                    // 4. Determine if it's "Me"
-                    // If IDs match OR (as a backup) usernames match
                     const isMe = (currentUserId !== "" && msgSenderId === currentUserId) ||
                         (msg.sender === currentUser?.username && currentUser?.username !== undefined);
 

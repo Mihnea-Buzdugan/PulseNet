@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
 import {GoogleLogin} from "@react-oauth/google";
+import {initializeE2EE} from "@/utils/cryptoUtils";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -84,6 +85,9 @@ const Login = () => {
             if (response.ok) {
                 const data = await response.json();
                 console.log('Login successful:', data);
+
+                await initializeE2EE();
+
                 const expirationTime = new Date();
                 expirationTime.setHours(expirationTime.getHours() + 6);
                 localStorage.setItem('auth-token', 'true');
@@ -124,6 +128,7 @@ const Login = () => {
         if (resp.ok) {
             const data = await resp.json();
             console.log(data);
+            await initializeE2EE();
             navigate('/');
             const exp = new Date();
             exp.setHours(exp.getHours() + 6);
@@ -182,11 +187,12 @@ const Login = () => {
                                 className={styles['toggle-passwords']}
                                 onClick={togglePasswordVisibility}
                             >
-                <FontAwesomeIcon
-                    icon={showPassword ? faEye : faEyeSlash}
-                    className={styles.customIcon}
-                />
-              </span>
+                                <FontAwesomeIcon
+                                    icon={showPassword ? faEye : faEyeSlash}
+                                    color='grey'
+                                    className={styles.customIcon}
+                                />
+                            </span>
                         </div>
                     </div>
 
