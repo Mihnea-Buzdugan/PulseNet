@@ -7,7 +7,7 @@ from .models import (
     Group_Conversation, DirectConversation, FavoritePulse,
     PulseRental, Alert, AlertImage, PulseComment,
     PulseRating, Notification, UrgentRequest, AlertReport, AlertConfirm, UrgentRequestImage, RequestComment,
-    UrgentRequestOffer
+    UrgentRequestOffer, DirectMessage, Group_Message
 )
 
 class LocationAdminForm(forms.ModelForm):
@@ -40,7 +40,7 @@ class CustomUserAdmin(UserAdmin):
                 'profile_picture', 'biography', 'lat', 'lng', 'trust_score',
                 'visibility_radius', 'quiet_hours_start', 'quiet_hours_end',
                 'online_status', 'private_account',
-                'banned_until'  # <--- Added here
+                'banned_until', 'public_key',  # <--- Added here
             )
         }),
     )
@@ -73,6 +73,6 @@ class UrgentRequestAdmin(admin.ModelAdmin):
 admin.site.register([
     Follow, Friendship, PendingFollow, PulseImage,
     Group_Conversation, DirectConversation, FavoritePulse,
-    PulseRental, AlertImage, PulseComment,
+    PulseRental, AlertImage, PulseComment, DirectMessage, Group_Message,
     PulseRating, Notification, AlertReport, AlertConfirm, UrgentRequestImage, RequestComment, UrgentRequestOffer
 ])

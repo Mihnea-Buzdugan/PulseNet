@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from '../styles/Components/navbar.module.css';
 import { FaHeart, FaBell } from "react-icons/fa";
+import { resetE2EE } from "@/utils/cryptoUtils";
 
 // Helper to get CSRF token for POST requests
 function getCookie(name) {
@@ -130,6 +131,7 @@ function Navbar() {
         await fetch('http://localhost:8000/accounts/logout/', { method: 'POST', credentials: 'include' });
         localStorage.removeItem('auth-token');
         localStorage.removeItem('token-expiration');
+        await resetE2EE();
         setIsAuthenticated(false);
         navigate('/Login');
     };

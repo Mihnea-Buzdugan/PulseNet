@@ -89,12 +89,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if self.chat_type == "direct":
             other_user = await self._get_other_direct_participant(user, self.conversation)
             if other_user:
+
+                notification_text = f"{user.username} sent a new message"
                 # Create DB notification first (so it exists even if recipient is offline)
                 await self._create_message_notification(
                     receiver_id=other_user.id,
                     sender_id=user.id,
                     conversation_id=self.conversation_id,
-                    content=content,
+                    content=notification_text,
                     message_id=message_obj.id,
                 )
 
@@ -107,7 +109,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         "conversation_id": self.conversation_id,
                         "sender_id": user.id,
                         "sender_name": user.username,
-                        "content": content[:50],  # Send a preview
+                        "content": notification_text,  # Send a preview
                     },
                 )
 
@@ -163,12 +165,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 sender=sender,
                 type="chat_message",
                 title="New Message",
-                message=(content[:250] if content else "New message"),
+                message=content,
                 conversation_id=conversation_id,
-                metadata={"message_id": message_id, "preview": content[:50]},
+                metadata={"message_id": message_id, "preview": content},
             )
         except User.DoesNotExist:
-            # receiver or sender disappeared; silently ignore
             pass
 
 

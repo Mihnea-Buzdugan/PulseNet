@@ -1,51 +1,167 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import styles from "../../styles/User_pages/messages.module.css";
 import Navbar from "../../components/Navbar";
 import Loading from "../../components/Loading";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Footer from "@/components/Footer";
+import { encryptMessage, decryptMessage } from "@/utils/cryptoUtils";
 
 const Messages = ({ currentUser }) => {
     const [conversations, setConversations] = useState([]);
+
     const [selectedConvo, setSelectedConvo] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [conversationKeys, setConversationKeys] = useState({});
+    const [keysLoading, setKeysLoading] = useState(false);
 
     const socketRef = useRef(null);
     const scrollRef = useRef(null);
 
-    /* ================= FETCH CONVERSATIONS ================= */
+    const processMessagesE2EE = useCallback(async (rawMessages) => {
+        const processed = [];
+        for (let msg of rawMessages) {
+            let decryptedText = "[Mesaj criptat]";
+            try {
+                const contentObj = JSON.parse(msg.content);
+                if (contentObj.for_sender && contentObj.for_receiver) {
+                    const isMine = String(msg.sender_id) === String(currentUser?.id);
+                    decryptedText = await decryptMessage(
+                        isMine ? contentObj.for_sender : contentObj.for_receiver
+                    );
+                } else {
+                    decryptedText = msg.content;
+                }
+            } catch {
+                decryptedText = msg.content;
+            }
+            processed.push({ ...msg, content: decryptedText });
+        }
+        return processed;
+    }, [currentUser?.id]);
+
     useEffect(() => {
+        if (!currentUser?.id) return;
+
         fetch("http://localhost:8000/accounts/my-conversations/", {
             credentials: "include",
         })
             .then((res) => res.json())
-            .then((data) => {
-                setConversations(data);
+            .then(async (data) => {
+                const processed = await Promise.all(
+                    data.map(async (convo) => {
+                        if (convo.type !== "direct" || !convo.last_message) {
+                            return convo;
+                        }
+                        try {
+                            const contentObj = JSON.parse(convo.last_message);
+                            if (contentObj.for_sender && contentObj.for_receiver) {
+                                const [myRes, receiverRes] = await Promise.all([
+                                    fetch(`http://localhost:8000/accounts/message_keys/get/${currentUser.id}/`, { credentials: "include" }),
+                                    fetch(`http://localhost:8000/accounts/message_keys/get/${convo.other_user_id}/`, { credentials: "include" }),
+                                ]);
+
+                                if (contentObj.for_sender && contentObj.for_receiver) {
+                                    let decrypted = "🔒 Mesaj criptat";
+                                    try {
+                                        const isMine = String(convo.last_message_sender_id) === String(currentUser.id);
+                                        decrypted = await decryptMessage(
+                                            isMine ? contentObj.for_sender : contentObj.for_receiver
+                                        );
+                                    } catch {
+                                        decrypted = "New message";
+                                    }
+                                    return { ...convo, last_message: decrypted };
+                                }
+                            }
+                        } catch {
+                            return convo;
+                        }
+                        return convo;
+                    })
+                );
+
+                setConversations(processed);
                 setLoading(false);
             })
             .catch((err) => {
                 console.error("Inbox fetch error:", err);
                 setLoading(false);
             });
-    }, []);
+    }, [currentUser?.id]);
 
-    /* ================= LOAD HISTORY + WS ================= */
     useEffect(() => {
         if (!selectedConvo) return;
+        setMessages([]);
 
-        fetch(
-            `http://localhost:8000/accounts/messages/history/${selectedConvo.type}/${selectedConvo.id}/`,
-            { credentials: "include" }
-        )
-            .then((res) => res.json())
-            .then((data) => {
-                setMessages(data.history || []);
-            })
-            .catch((err) => console.error("History fetch error:", err));
+        const loadKeysAndHistory = async () => {
+            if (selectedConvo.type === "direct") {
+                const cacheKey = `direct-${selectedConvo.id}`;
+
+                if (!conversationKeys[cacheKey]) {
+                    setKeysLoading(true);
+                    try {
+                        const [receiverRes, myRes] = await Promise.all([
+                            fetch(`http://localhost:8000/accounts/message_keys/get/${selectedConvo.other_user_id}/`,
+                                { credentials: "include" }),
+                            fetch(`http://localhost:8000/accounts/message_keys/get/${currentUser?.id}/`,
+                                { credentials: "include" })
+                        ]);
+
+                        if (receiverRes.ok && myRes.ok) {
+                            const receiverData = await receiverRes.json();
+                            const myData = await myRes.json();
+
+                            // ← AICI pui verificările
+                            if (!receiverData.public_key) {
+                                return;
+                            }
+                            if (!myData.public_key) {
+                                await initializeE2EE();
+                                return;
+                            }
+
+                            setConversationKeys(prev => ({
+                                ...prev,
+                                [cacheKey]: {
+                                    receiverKey: receiverData.public_key,
+                                    myKey: myData.public_key,
+                                }
+                            }));
+                        } else {
+                            console.error("Key fetch failed:", receiverRes.status, myRes.status);
+                        }
+                    } catch (e) {
+                        console.error("Failed to load keys:", e);
+                    } finally {
+                        setKeysLoading(false);
+                    }
+                }
+            }
+
+            try {
+                const res = await fetch(
+                    `http://localhost:8000/accounts/messages/history/${selectedConvo.type}/${selectedConvo.id}/`,
+                    { credentials: "include" }
+                );
+                const data = await res.json();
+                const history = data.history || [];
+
+                if (selectedConvo.type === "direct") {
+                    const decrypted = await processMessagesE2EE(history);
+                    setMessages(decrypted);
+                } else {
+                    setMessages(history);
+                }
+            } catch (err) {
+                console.error("History fetch error:", err);
+            }
+        };
+
+        loadKeysAndHistory();
 
         if (socketRef.current) {
             socketRef.current.close();
@@ -54,59 +170,86 @@ const Messages = ({ currentUser }) => {
         const wsUrl = `ws://localhost:8000/ws/chat/${selectedConvo.type}/${selectedConvo.id}/`;
         socketRef.current = new WebSocket(wsUrl);
 
-        socketRef.current.onmessage = (e) => {
+        socketRef.current.onmessage = async (e) => {
             const data = JSON.parse(e.data);
-            setMessages((prev) => [...prev, data]);
 
-            setConversations((prev) =>
-                prev.map((c) =>
-                    c.id === selectedConvo.id && c.type === selectedConvo.type
-                        ? { ...c, last_message: data.content }
-                        : c
-                )
-            );
+            if (selectedConvo.type === "direct") {
+                const [decrypted] = await processMessagesE2EE([data]);
+                setMessages((prev) => [...prev, decrypted]);
+
+                setConversations((prev) =>
+                    prev.map((c) =>
+                        c.id === selectedConvo.id && c.type === selectedConvo.type
+                            ? { ...c, last_message: decrypted.content }
+                            : c
+                    )
+                );
+            } else {
+                setMessages((prev) => [...prev, data]);
+                setConversations((prev) =>
+                    prev.map((c) =>
+                        c.id === selectedConvo.id && c.type === selectedConvo.type
+                            ? { ...c, last_message: data.content }
+                            : c
+                    )
+                );
+            }
         };
 
-        socketRef.current.onerror = (err) => {
-            console.error("WebSocket error:", err);
-        };
-
-        socketRef.current.onclose = () => {
-            // console.log("WebSocket closed");
-        };
+        socketRef.current.onerror = (err) => console.error("WebSocket error:", err);
 
         return () => socketRef.current?.close();
-    }, [selectedConvo]);
+    }, [selectedConvo, processMessagesE2EE]);
 
-    /* ================= AUTO SCROLL ================= */
     useEffect(() => {
         scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    /* ================= ESCAPE TO CLOSE SIDEBAR (MOBILE) ================= */
     useEffect(() => {
         const onKey = (e) => {
-            if (e.key === "Escape" && sidebarOpen) {
-                setSidebarOpen(false);
-            }
+            if (e.key === "Escape" && sidebarOpen) setSidebarOpen(false);
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
     }, [sidebarOpen]);
 
-    /* ================= SEND MESSAGE ================= */
-    const handleSend = (e) => {
+    const handleSend = async (e) => {
         e.preventDefault();
-
         if (!newMessage.trim() || !socketRef.current) return;
 
-        socketRef.current.send(JSON.stringify({ message: newMessage }));
-        setNewMessage("");
+        if (selectedConvo.type === "direct") {
+            const cacheKey = `direct-${selectedConvo.id}`;
+            const keys = conversationKeys[cacheKey];
+
+            if (!keys?.receiverKey || !keys?.myKey) {
+                return;
+            }
+
+            const rawText = newMessage;
+            setNewMessage("");
+
+            try {
+                const [encryptedForReceiver, encryptedForSender] = await Promise.all([
+                    encryptMessage(rawText, keys.receiverKey),
+                    encryptMessage(rawText, keys.myKey),
+                ]);
+
+                socketRef.current.send(JSON.stringify({
+                    message: JSON.stringify({
+                        for_sender: encryptedForSender,
+                        for_receiver: encryptedForReceiver,
+                    })
+                }));
+            } catch (err) {
+                setNewMessage(rawText);
+            }
+        } else {
+            socketRef.current.send(JSON.stringify({ message: newMessage }));
+            setNewMessage("");
+        }
     };
 
-    if (loading) {
-        return <Loading />;
-    }
+    if (loading) return <Loading />;
 
     return (
         <div className={styles.body}>
