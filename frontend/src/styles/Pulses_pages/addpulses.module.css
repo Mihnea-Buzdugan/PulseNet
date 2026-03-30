@@ -8,7 +8,7 @@
 
 
 .bodyContainer {
-    background-color: #e9e6e6;
+    background-color: var(--color-bg);
     color: black;
     min-height: 160vh;
 }
@@ -29,9 +29,8 @@
     max-width: 1000px; /* Am făcut containerul mai lat */
     margin: auto;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f2f4f5;
     padding: 20px;
-    color: #002f34;
+    color: var(--color-text-strong);
 }
 
 .anunt-header {
@@ -108,7 +107,7 @@
 
 .input-field:focus, .select-field:focus, .textarea-field:focus, .currency-select:focus {
     outline: none;
-    border-color: #002f34;
+    border-color: var(--color-border-focus);
     background-color: #fff;
 }
 
@@ -136,6 +135,68 @@
     transition: 0.2s;
     border-radius: 4px;
 }
+
+
+.imagePreviewBox {
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.imagePreviewBox:hover {
+    transform: scale(1.02);
+}
+
+/* Efect de overlay întunecat la hover pentru a vedea X-ul mai bine */
+.imagePreviewBox::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.imagePreviewBox:hover::before {
+    opacity: 1;
+}
+
+.removeImgBtn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efect de bounce */
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.4);
+}
+
+.imagePreviewBox:hover .removeImgBtn {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.removeImgBtn:hover {
+    background: #dc2626;
+    transform: translate(-50%, -50%) scale(1.1) !important;
+}
+
 
 @media (max-width: 600px) {
     .image-upload-grid {

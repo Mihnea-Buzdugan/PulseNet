@@ -190,7 +190,7 @@ export default function FavoritePulses() {
                 {/* Hero Header */}
                 <div className={styles.heroSection}>
                     <h1 className={styles.title}>
-                        <span className={styles.gradientText}>Your Collection</span> 💖
+                        <span className={styles.gradientText}>Your Collection</span>
                     </h1>
                     <p className={styles.subtitle}>
                         Filter and explore your loaded favorites. Showing up to {PER_PAGE} per page.

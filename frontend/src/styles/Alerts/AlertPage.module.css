@@ -8,7 +8,7 @@
 
 
 .bodyContainer {
-    background-color: #e9e6e6;
+    background-color: var(--color-bg);
     color: black;
 }
 
@@ -60,7 +60,7 @@ h1, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.02em; color: #0f172
     margin-bottom: 2rem;
     transition: color 0.2s;
 }
-.backBtn:hover { color: #2563eb; }
+.backBtn:hover { color: var(--color-text-strong); }
 .arrow { transition: transform 0.2s; }
 .backBtn:hover .arrow { transform: translateX(-4px); }
 
@@ -294,13 +294,13 @@ h1, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.02em; color: #0f172
     padding: 1rem; min-height: 100px; resize: vertical;
     font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s;
 }
-.commentForm textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+.commentForm textarea:focus { outline: none; border-color: var(--color-border-focus); box-shadow: var(--shadow-md); }
 .postCommentBtn {
-    align-self: flex-start; background: #2563eb; color: #ffffff;
+    align-self: flex-start; background: var(--color-primary); color: #ffffff;
     border: none; padding: 0.75rem 1.5rem; border-radius: 8px;
     font-weight: 600; cursor: pointer; transition: background 0.2s;
 }
-.postCommentBtn:hover { background: #1d4ed8; }
+.postCommentBtn:hover { background: var(--color-primary-dark); }
 .comment {
     display: flex; gap: 1rem; background: #ffffff;
     padding: 1.25rem; border-radius: 12px; margin-bottom: 1rem;

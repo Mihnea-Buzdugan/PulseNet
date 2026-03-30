@@ -35,12 +35,12 @@
 
 .inputField {
     @apply w-full rounded-lg border border-slate-200 px-4 py-2.5 text-slate-700;
-    @apply focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all;
+    @apply focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-all;
 }
 
 .textArea {
     @apply w-full rounded-lg border border-slate-200 px-4 py-3 text-slate-700;
-    @apply focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none;
+    @apply focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-all resize-none;
 }
 
 .categoryLabel { @apply block text-sm font-medium text-slate-500 mb-4; }
@@ -48,13 +48,13 @@
 .categoryBtnBase { @apply flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 ease-in-out border border-transparent; }
 
 /* Category Button States */
-.catDefault { @apply bg-purple-50 text-purple-700 hover:bg-purple-100; }
-.catSelected { @apply bg-purple-100 text-purple-900 ring-2 ring-purple-200 shadow-sm; }
+.catDefault { @apply bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]; }
+.catSelected { @apply bg-[var(--color-surface-alt)] text-[var(--color-text-solid)] ring-2 ring-[var(--color-primary)] shadow-sm; }
 .catInactive { @apply bg-slate-100 text-slate-400 opacity-60 hover:opacity-80; }
 
 .submitWrapper { @apply pt-6 flex justify-end; }
 .submitBtn {
-    @apply bg-[#2D0B44] hover:bg-[#1f0730] text-white px-8 py-3 rounded-lg font-medium;
+    @apply bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white px-8 py-3 rounded-lg font-medium;
     @apply flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
@@ -119,7 +119,7 @@
     cursor: pointer;
     opacity: 0;
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.4);
+    box-shadow: var(--shadow-md);
 }
 
 .imagePreviewBox:hover .removeImgBtn {
@@ -153,9 +153,9 @@
 }
 
 .uploadBtnBox:hover {
-    border-color: #7c3aed; /* Changed hover to purple to match theme instead of red */
-    background-color: #f5f3ff;
-    color: #7c3aed;
+    border-color: var(--color-border-focus); /* Changed hover to purple to match theme instead of red */
+    background-color: var(--color-surface);
+    color: var(--color-primary);
 }
 
 @media (max-width: 640px) {
@@ -205,13 +205,13 @@
 
 :global(.react-datepicker__day:hover) {
     background-color: #f5f3ff !important;
-    color: #7c3aed !important;
+    color: var(--color-primary) !important;
     border-radius: 8px !important;
 }
 
 :global(.react-datepicker__day--selected),
 :global(.react-datepicker__day--keyboard-selected) {
-    background-color: #2D0B44 !important;
+    background-color: var(--color-primary-dark) !important;
     color: white !important;
     border-radius: 8px !important;
     font-weight: 600 !important;

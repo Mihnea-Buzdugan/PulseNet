@@ -79,7 +79,7 @@ export default function AlertPage() {
         setCommentsLoading(true);
         setCommentsError("");
         try {
-            const res = await fetch(`http://localhost:8000/accounts/urgent-requests/comments/${id}/?page=${page}`, {
+            const res = await fetch(`http://localhost:8000/accounts/alerts/comments/${id}/?page=${page}`, {
                 method: "GET",
                 credentials: "include",
                 headers: { "Accept": "application/json" },
@@ -168,7 +168,7 @@ export default function AlertPage() {
         setIsPosting(true);
         setCommentsError("");
         try {
-            const res = await fetch(`http://localhost:8000/accounts/urgent-requests/comments/${id}/`, {
+            const res = await fetch(`http://localhost:8000/accounts/alerts/comments/${id}/`, {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -522,7 +522,7 @@ export default function AlertPage() {
                                         border: "none",
                                         background: "transparent",
                                         cursor: "pointer",
-                                        color: "#007bff",
+                                        color: "#3B82A6",
                                     }}
                                 >
                                     {showComments

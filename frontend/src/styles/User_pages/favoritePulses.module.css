@@ -7,7 +7,7 @@
 
 /* Background */
 .body {
-    background: #e9e6e6;
+    background: var(--color-bg);
     color: black;
     margin: 0;
     padding: 0;
@@ -44,7 +44,7 @@
 }
 
 .gradientText {
-    background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+    background: var(--color-text-strong);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -99,8 +99,8 @@
 
 .searchInput:focus {
     outline: none;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
 }
 
 .dropdowns {
@@ -123,10 +123,14 @@
 }
 
 .selectBox:hover {
-    border-color: #cbd5e1;
+    border-color: var(--color-border-focus);
     background: #f1f5f9;
 }
 
+.selectBox:active {
+    border-color: var(--color-border-focus);
+    background: #f1f5f9;
+}
 /* Grid & Cards */
 .grid {
     display: grid;
@@ -148,8 +152,7 @@
 }
 
 .card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-lg);
     border-color: #e2e8f0;
 }
 
@@ -167,9 +170,6 @@
     transition: transform 0.6s ease;
 }
 
-.card:hover .image {
-    transform: scale(1.08);
-}
 
 .favoriteBadge {
     position: absolute;
@@ -193,8 +193,8 @@
 .typeTag {
     align-self: flex-start;
     padding: 4px 12px;
-    background: #f5f3ff;
-    color: #7c3aed;
+    background: var(--color-surface-alt);
+    color: var(--color-primary-dark);
     border-radius: 8px;
     font-size: 0.7rem;
     font-weight: 800;
@@ -265,7 +265,7 @@
 }
 
 .pageBtn {
-    background: #6366f1;
+    background: var(--color-primary);
     color: #fff;
     border: none;
     padding: 10px 25px;
@@ -276,8 +276,7 @@
 }
 
 .pageBtn:hover:not(:disabled) {
-    background: #7c3aed;
-    transform: translateY(-2px);
+    background: var(--color-primary);
 }
 
 .pageBtn:disabled {
@@ -389,7 +388,7 @@
 }
 
 .carouselNav {
-    background: #6366f1;
+    background: var(--color-primary);
     border: none;
     color: #fff;
     font-size: 1.8rem;
@@ -401,7 +400,7 @@
 }
 
 .carouselNav:hover:not(:disabled) {
-    background: #7c3aed;
+    background: var(--color-primary-dark);
 }
 
 .carouselNav:disabled,

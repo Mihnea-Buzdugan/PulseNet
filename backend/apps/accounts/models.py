@@ -430,6 +430,28 @@ class Alert(models.Model):
         return self.confirm_count > 10
 
 
+class AlertComment(models.Model):
+    alert = models.ForeignKey(
+        Alert,
+        on_delete=models.CASCADE,
+    )
+
+    user = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="alert_comments"
+    )
+
+    content = models.TextField()
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+    def can_delete(self, request_user):
+        return request_user == self.user or request_user.is_superuser
+
+    def __str__(self):
+        return f"{self.user} - {self.pub_date}"
+
+
 class AlertImage(models.Model):
     alert = models.ForeignKey(
         Alert,

@@ -271,7 +271,7 @@ export default function RequestOffer() {
                             {requestItem.max_price && (
                                 <div className={styles.priceTag}>
                                     <h2>{requestItem.max_price} {requestItem.currency || "USD"}</h2>
-                                    <span>(Target Budget)</span>
+                                    <span> (Target Budget)</span>
                                 </div>
                             )}
                         </div>

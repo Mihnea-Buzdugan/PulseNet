@@ -14,7 +14,7 @@
 
 /* Background */
 .body {
-    background: #e9e6e6;
+    background: var(--color-bg);
     color: black;
     margin: 0;
     padding: 0;
@@ -104,7 +104,7 @@
 }
 
 .myBubble {
-    background: linear-gradient(135deg, #007aff, #0055ff);
+    background: var(--color-secondary);
     color: white;
     border-bottom-right-radius: 4px;
 }
@@ -150,12 +150,12 @@
 
 .inputField:focus {
     background: #ffffff;
-    border-color: #007aff;
-    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+    border-color: var(--color-secondary);
+    box-shadow: var(--shadow-md);
 }
 
 .sendButton {
-    background: #007aff;
+    background: var(--color-secondary);
     color: white;
     border: none;
     width: 40px;
@@ -169,7 +169,7 @@
 }
 
 .sendButton:hover {
-    background: #0055ff;
+    background: var(--color-secondary-dark);
     transform: scale(1.05);
 }
 

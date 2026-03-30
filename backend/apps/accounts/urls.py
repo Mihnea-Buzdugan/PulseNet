@@ -65,6 +65,7 @@ urlpatterns = [
     path("alerts/<int:alert_id>/confirm/", views.confirm_alert, name="confirm_alert"),
     path("alerts/<int:alert_id>/unconfirm/", views.unconfirm_alert, name="unconfirm_alert"),
     path("alerts/<int:alert_id>/report/", views.report_alert, name="report_alert"),
+    path('alerts/comments/<int:alert_id>/', views.get_alert_comments, name='get_alert_comments'),
     path("alerts/weather/", views.get_current_weather, name="get_current_weather"),
     #Urgent requests
     path('urgent-requests/create/', views.create_urgent_request, name='create_urgent_request'),

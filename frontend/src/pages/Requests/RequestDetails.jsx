@@ -372,7 +372,7 @@ export default function RequestDetails() {
                             <div style={{ marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
                                 <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                     <span>Recenzii</span>
-                                    <button onClick={handleToggleComments} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#007bff' }}>
+                                    <button onClick={handleToggleComments} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#3B82A6' }}>
                                         {showComments ? "Hide comments" : `Show comments${request.comments_count ? ` (${request.comments_count})` : ""}`}
                                     </button>
                                 </h3>
@@ -380,24 +380,24 @@ export default function RequestDetails() {
                                 {/* 1-10 Star Picker + Submit Rating */}
                                 <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
 
-                                        <form onSubmit={handlePostComment} style={{ display: 'flex', gap: '10px', flex: 1 }}>
-                                            <input
-                                                type="text"
-                                                name="comment"
-                                                placeholder="Adaugă un comentariu..."
-                                                value={commentText}
-                                                onChange={(e) => setCommentText(e.target.value)}
-                                                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none' }}
-                                                disabled={isPosting}
-                                            />
-                                            <button
-                                                type="submit"
-                                                disabled={isPosting}
-                                                style={{ background: '#007bff', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: isPosting ? 'default' : 'pointer' }}
-                                            >
-                                                <Send size={18} />
-                                            </button>
-                                        </form>
+                                    <form onSubmit={handlePostComment} style={{ display: 'flex', gap: '10px', flex: 1 }}>
+                                        <input
+                                            type="text"
+                                            name="comment"
+                                            placeholder="Submit a comment..."
+                                            value={commentText}
+                                            onChange={(e) => setCommentText(e.target.value)}
+                                            className={styles.commentInput}
+                                            disabled={isPosting}
+                                        />
+                                        <button
+                                            type="submit"
+                                            disabled={isPosting}
+                                            className={styles.sendButton}
+                                        >
+                                            <Send size={18} />
+                                        </button>
+                                    </form>
                                 </div>
 
                                 {/* ------- Comments (lazy-loaded from backend) ------- */}

@@ -1008,7 +1008,6 @@ export default function Profile() {
                 <div className={styles.navWrapper}>
                     <Navbar />
                 </div>
-
                 <div className={styles.container}>
 
                     {/* HEADER CARD */}
