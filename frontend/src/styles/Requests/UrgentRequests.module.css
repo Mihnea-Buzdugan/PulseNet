@@ -8,7 +8,7 @@
 
 
 .bodyContainer {
-    background-color: #e9e6e6;
+    background-color: var(--color-bg);
     color: black;
 }
 
@@ -44,7 +44,7 @@
     font-size: 2.5rem;
     font-weight: 800;
     margin: 0;
-    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    background: var(--color-text-strong);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -1px;
@@ -108,13 +108,13 @@
 
 .filterBar input:focus,
 .filterBar select:focus {
-    border-color: #ff4b2b;
+    border-color: var(--color-primary);
     background: #fff;
     box-shadow: 0 0 0 4px rgba(255, 75, 43, 0.08);
 }
 
 .filterBtn {
-    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    background: var(--color-primary-dark);
     color: #fff;
     border: none;
     padding: 0.95rem 1.4rem;
@@ -126,8 +126,7 @@
 }
 
 .filterBtn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(255, 75, 43, 0.18);
+    box-shadow: var(--shadow-lg);
 }
 
 .filterBtn:active {
@@ -209,8 +208,8 @@
 
 .urgentRequestCard:hover {
     cursor: pointer;
-    box-shadow: 0 20px 40px rgba(255, 75, 43, 0.15);
-    border-color: rgba(255, 75, 43, 0.3);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-border-focus);
 }
 
 /* Card Header (Image) */
@@ -247,7 +246,7 @@
     right: 1rem;
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(4px);
-    color: #ff4b2b;
+    color: var(--color-secondary-dark);
     padding: 0.4rem 1rem;
     border-radius: 30px;
     font-size: 0.75rem;
@@ -274,7 +273,7 @@
 }
 
 .cardUser {
-    color: #ff4b2b;
+    color: var(--color-secondary-dark);
     font-weight: 600;
     font-size: 0.9rem;
     margin: 0 0 1rem 0;
@@ -379,8 +378,8 @@
 }
 
 .carouselBtn:hover:not(:disabled) {
-    border-color: #ff4b2b;
-    color: #ff4b2b;
+    border-color: var(--color-border-focus);
+    color: var(--color-primary-dark);
     background: #fffafa;
 }
 

@@ -19,7 +19,7 @@ input {
 }
 
 .bodyContainer {
-    background-color: #e9e6e6;
+    background-color: var(--color-bg);
     color: black;
 }
 
@@ -59,7 +59,7 @@ input {
 }
 
 .accent {
-    background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+    background: var(--color-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -108,7 +108,7 @@ input {
 
 .activeTab {
     background: #ffffff;
-    color: #4f46e5;
+    color: var(--color-primary);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
@@ -158,8 +158,8 @@ input {
 
 .searchInput:focus {
     outline: none;
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.15);
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-md);
     background: #ffffff;
 }
 
@@ -336,7 +336,7 @@ input {
 }
 
 .unbanButton {
-    background-color: #00bfa5;
+    background-color: var(--color-primary);
     color: white;
     border: none;
     padding: 6px 12px;
@@ -346,7 +346,7 @@ input {
 }
 
 .unbanButton:hover {
-    background-color: #009e8a;
+    background-color: var(--color-primary-dark);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
@@ -386,7 +386,7 @@ input {
 
 .summaryChip span {
     margin-left: 0.35rem;
-    color: #4f46e5;
+    color: var(--color-primary);
     font-weight: 800;
 }
 
@@ -450,7 +450,7 @@ input {
 .flaggedItem {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-left: 5px solid #f59e0b;
+    border-left: 5px solid var(--color-secondary);;
     padding: 1rem;
     border-radius: 14px;
     transition: all 0.2s ease;
@@ -504,7 +504,7 @@ input {
 
 .openButton {
     background: #eef2ff;
-    color: #4338ca;
+    color: var(--color-secondary);
     border: 1px solid #c7d2fe;
     padding: 0.6rem 0.9rem;
     border-radius: 10px;
@@ -514,7 +514,7 @@ input {
 }
 
 .openButton:hover {
-    background: #4338ca;
+    background: var(--color-secondary-dark);
     color: #ffffff;
 }
 
@@ -581,13 +581,13 @@ input {
 }
 
 .alertLink:hover {
-    color: #4f46e5;
+    color: var(--color-secondary);
     text-decoration: underline;
 }
 
 .viewButton {
     background: #eef2ff;
-    color: #4338ca;
+    color: var(--color-secondary);
     border: 1px solid #c7d2fe;
     padding: 0.55rem 0.9rem;
     border-radius: 10px;
@@ -600,7 +600,7 @@ input {
 }
 
 .viewButton:hover {
-    background: #4338ca;
+    background: var(--color-secondary-dark);
     color: #ffffff;
     box-shadow: 0 4px 12px rgba(67, 56, 202, 0.18);
 }
@@ -729,7 +729,7 @@ input {
 }
 
 .primaryButton {
-    background: #4f46e5;
+    background: var(--color-secondary);
     color: #ffffff;
     border: none;
     padding: 0.85rem 1.15rem;
@@ -742,7 +742,7 @@ input {
 }
 
 .primaryButton:hover {
-    background: #4338ca;
+    background: var(--color-secondary-dark);
     transform: translateY(-1px);
 }
 
@@ -798,8 +798,8 @@ input {
 }
 
 .datetimeInput:focus {
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+    border-color: var(--color-secondary);
+    box-shadow: var(--shadow-md);
 }
 
 .errorText {

@@ -67,8 +67,7 @@
 
 .card:hover {
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-    transform: translateY(-2px);
-    border-color: #cbd5e1;
+    border-color: var(--color-border-focus);
 }
 
 .userInfo {
@@ -109,12 +108,12 @@
 /* Primary Action */
 .acceptBtn {
     border: none;
-    background-color: #10b981; /* Emerald green */
+    background-color: var(--color-primary); /* Emerald green */
     color: white;
 }
 
 .acceptBtn:hover {
-    background-color: #059669;
+    background-color: var(--color-primary-dark);
 }
 
 /* Secondary Action (De-emphasized to reduce visual noise) */

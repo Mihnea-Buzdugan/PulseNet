@@ -8,7 +8,7 @@
 
 
 .bodyContainer {
-    background-color: #e9e6e6;
+    background-color: var(--color-bg);
     color: black;
     min-height: 140vh;
 }
@@ -94,8 +94,8 @@
 .inputGroup select:focus,
 .inputGroup textarea:focus {
     background-color: #ffffff;
-    border-color: #ef4444; /* Accent color (Red) */
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+    border-color: var(--color-border-focus); /* Accent color (Red) */
+    box-shadow: var(--shadow-md);
 }
 
 .inputGroup textarea {
@@ -135,8 +135,8 @@
 
 .customSelectBtn:focus {
     background-color: #ffffff;
-    border-color: #ef4444;
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-md);
 }
 
 .chevron {
@@ -176,13 +176,13 @@
 }
 
 .customSelectItem:hover {
-    background-color: #fef2f2;
-    color: #ef4444;
+    background-color: var(--color-surface-alt);
+    color: var(--color-primary-dark);
 }
 
 .customSelectItemActive {
-    background-color: #fef2f2;
-    color: #ef4444;
+    background-color: var(--color-surface-alt);
+    color: var(--color-primary-dark);
     font-weight: 600;
 }
 
@@ -284,9 +284,9 @@
 }
 
 .uploadBtnBox:hover {
-    border-color: #ef4444;
-    background-color: #fef2f2;
-    color: #ef4444;
+    border-color: var(--color-border-focus);
+    background-color: var(--color-surface-alt);
+    color: var(--color-primary-dark);
 }
 
 /* =========================================
@@ -302,10 +302,10 @@
     padding: 1rem;
     border-radius: 12px; /* Mai modern decât pastila complet rotundă, se potrivește cu input-urile */
     background-color: transparent;
-    color: #ef4444;
+    color: var(--color-primary);
     font-size: 1.1rem;
     font-weight: 700;
-    border: 2px solid #ef4444;
+    border: 2px solid var(--color-border-focus);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     text-transform: uppercase;
@@ -313,10 +313,10 @@
 }
 
 .submitBtn:hover:not(:disabled) {
-    background-color: #ef4444;
+    background-color: var(--color-primary-dark);
     color: #ffffff;
     transform: translateY(2px);
-    box-shadow: 0 8px 15px -3px rgba(239, 68, 68, 0.3);
+    box-shadow: var(--shadow-md);
 }
 
 .submitBtn:active:not(:disabled) {

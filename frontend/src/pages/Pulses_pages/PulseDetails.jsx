@@ -500,7 +500,7 @@ export default function PulseDetails() {
                             <div style={{ marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
                                 <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                     <span>Recenzii și Rating</span>
-                                    <button onClick={handleToggleComments} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#007bff' }}>
+                                    <button onClick={handleToggleComments} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#3B82A6' }}>
                                         {showComments ? "Hide comments" : `Show comments${pulse.comments_count ? ` (${pulse.comments_count})` : ""}`}
                                     </button>
                                 </h3>
@@ -534,7 +534,7 @@ export default function PulseDetails() {
                                             onClick={handleSubmitRating}
                                             disabled={isSubmittingRating || userRating === 0}
                                             style={{
-                                                background: isSubmittingRating || userRating === 0 ? '#9bb8ff' : '#007bff',
+                                                background: isSubmittingRating || userRating === 0 ? 'rgba(62, 143, 87, 0.55)' : '#3E8F57',
                                                 color: 'white',
                                                 border: 'none',
                                                 padding: '10px 15px',
@@ -549,16 +549,16 @@ export default function PulseDetails() {
                                             <input
                                                 type="text"
                                                 name="comment"
-                                                placeholder="Adaugă un comentariu..."
+                                                placeholder="Submit a comment..."
                                                 value={commentText}
                                                 onChange={(e) => setCommentText(e.target.value)}
-                                                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none' }}
+                                                className={styles.commentInput}
                                                 disabled={isPosting}
                                             />
                                             <button
                                                 type="submit"
                                                 disabled={isPosting}
-                                                style={{ background: '#007bff', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: isPosting ? 'default' : 'pointer' }}
+                                                className={styles.sendButton}
                                             >
                                                 <Send size={18} />
                                             </button>

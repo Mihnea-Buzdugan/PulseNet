@@ -3,6 +3,7 @@ import styles from '../../styles/Pulses_pages/addpulses.module.css';
 import Navbar from "../../components/Navbar";
 import {Link} from "react-router-dom";
 import Footer from "@/components/Footer";
+import {X} from "lucide-react";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -186,7 +187,7 @@ function AddPulses() {
             <div className={styles["anunt-container"]}>
                 <div className="flex justify-between items-center">
                 <h1 className={styles["anunt-header"]}>Publică un anunț</h1>
-                <Link to="/create-request" className="mb-5 text-blue-600 underline hover:text-blue-800  cursor-pointer ">Have a more urgent request?</Link>
+                <Link to="/create-request" className="mb-5 text-[#3B82A6] underline hover:text-[#2F6B87]  cursor-pointer ">Have an urgent request?</Link>
                 </div>
 
                 {/* --- Secțiunea Detalii --- */}
@@ -270,7 +271,7 @@ function AddPulses() {
                         {imagesPreview.map((img, idx) => (
                             <div
                                 key={idx}
-                                className={styles["image-slot"]}
+                                className={styles.imagePreviewBox}
                                 style={{
                                     backgroundImage: `url(${img})`,
                                     backgroundSize: "cover",
@@ -280,9 +281,9 @@ function AddPulses() {
                                 <button
                                     type="button"
                                     onClick={() => removeImageAt(idx)}
-                                    className={styles["delete-btn"]}
+                                    className={styles.removeImgBtn}
                                 >
-                                    ✕
+                                    <X size={16} />
                                 </button>
                             </div>
                         ))}
@@ -342,7 +343,7 @@ function AddPulses() {
                             disabled={isGettingLocation || isSubmitting}
                             style={{
                                 padding: "12px 30px",
-                                backgroundColor: isGettingLocation || isSubmitting ? "rgba(0,0,0,0.3)" : "rgba(33,31,31,0.67)",
+                                backgroundColor: isGettingLocation || isSubmitting ? "#4CAF6A" : "#3E8F57",
                                 color: "white",
                                 border: "none",
                                 borderRadius: "8px",

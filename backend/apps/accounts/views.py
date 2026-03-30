@@ -23,7 +23,7 @@ from math import ceil
 from .decorators import api_login_required, check_hate_speech
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
     PulseComment, PulseRating, Notification, UrgentRequest, UrgentRequestImage, AlertConfirm, AlertReport, \
-    RequestComment, UrgentRequestOffer
+    RequestComment, UrgentRequestOffer, AlertComment
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
@@ -2330,6 +2330,87 @@ def delete_report(request, report_id):
             {"success": False, "message": f"An error occurred: {str(e)}"},
             status=500
         )
+
+
+@login_required
+def get_alert_comments(request, alert_id):
+    if request.method == "GET":
+        comments = (
+            AlertComment.objects
+            .filter(alert_id=alert_id)
+            .select_related("user")
+            .order_by("-pub_date")
+        )
+
+        data = []
+
+        for comment in comments:
+            data.append({
+                "id": comment.id,
+                "user": comment.user.username,
+                "user_id": comment.user.id,
+                "avatar": request.build_absolute_uri(comment.user.profile_picture.url) if comment.user.profile_picture else None,
+                "content": comment.content,
+                "date": comment.pub_date.strftime("%d %b %Y, %H:%M"),
+                "can_delete": comment.can_delete(request.user),
+            })
+
+        return JsonResponse({
+            "success": True,
+            "comments": data
+        })
+
+
+    elif request.method == "POST":
+        data = json.loads(request.body)
+        content = data.get("content")
+        if not content:
+            return JsonResponse({
+                "success": False,
+                "error": "Content is required"
+            })
+
+        comment = AlertComment.objects.create(
+            alert_id=alert_id,
+            user=request.user,
+            content=content
+
+        )
+
+        return JsonResponse({
+            "success": True,
+            "comment": {
+                "id": comment.id,
+                "user": comment.user.username,
+                "user_id": comment.user.id,
+                "avatar": request.build_absolute_uri(
+                    comment.user.profile_picture.url) if comment.user.profile_picture else None,
+                "content": comment.content,
+                "date": comment.pub_date.strftime("%d %b %Y, %H:%M"),
+                "can_delete": comment.can_delete(request.user),
+            }
+        })
+    elif request.method == "DELETE":
+        # get comment_id from query params or body
+
+        comment_id = alert_id
+        if not comment_id:
+            return JsonResponse({"success": False, "error": "Comment ID required"}, status=400)
+
+        try:
+            comment = AlertComment.objects.get(id=comment_id)
+            if comment.user != request.user:
+                return JsonResponse({"success": False, "error": "Not allowed"}, status=403)
+            comment.delete()
+            return JsonResponse({"success": True, "message": "Comment deleted"})
+        except RequestComment.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Comment not found"}, status=404)
+    else:
+        return JsonResponse({
+            "success": False,
+            "error": "Invalid request method"
+        }, status=405)
+
 
 @require_GET
 def get_current_weather(request):

@@ -214,7 +214,7 @@ export default function Profile() {
                                 {(user.is_friend || !user.private_account) ? (
                                     <button
                                         className={styles.msgBtn}
-                                        onClick={(e) => { e.stopPropagation(); navigate(`/direct-chat/${pulse.user_id}`, {
+                                        onClick={(e) => { e.stopPropagation(); navigate(`/direct-chat/${user.id}`, {
                                             state: {
                                                 fromPulse: false,
                                             }
