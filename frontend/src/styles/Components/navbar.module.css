@@ -66,7 +66,7 @@
 
 .searchInput:focus {
     background-color: #fff;
-    border-color: #ff8a65;
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 1px rgba(255, 138, 101, 0.2);
 }
 
@@ -106,11 +106,11 @@
 
 .dmButton:hover {
     transform: scale(1.1);
-    color: #ff8a65;
+    color: var(--color-primary);
 }
 
 .activeDm {
-    color: #ff8a65;
+    color: var(--color-primary);
 }
 
 .badge {
@@ -193,9 +193,9 @@
     opacity: 0.8;
 }
 
-.followBtn { background-color: #0095f6; color: white; }
-.unfollowBtn { background-color: #f0f2f5; color: #050505; }
-.msgBtn { background-color: #ff8a65; color: white; }
+.followBtn { background-color: var(--color-secondary); color: white; }
+.unfollowBtn { background-color: var(--color-danger); color: white; }
+.msgBtn { background-color: var(--color-primary);; color: white; }
 
 /* --- RIGHT SECTION: DESKTOP NAV LINKS --- */
 .navLinks {
@@ -213,7 +213,7 @@
 }
 
 .sus:hover {
-    color: #ff8a65;
+    color: var(--color-primary);
 }
 
 /* --- MOBILE & RESPONSIVE LOGIC --- */
@@ -287,7 +287,7 @@
     cursor: pointer;
     display: flex;
     align-items: center;
-    color: #ff8a65;
+    color: black;
     transition: transform 0.2s ease, color 0.2s ease;
     position: relative;
 }
@@ -295,11 +295,11 @@
 .notifButton:hover,
 .activeNotif {
     transform: scale(1.12);
-    color: #ff7043;
+    color: var(--color-primary);
 }
 
 .notifIcon {
-    font-size: 22px;
+    font-size: 25px;
 }
 
 /* --- DROPDOWN CONTAINER --- */

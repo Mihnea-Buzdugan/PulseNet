@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import styles from '../styles/Components/navbar.module.css';
 import { FaHeart, FaBell } from "react-icons/fa";
 import { resetE2EE } from "@/utils/cryptoUtils";
+import {IoNotificationsOutline} from "react-icons/io5";
 
 // Helper to get CSRF token for POST requests
 function getCookie(name) {
@@ -158,12 +159,15 @@ function Navbar() {
 
     const handleNotifClick = (n) => {
         setShowNotifDropdown(false);
+
         if (n.type === 'chat_message') {
             navigate(`/direct-chat/${n.sender_id}`);
         } else if (n.type === 'rental_proposal') {
             navigate(`/profile`);
         } else if (n.pulse_id) {
             navigate(`/pulse/${n.pulse_id}`);
+        } else if (n.type === 'hero_alert' && n.metadata?.request_id) {
+            navigate(`/request/${n.metadata.request_id}`);
         }
     };
 
@@ -304,7 +308,7 @@ function Navbar() {
                         {/* NOTIFICATIONS BUTTON */}
                         <div className={styles.notifWrapper} ref={notifRef}>
                             <div className={`${styles.notifButton} ${showNotifDropdown ? styles.activeNotif : ''}`} onClick={toggleNotifications}>
-                                <FaBell className={styles.notifIcon} />
+                                <IoNotificationsOutline className={styles.notifIcon} />
                                 {unreadNotifCount > 0 && <span className={styles.badge}>{unreadNotifCount}</span>}
                             </div>
 

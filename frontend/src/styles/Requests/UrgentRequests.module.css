@@ -423,3 +423,11 @@
     50% { opacity: 0.5; }
     100% { opacity: 1; }
 }
+
+@media (max-width: 480px) {
+
+    .navbarAdjust{
+        padding: 0;
+
+    }
+}

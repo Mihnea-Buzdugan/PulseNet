@@ -404,22 +404,24 @@ export default function AlertPage() {
                     <div className={styles.headerLeft}>
                         <div className={styles.badgeContainer}>
                             <span className={styles.badge}>{alert.category_display || "General"}</span>
+
                             {alert.is_verified && (
                                 <span className={styles.verifiedBadge}>
-                            <CheckCircle size={14} fill="#3b82f6" color="white" />
-                            Verified Alert
-                            </span>
+      <CheckCircle size={14} fill="#3b82f6" color="white" />
+      Verified Alert
+    </span>
                             )}
+
                             <span className={styles.time}>
-                                {new Intl.DateTimeFormat('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric',
-                                    hour: 'numeric',
-                                    minute: '2-digit',
-                                    hour12: true
-                                }).format(new Date(alert.created_at))}
-                            </span>
+    {new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+    }).format(new Date(alert.created_at))}
+  </span>
                         </div>
                         <h1 className={styles.title}>{alert.title}</h1>
                         <span className={styles.postedBy}>Reported by <span className={styles.highlightedUser}>@{alert.user}</span></span>

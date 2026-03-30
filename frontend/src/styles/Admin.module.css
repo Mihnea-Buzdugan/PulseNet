@@ -1047,3 +1047,11 @@ input {
         padding: 0.3rem 0.65rem;
     }
 }
+
+@media (max-width: 480px) {
+
+    .navbarAdjust{
+        padding: 0;
+
+    }
+}

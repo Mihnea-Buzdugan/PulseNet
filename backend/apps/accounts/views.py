@@ -1040,7 +1040,7 @@ def get_pulse_by_id(request, pulse_id):
             "price": float(pulse.price),
             "currency": pulse.currencyType,
             "location": coords,
-            "timestamp": pulse.created_at.strftime("%d %b %Y, %H:%M"),
+            "timestamp": (pulse.created_at + timedelta(hours=3)).strftime("%d %b %Y, %H:%M"),
             "is_favorite": FavoritePulse.objects.filter(pulse=pulse, user=request.user).exists(),
             "images": images,
             "user_rating": user_rating,
@@ -2488,7 +2488,8 @@ def get_notifications(request):
             "sender_id": n.sender.id if n.sender else None,
             "is_read": n.is_read,
             "created_at": n.created_at.strftime("%b %d, %H:%M"),
-            "sender_name": n.sender.username if n.sender else "System"
+            "sender_name": n.sender.username if n.sender else "System",
+            "metadata": n.metadata,
         })
 
     return JsonResponse({"notifications": data}, safe=False)
@@ -2717,7 +2718,7 @@ def get_request_by_id(request, request_id):
             "is_approved": urgent_request.is_approved,
             "is_flagged": urgent_request.is_flagged,
             "toxicity_score": urgent_request.toxicity_score,
-            "timestamp": urgent_request.created_at.strftime("%d %b %Y, %H:%M"),
+            "timestamp": (urgent_request.created_at + timedelta(hours=3)).strftime("%d %b %Y, %H:%M"),
             "has_trust_access": has_trust_access,
 
 
@@ -3043,7 +3044,7 @@ def modify_offer_status(request, offer_id):
                 notification = Notification.objects.create(
                     user=other_user,
                     sender=user,
-                    type="request_offer",
+                    type="rental_proposal",
                     title="Offer Counteroffer",
                     message=f"{user.username} updated the offer price for {offer.request.title} to {offer.total_price}",
                     # You might need to adjust these kwargs based on your Notification model:

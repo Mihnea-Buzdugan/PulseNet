@@ -191,7 +191,7 @@ const NotificationHandler = ({ currentUser }) => {
                 window.dispatchEvent(new CustomEvent("hero_alert", { detail: data }));
                 toast.custom((t) => (
                     <div
-                        onClick={() => { navigate(`/urgent-requests`); toast.dismiss(t.id); }}
+                        onClick={() => { navigate(`/request/${data.request_id}`); toast.dismiss(t.id); }}
                         style={{
                             display: 'flex',
                             width: '384px',

@@ -178,3 +178,11 @@
     height: 20px;
     fill: white;
 }
+
+@media (max-width: 480px) {
+
+    .mainContainer{
+        padding: 0;
+
+    }
+}

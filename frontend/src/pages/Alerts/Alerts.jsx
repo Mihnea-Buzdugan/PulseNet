@@ -28,6 +28,8 @@ const CATEGORIES = [
 const AlertCarousel = ({ images }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
 
+    const hasImages = images && images.length > 0;
+
     const nextImage = (e) => {
         e.stopPropagation();
         setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -38,23 +40,35 @@ const AlertCarousel = ({ images }) => {
         setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
     };
 
-    if (!images || images.length === 0) return null;
-
     return (
         <div className={styles.carouselContainer}>
-            <img src={images[currentIndex]} alt="Alert visual" className={styles.carouselImg} />
-            {images.length > 1 && (
+            {hasImages ? (
                 <>
-                    <button className={`${styles.navBtn} ${styles.left}`} onClick={prevImage}>
-                        <ChevronLeft size={20} />
-                    </button>
-                    <button className={`${styles.navBtn} ${styles.right}`} onClick={nextImage}>
-                        <ChevronRight size={20} />
-                    </button>
-                    <div className={styles.imageCounter}>
-                        {currentIndex + 1} / {images.length}
-                    </div>
+                    <img
+                        src={images[currentIndex]}
+                        alt="Alert visual"
+                        className={styles.carouselImg}
+                    />
+
+                    {images.length > 1 && (
+                        <>
+                            <button className={`${styles.navBtn} ${styles.left}`} onClick={prevImage}>
+                                <ChevronLeft size={20} />
+                            </button>
+                            <button className={`${styles.navBtn} ${styles.right}`} onClick={nextImage}>
+                                <ChevronRight size={20} />
+                            </button>
+
+                            <div className={styles.imageCounter}>
+                                {currentIndex + 1} / {images.length}
+                            </div>
+                        </>
+                    )}
                 </>
+            ) : (
+                <div className={styles.noImagePlaceholder}>
+                    No Preview
+                </div>
             )}
         </div>
     );

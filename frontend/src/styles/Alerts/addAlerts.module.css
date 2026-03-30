@@ -350,3 +350,11 @@
         grid-template-columns: repeat(2, 1fr); /* 2 coloane pe mobile pentru a nu fi pozele prea mici */
     }
 }
+
+@media (max-width: 480px) {
+
+    .navbarAdjust{
+        padding: 0;
+
+    }
+}

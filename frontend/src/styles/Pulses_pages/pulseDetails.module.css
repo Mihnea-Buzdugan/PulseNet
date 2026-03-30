@@ -453,6 +453,21 @@
         gap: 24px;
     }
 
+    .mainContainer{
+        padding: 0;
+
+    }
+    .page {
+        padding: 0;
+    }
+
+    .page,
+    .mainContainer,
+    .container {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
     .mainImage {
         height: 320px;
     }
@@ -470,6 +485,11 @@
     .title {
         font-size: 26px;
     }
+
+    .left{
+        padding: 0;
+    }
+
     .mainImage {
         height: 220px;
     }

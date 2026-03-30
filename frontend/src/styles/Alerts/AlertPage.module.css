@@ -83,44 +83,85 @@ h1, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.02em; color: #0f172
 .badgeContainer {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
 }
 
-.verifiedBadge {
-    display: flex;
+.badge,
+.verifiedBadge,
+.time {
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background-color: #eff6ff;
-    color: #1d4ed8;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    border: 1px solid #bfdbfe;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-}
-
-/* Optional: Add a subtle pulse to the verified badge to draw eyes */
-.verifiedBadge svg {
-    filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3));
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 .badge {
     background: rgba(37, 99, 235, 0.1);
     color: #2563eb;
     border: 1px solid rgba(37, 99, 235, 0.2);
-    padding: 0.25rem 0.75rem;
-    border-radius: 99px;
-    font-size: 0.875rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
 }
-.time { color: #64748b; font-size: 0.9rem; }
-.postedBy { display: block; color: #64748b; margin-bottom: 1.5rem; font-size: 1rem; }
-.highlightedUser { color: #0f172a; font-weight: 600; }
+
+.verifiedBadge {
+    gap: 0.35rem;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid #bfdbfe;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.verifiedBadge svg {
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3));
+}
+
+.time {
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.postedBy {
+    display: block;
+    color: #64748b;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.highlightedUser {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    .badgeContainer {
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .badge,
+    .verifiedBadge,
+    .time {
+        font-size: 0.8rem;
+    }
+
+    .time {
+        width: 100%;
+    }
+}
 
 /* Action Row Buttons */
 .actionRow { display: flex; flex-wrap: wrap; gap: 1rem; }
@@ -577,4 +618,12 @@ h1, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.02em; color: #0f172
 @media (max-width: 1024px) {
     .headerCard { grid-template-columns: 1fr; gap: 2rem; }
     .contentGrid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+
+    .navbarAdjust{
+        padding: 0;
+
+    }
 }

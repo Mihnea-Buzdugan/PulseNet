@@ -308,3 +308,15 @@
 .calendarEventLabel b {
     font-weight: 600;
 }
+
+@media (max-width: 480px) {
+
+    .mainContainer{
+        padding: 0;
+
+    }
+
+    .header {
+       margin-left: 20px;
+    }
+}
