@@ -2,8 +2,21 @@
 const DB_NAME = "e2ee_keystore";
 const DB_VERSION = 1;
 const STORE_NAME = "keys";
-const PRIVATE_KEY_ID = "private_key";
-const PUBLIC_KEY_ID = "public_key";
+
+let cachedUserId = null;
+
+async function getCurrentUserId() {
+    if (cachedUserId) return cachedUserId;
+    const res = await fetch("http://localhost:8000/accounts/user/", { credentials: "include" });
+    if (!res.ok) throw new Error("Failed to fetch user info for E2EE key scoping");
+    const data = await res.json();
+    cachedUserId = data.id;
+    return cachedUserId;
+}
+
+export function clearUserIdCache() {
+    cachedUserId = null;
+}
 
 
 function openDB() {
@@ -77,6 +90,10 @@ function base64ToArrayBuffer(base64) {
 
 export async function initializeE2EE() {
     try {
+        const userId = await getCurrentUserId();
+        const PRIVATE_KEY_ID = `private_key_${userId}`;
+        const PUBLIC_KEY_ID = `public_key_${userId}`;
+
         const existingPrivateKey = await getKeyFromDB(PRIVATE_KEY_ID);
 
         const serverCheck = await fetch(
@@ -168,7 +185,8 @@ export async function encryptMessage(text, publicKeyBase64) {
 
 export async function decryptMessage(encryptedBase64) {
     try {
-        const privateKey = await getKeyFromDB(PRIVATE_KEY_ID);
+        const userId = await getCurrentUserId();
+        const privateKey = await getKeyFromDB(`private_key_${userId}`);
 
         if (!privateKey) {
             throw new Error("Private key not found in IndexedDB. Re-initialize E2EE.");
@@ -186,9 +204,4 @@ export async function decryptMessage(encryptedBase64) {
     } catch (error) {
         return "[Mesaj criptat sau eroare de decriptare]";
     }
-}
-
-
-export async function resetE2EE() {
-    await clearDB();
 }

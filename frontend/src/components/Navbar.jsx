@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from '../styles/Components/navbar.module.css';
 import { FaHeart, FaBell } from "react-icons/fa";
-import { resetE2EE } from "@/utils/cryptoUtils";
+import { clearUserIdCache } from "@/utils/cryptoUtils";
 import {IoNotificationsOutline} from "react-icons/io5";
 
 // Helper to get CSRF token for POST requests
@@ -132,7 +132,7 @@ function Navbar() {
         await fetch('http://localhost:8000/accounts/logout/', { method: 'POST', credentials: 'include' });
         localStorage.removeItem('auth-token');
         localStorage.removeItem('token-expiration');
-        await resetE2EE();
+        clearUserIdCache();
         setIsAuthenticated(false);
         navigate('/Login');
     };
