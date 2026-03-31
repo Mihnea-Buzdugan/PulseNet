@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import styles from '../../styles/Requests/UrgentRequests.module.css';
 import Navbar from "@/components/Navbar";
 import {useNavigate} from "react-router-dom";
@@ -39,6 +39,56 @@ export default function UrgentRequests() {
 
         return () => clearTimeout(delay);
     }, [search, category, minPrice, maxPrice]);
+
+    const socketRef = useRef(null);
+    useEffect(() => {
+        // Initialize WebSocket
+        socketRef.current = new WebSocket("ws://localhost:8000/ws/requests/");
+
+        socketRef.current.onopen = () => {
+            console.log("Connected to Request WebSocket");
+        };
+
+        socketRef.current.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+
+                // Handle deleted requests
+                if (message.type === "request_deleted" && message.id) {
+                    setRequests((prev) => prev.filter((p) => p.id !== message.id));
+                    return;
+                }
+
+                // Handle new/updated requests
+                if (!message.id) return;
+
+                // Calculate lat/lng from GeoJSON location for frontend
+                let lat, lng;
+                if (message.location && message.location.coordinates) {
+                    [lng, lat] = message.location.coordinates;
+                }
+
+                const newRequest = { ...message, lat, lng };
+
+                // Add to state if not already present
+                setRequests((prev) => {
+                    if (prev.find((p) => p.id === newRequest.id)) return prev;
+                    return [newRequest, ...prev];
+                });
+
+            } catch (err) {
+                console.error("Error parsing websocket message:", err);
+            }
+        };
+
+        socketRef.current.onerror = (err) => console.error("WebSocket Error:", err);
+
+        socketRef.current.onclose = () => console.warn("WebSocket disconnected");
+
+        return () => {
+            if (socketRef.current) socketRef.current.close();
+        };
+    }, []);
 
     const navigate = useNavigate();
     const fetchDetailedAddress = async (lat, lng) => {
@@ -191,8 +241,8 @@ export default function UrgentRequests() {
                 {requests.map((req) => (
                     <div className={styles.urgentRequestCard} key={req.id} onClick={() => navigate(`/request/${req.id}`)}>
                         <div className={styles.cardHeader}>
-                            {req.images?.length > 0 ? (
-                                <img src={req.images[0]} alt={req.title} className={styles.urgentRequestImage} />
+                            {req.image ? (
+                                <img src={req.image} alt={req.title} className={styles.urgentRequestImage} />
                             ) : (
                                 <div className={styles.imagePlaceholder}>No Preview</div>
                             )}

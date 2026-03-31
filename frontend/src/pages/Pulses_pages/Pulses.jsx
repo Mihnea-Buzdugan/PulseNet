@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import styles from '../../styles/Requests/UrgentRequests.module.css';
 import Navbar from "@/components/Navbar";
 import {useNavigate} from "react-router-dom";
@@ -18,6 +18,56 @@ export default function Pulses() {
     const [pulseType, setPulseType] = useState("");
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
+
+    const socketRef = useRef(null);
+    useEffect(() => {
+        // Initialize WebSocket
+        socketRef.current = new WebSocket("ws://localhost:8000/ws/pulses/");
+
+        socketRef.current.onopen = () => {
+            console.log("Connected to Pulse WebSocket");
+        };
+
+        socketRef.current.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+
+                // Handle deleted pulses
+                if (message.type === "pulse_deleted" && message.id) {
+                    setPulses((prev) => prev.filter((p) => p.id !== message.id));
+                    return;
+                }
+
+                // Handle new/updated pulses
+                if (!message.id) return;
+
+                // Calculate lat/lng from GeoJSON location for frontend
+                let lat, lng;
+                if (message.location && message.location.coordinates) {
+                    [lng, lat] = message.location.coordinates;
+                }
+
+                const newPulse = { ...message, lat, lng };
+
+                // Add to state if not already present
+                setPulses((prev) => {
+                    if (prev.find((p) => p.id === newPulse.id)) return prev;
+                    return [newPulse, ...prev];
+                });
+
+            } catch (err) {
+                console.error("Error parsing websocket message:", err);
+            }
+        };
+
+        socketRef.current.onerror = (err) => console.error("WebSocket Error:", err);
+
+        socketRef.current.onclose = () => console.warn("WebSocket disconnected");
+
+        return () => {
+            if (socketRef.current) socketRef.current.close();
+        };
+    }, []);
 
     useEffect(() => {
         const delay = setTimeout(() => {
@@ -177,14 +227,14 @@ export default function Pulses() {
 
                 <div className={styles.urgentRequestsGrid}>
                     {pulses.map((pulse) => (
-                        <div className={styles.urgentRequestCard} key={pulse.id} onClick={() => navigate(`/pulse/${pulse.pulseType}/${pulse.id}`)}>
+                        <div className={styles.urgentRequestCard} key={pulse.id} onClick={() => navigate(`/pulse/${pulse.pulse_type}/${pulse.id}`)}>
                             <div className={styles.cardHeader}>
-                                {pulse.images?.length > 0 ? (
-                                    <img src={pulse.images[0]} alt={pulse.title} className={styles.urgentRequestImage} />
+                                {pulse.image ? (
+                                    <img src={pulse.image} alt={pulse.title} className={styles.urgentRequestImage} />
                                 ) : (
                                     <div className={styles.imagePlaceholder}>No Preview</div>
                                 )}
-                                <span className={styles.categoryBadge}>{pulse.category || 'General'}</span>
+                                <span className={styles.categoryBadge}>{pulse.pulse_type || 'General'}</span>
                             </div>
 
                             <div className={styles.cardBody}>

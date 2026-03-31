@@ -265,7 +265,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 class PulseConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_group_name = "pulses_feed"
-
         self.user_coords = None
         self.visibility_radius = None
 
@@ -287,46 +286,124 @@ class PulseConsumer(AsyncWebsocketConsumer):
                 }
             self.visibility_radius = u.visibility_radius or 1
         except User.DoesNotExist:
-            pass
+            self.user_coords = None
+            self.visibility_radius = None
 
     async def receive(self, text_data=None, bytes_data=None):
         if text_data:
             data = json.loads(text_data)
             if data.get("type") == "set_location":
-                self.user_coords = {
-                    "lat": data.get("lat"),
-                    "lng": data.get("lng")
-                }
+                lat = data.get("lat")
+                lng = data.get("lng")
+                if lat is not None and lng is not None:
+                    self.user_coords = {"lat": lat, "lng": lng}
                 self.visibility_radius = data.get("radius", self.visibility_radius or 10)
-
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         print(f"Connection closed with code: {close_code}")
 
     async def pulse_message(self, event):
-        pulse_data = event["data"]
-
-        if not self.user_coords:
+        pulse_data = event.get("data")
+        if not pulse_data or not pulse_data.get("location") or not self.user_coords:
             return
 
-        pulse_lat = pulse_data.get("lat")
-        pulse_lng = pulse_data.get("lng")
-
-        if pulse_lat is None or pulse_lng is None:
+        # Extract coordinates from GeoJSON location
+        coords = pulse_data["location"].get("coordinates")
+        if not coords or len(coords) < 2:
             return
 
+        pulse_point = (coords[1], coords[0])  # GeoJSON: [lng, lat]
         user_point = (self.user_coords["lat"], self.user_coords["lng"])
-        pulse_point = (pulse_lat, pulse_lng)
 
+        # Calculate distance
         distance_km = geodesic(user_point, pulse_point).km
 
+        # Send only if within visibility radius
         if distance_km <= self.visibility_radius:
             pulse_data["distance"] = round(distance_km, 2)
             await self.send(text_data=json.dumps(pulse_data))
         else:
-            print(f"Pulse ignorat. Distanța: {distance_km}km > Raza: {self.visibility_radius}km")
+            print(f"Pulse ignored. Distance: {distance_km}km > Radius: {self.visibility_radius}km")
 
+    async def pulse_deleted(self, event):
+        # This sends the deleted pulse ID to clients
+        await self.send(text_data=json.dumps({
+            "type": "pulse_deleted",
+            "id": event["id"]
+        }))
+
+
+class RequestConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_group_name = "requests_feed"
+        self.user_coords = None
+        self.visibility_radius = None
+
+        user = self.scope.get("user")
+        if user and user.is_authenticated:
+            await self._load_user_location(user)
+
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
+
+    @database_sync_to_async
+    def _load_user_location(self, user):
+        try:
+            u = User.objects.get(id=user.id)
+            if u.location:
+                self.user_coords = {
+                    "lat": u.location.y,
+                    "lng": u.location.x,
+                }
+            self.visibility_radius = u.visibility_radius or 1
+        except User.DoesNotExist:
+            self.user_coords = None
+            self.visibility_radius = None
+
+    async def receive(self, text_data=None, bytes_data=None):
+        if text_data:
+            data = json.loads(text_data)
+            if data.get("type") == "set_location":
+                lat = data.get("lat")
+                lng = data.get("lng")
+                if lat is not None and lng is not None:
+                    self.user_coords = {"lat": lat, "lng": lng}
+                self.visibility_radius = data.get("radius", self.visibility_radius or 10)
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        print(f"Connection closed with code: {close_code}")
+
+    async def request_message(self, event):
+        request_data = event.get("data")
+        if not request_data or not request_data.get("location") or not self.user_coords:
+            return
+
+        # Extract coordinates from GeoJSON location
+        coords = request_data["location"].get("coordinates")
+        if not coords or len(coords) < 2:
+            return
+
+        request_point = (coords[1], coords[0])  # GeoJSON: [lng, lat]
+        user_point = (self.user_coords["lat"], self.user_coords["lng"])
+
+        # Calculate distance
+        distance_km = geodesic(user_point, request_point).km
+
+        # Send only if within visibility radius
+        if distance_km <= self.visibility_radius:
+            request_data["distance"] = round(distance_km, 2)
+            await self.send(text_data=json.dumps(request_data))
+        else:
+            print(f"Request ignored. Distance: {distance_km}km > Radius: {self.visibility_radius}km")
+
+    async def request_deleted(self, event):
+        # This sends the deleted request ID to clients
+        await self.send(text_data=json.dumps({
+            "type": "request_deleted",
+            "id": event["id"]
+        }))
 
 
 class AlertConsumer(AsyncWebsocketConsumer):

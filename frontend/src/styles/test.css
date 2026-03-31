@@ -1,0 +1,790 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+
+.bodyContainer {
+    background-color: #e9e6e6;
+    color: black;
+}
+
+
+.main-container {
+    position: relative;
+}
+
+.navbarAdjust {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.news-bar {
+    width: 95%;
+    background-color: white;
+    border-radius: 5px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    margin: 20px auto;
+    font-size: 18px;
+    padding: 0 20px;
+}
+
+/* News Update Label */
+.news-update {
+    color: #E76F51;
+    margin-right: 20px;
+    font-weight: bold;
+    flex: 0 0 auto;
+}
+
+/* Container for the scrolling text */
+.marquee-container {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Scroll Animation */
+@keyframes scroll {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(-100%);
+    }
+}
+
+/* Marquee (scrolling text) */
+.marquee {
+    white-space: nowrap;
+    display: inline-block;
+    animation: scroll 25s linear infinite;
+}
+
+.another {
+    padding: 15px 10px;
+}
+
+.wholeContaining {
+    width: 100%;
+    height: 600px;
+    position : relative;
+}
+
+.main {
+    width: 1300px;
+    height: 600px;
+    position: absolute;
+    left: 8%;
+    display: flex;
+}
+
+.ceva {
+    width: 400px;
+    background-color: rgb(235, 235, 235);
+    position: absolute;
+    left: -10%;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 5px;
+    box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+.test{
+    width: 80%;
+}
+
+.top {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+}
+
+.stur {
+    width: 40px;
+    height: 40px;
+}
+
+.name {
+    margin-left: 20px;
+    font-size: 19px;
+    font-weight: bold;
+}
+
+.time {
+    margin-left: 10px;
+    color: rgb(155, 155, 155);
+}
+
+.middle {
+    font-size: 34px;
+    padding: 15px 20px;
+    width: 350px;
+}
+
+.description {
+    padding: 0 20px;
+    color: rgb(155, 155, 155);
+    line-height: 25px;
+}
+
+.data {
+    display: flex;
+    justify-content: space-between;
+    padding: 25px 20px;
+}
+
+.date {
+    font-size: 14px;
+    color: rgb(107, 107, 107);
+}
+
+.nothing {
+    font-size: 20px;
+    margin-right: 20px;
+}
+
+.citeste-ma {
+    font-weight: bold;
+    color: black;
+    margin-left: 10px;
+}
+
+.mare {
+    width: 100%;
+    height: 600px;
+    border-radius: 20px;
+    box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.3);
+    object-fit: cover;
+}
+
+.stanga {
+    flex: 1;
+    height: 100%;
+    margin-right: 20px;
+}
+
+.dreapta {
+    width: 700px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.stire {
+    width: 100%;
+    height: 25%;
+    border-radius: 20px;
+    display: flex;
+    background-color: rgb(235, 235, 235);
+    box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.ferrari {
+    width: 100%;
+    height: 132px;
+    object-fit: cover;
+    border-radius: 20px;
+}
+
+.smallimg {
+    height: 100%;
+    width: 30%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.content {
+    margin-left: 15px;
+}
+
+.cafea {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.sus {
+    display: flex;
+    align-items: center;
+    margin: 8px 0 20px;
+}
+
+.jos {
+    display: flex;
+}
+
+.mijloc {
+    margin-bottom: 10px;
+    width: 300px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+
+
+.timing {
+    margin-left: 10px;
+    color: rgb(155, 155, 155);
+}
+
+.category {
+    color: #E76F51;
+}
+
+.aia {
+    display: flex;
+}
+.aiaone{
+    display: flex;
+}
+
+.one,
+.two,
+.three {
+    width: 33%;
+    height: 500px;
+    background-color: rgb(235, 235, 235);
+    box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+}
+
+.one,
+.two {
+    margin-right: 30px;
+    cursor:pointer;
+}
+
+.lastest-news {
+    width: 80%;
+    margin: 100px auto 50px auto;
+}
+
+.bodyContainer h1 {
+    margin-bottom: 40px;
+    font-size:38px;
+}
+
+.aoleu {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 15px;
+}
+
+.sus1 {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    margin: 8px 0 20px;
+}
+
+.scris {
+    padding: 0 20px;
+    margin-bottom: 10px;
+    /* This ensures the title and badge stay together nicely */
+    display: flex;
+    align-items: baseline;
+}
+
+.maimult-scris {
+    padding: 0 20px;
+    font-size: 16px;
+    width: 400px;
+    margin-top: 20px;
+    color: rgb(155, 155, 155);
+}
+
+.jos1 {
+    display: flex;
+    padding: 0 20px;
+}
+
+.hot-news {
+    width: 80%;
+    margin: 100px auto 50px auto;
+}
+
+/* Enhanced Footer with Modern Styling */
+.footer {
+    background: linear-gradient(135deg, #00bfa5, #ff8a65);
+    color: black;
+    text-align: center;
+    padding: 25px 15px;
+    font-size: 15px;
+    margin-top: 50px;
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 15px 15px 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Star Rating with Animation */
+.rating {
+    font-size: 1.5rem;
+    color: #20786e;
+    font-weight: bold;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    animation: fadeIn 1.2s ease-in-out;
+    margin-bottom: 5px;
+}
+
+/* Star Rating Hover Effect */
+.rating svg {
+    transition: transform 0.3s ease;
+}
+
+.rating:hover svg {
+    transform: scale(1.2);
+}
+
+/* Footer Text Layout */
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Subtle Quote */
+.footer-quote {
+    font-style: italic;
+    font-size: 15px;
+    opacity: 0.8;
+    margin-top: 8px;
+    font-weight: bold;
+}
+
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+
+
+
+/* Additional Interactive Buttons */
+.nush {
+    display: flex;
+    justify-content: center;
+    min-height: 100px;
+}
+
+.scrie, .vezi {
+    position: relative;
+    overflow: hidden;
+    padding: 10px 20px;
+    border: none;
+    background-color: #00d4b7;
+    color: black;
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.scrie::before, .vezi::before,
+.scrie::after, .vezi::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 3px;
+    background-color: #008e7e;
+    transition: transform 0.3s ease;
+}
+
+.scrie::before, .vezi::before {
+    top: 0;
+    right: 0;
+    transform: translateX(100%);
+}
+
+.scrie::after, .vezi::after {
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+}
+
+.scrie:hover::before, .vezi:hover::before,
+.scrie:hover::after, .vezi:hover::after {
+    transform: translateX(0);
+}
+
+.scrie:hover, .vezi:hover {
+    color: black;
+}
+
+.profil {
+    width: 45px;
+}
+
+/* Responsive adjustments for Articles page */
+
+/* Desktop adjustments for widths (1024px and below) */
+@media (max-width: 1024px) {
+    .navbarAdjust,
+    .main-container {
+        max-width: 95%;
+        padding: 15px;
+    }
+
+    .wholeContaining {
+        height: auto;
+    }
+
+    .main {
+        width: 100%;
+        left: 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        position: relative;
+    }
+
+    .test {
+        width: 100%;
+    }
+
+    .stanga, .dreapta {
+        width: 100%;
+    }
+
+    .ceva {
+        width: 90%;
+        left: 0;
+        top: auto;
+        margin: 20px auto;
+        transform: none;
+    }
+
+    .dreapta {
+        gap: 15px;
+    }
+
+    .marquee {
+        font-size: 16px;
+    }
+}
+
+/* Tablet adjustments (768px and below) */
+@media (max-width: 768px) {
+    .news-bar {
+        font-size: 16px;
+        padding: 0 10px;
+        height: 45px;
+    }
+
+    .wholeContaining {
+        height: auto;
+        padding: 10px 0;
+    }
+
+    .main {
+        width: 100%;
+        margin-bottom: 600px;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .stanga, .dreapta {
+        width: 100%;
+    }
+
+    .stanga {
+        margin-bottom: 20px;
+    }
+
+    /* Adjust the featured article overlay */
+    .ceva {
+        width: 95%;
+        position: relative;
+        left: 0;
+        bottom: 50%;
+        transform: none;
+        margin-bottom: 20px;
+    }
+
+    .top, .middle, .description, .data {
+        padding: 10px 15px;
+    }
+
+    .middle {
+        font-size: 28px;
+        width: 90%;
+    }
+
+    .scris {
+        font-size: 24px;
+        padding: 0 10px;
+    }
+
+    .maimult-scris {
+        width: 90%;
+        font-size: 14px;
+        padding: 0 10px;
+    }
+
+    .aia {
+        flex-direction: column;
+    }
+    .aiaone{
+        flex-direction: column;
+    }
+    .no{
+        margin-top: 700px;
+    }
+
+    .one,
+    .two,
+    .three {
+        width: 100%;
+        height: auto;
+        margin-right: 0;
+        margin-top: 20px;
+        height: 450px;
+    }
+}
+
+/* Mobile adjustments (480px and below) */
+@media (max-width: 480px) {
+    html {
+        font-size: 14px;
+    }
+
+    .navbarAdjust,
+    .main-container {
+        padding: 10px;
+    }
+
+    .news-bar {
+        font-size: 14px;
+        padding: 0 8px;
+        height: 40px;
+    }
+
+    .marquee {
+        font-size: 14px;
+    }
+
+    .wholeContaining {
+        height: auto; /* Allow the container to grow with the column content */
+        min-height: 600px;
+    }
+
+    .stanga .mare {
+        height: 350px;       /* MUST be a fixed value (px, vh, etc.) for maps */
+        max-height: 800px;
+        border-radius: 15px;
+        margin-top: 20px;    /* Reduced from 400px */
+        width: 100%;
+    }
+
+    /* Ensure the main flex container doesn't trap the height */
+    .main {
+        position: relative;  /* Changed from absolute to keep it in document flow */
+        height: auto;
+    }
+
+    .stanga, .dreapta {
+        width: 100%;
+    }
+
+    .ceva {
+        width: 95%;
+        margin: 10px auto;
+        padding: 5px;
+    }
+
+    .top {
+        padding: 8px 10px;
+    }
+
+    .stur {
+        width: 35px;
+        height: 35px;
+    }
+
+    .name {
+        font-size: 16px;
+        margin-left: 10px;
+    }
+
+    .time,
+    .timing {
+        font-size: 12px;
+    }
+
+    .middle {
+        font-size: 24px;
+        padding: 8px 10px;
+        width: 100%;
+    }
+
+    .description {
+        font-size: 14px;
+        padding: 0 10px;
+    }
+
+    .data {
+        flex-direction: column;
+        padding: 10px 10px;
+    }
+
+    .date {
+        font-size: 12px;
+    }
+
+    .dreapta {
+        gap: 10px;
+    }
+
+    .stire {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .smallimg,
+    .ferrari {
+        width: 100%;
+        height: auto;
+    }
+
+    .content {
+        margin-left: 5px;
+    }
+
+    .mijloc {
+        font-size: 16px;
+        margin-bottom: 5px;
+        width: 100%;
+    }
+
+    .scris {
+        font-size: 20px;
+        padding: 0 8px;
+    }
+
+    .maimult-scris {
+        width: 100%;
+        font-size: 12px;
+        padding: 0 8px;
+    }
+
+    /* In the Latest and Hot News sections */
+    .lastest-news,
+    .hot-news {
+        width: 100%;
+    }
+
+    .one,
+    .two,
+    .three {
+        width: 100%;
+        height: auto;
+        margin-bottom: 15px;
+    }
+
+    .footer {
+        padding: 15px 10px;
+        font-size: 13px;
+    }
+
+    /* Button adjustments */
+    .scrie, .vezi {
+        padding: 8px 16px;
+        font-size: 14px;
+        margin-right: 5px;
+    }
+}
+
+/* Badge for Pulse Type (e.g., 'event', 'sale') */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: #E76F51;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px; /* Pill shape looks more modern than a square */
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 10px; /* Space between name and badge */
+    vertical-align: middle;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(231, 111, 81, 0.2);
+}
+
+/* Star/Review Styling */
+.ratingGroup {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    color: #008e7e; /* Using your teal accent */
+    font-weight: bold;
+}
+
+/* Description truncation for the small cards */
+.descriptionLine {
+    font-size: 14px;
+    color: #888;
+    line-height: 1.4;
+    margin: 5px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Shows only 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Price emphasizing */
+.priceTag {
+    font-weight: bold;
+    color: black;
+    font-size: 17px;
+}
+
+/* Map Popup specific padding */
+.popupContent {
+    padding: 10px;
+    min-width: 150px;
+}
+
+.distantaSpan {
+    font-size: 14px;
+    color: #888;
+    font-weight: 400;
+    margin-left: 12px;
+    letter-spacing: 0;
+    /* Keeps the icon and text together */
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}

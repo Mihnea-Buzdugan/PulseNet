@@ -504,7 +504,6 @@ def add_pulse(request):
         should_flag = getattr(request, 'needs_review', False)
         ai_score = getattr(request, 'toxicity_score', 0.0)
 
-        # coordonatele de unde a fost facuta postarea
         lat = data.get('lat')
         lng = data.get('lng')
         location_point = None
@@ -521,7 +520,7 @@ def add_pulse(request):
             title=data.get('title'),
             description=data.get('description', ''),
             category=data.get('category', ''),
-            pulse_type=data.get('pulse_type'),  # 'servicii' sau 'obiecte'
+            pulse_type=data.get('pulse_type'),
             price=price,
             trust_required=trust_required,
             currencyType=data.get('currencyType', 'RON'),
@@ -539,17 +538,24 @@ def add_pulse(request):
             PulseImage.objects.create(pulse=pulse, image=img)
 
         first_image = pulse.images.first()
+        image_url = request.build_absolute_uri(first_image.image.url) if first_image else None
+
+        # Broadcast payload with GeoJSON location
         broadcast_payload = {
             "id": pulse.id,
             "type": pulse.pulse_type,
-            "name": pulse.title,
             "user": request.user.username,
+            "title": pulse.title,
             "price": float(pulse.price),
+            "pulse_type": pulse.pulse_type,
+            "description": pulse.description,
+            "popularity_score": pulse.popularity_score if hasattr(pulse, 'popularity_score') else 0,
+            "total_reviews": pulse.total_reviews if hasattr(pulse, 'total_reviews') else 0,
             "currency": pulse.currencyType,
             "timestamp": pulse.created_at.strftime("%Y-%m-%d %H:%M"),
-            "image": request.build_absolute_uri(first_image.image.url) if first_image else None,
-            "lat": pulse.location.y if pulse.location else None,
-            "lng": pulse.location.x if pulse.location else None,
+            "distance": None,  # Calculated in consumer
+            "location": json.loads(pulse.location.geojson) if pulse.location else None,
+            "image": image_url,
         }
 
         channel_layer = get_channel_layer()
@@ -755,7 +761,7 @@ def list_all_pulses(request):
             "user": pulse.user.username,
             "title": pulse.title,
             "description": pulse.description,
-            "pulseType": pulse.pulse_type,
+            "pulse_type": pulse.pulse_type,
             "category": pulse.pulse_type,
             "currencyType": pulse.currencyType,
             "price": str(pulse.price) if pulse.price else None,
@@ -2562,24 +2568,28 @@ def urgent_requests_list(request):
         ]
 
         image_url = image_urls[0] if image_urls else None
-        if best_score > 0.50:
-            data.append({
-                "id": obj.id,
-                "user_id": obj.user.id,
-                "user": obj.user.username,
-                "title": obj.title,
-                "description": obj.description,
-                "category": obj.category,
-                "max_price": float(obj.max_price) if obj.max_price else None,
-                "location": [obj.location.x, obj.location.y] if obj.location else None,
-                "created_at": obj.created_at.isoformat(),
-                "expires_at": obj.expires_at.isoformat() if obj.expires_at else None,
-                "match_score": round(best_score * 100, 1),
-                "images": image_urls,
-                "image": image_url,
-            })
 
+        # We append all results regardless of their score
+        data.append({
+            "id": obj.id,
+            "user_id": obj.user.id,
+            "user": obj.user.username,
+            "title": obj.title,
+            "description": obj.description,
+            "category": obj.category,
+            "max_price": float(obj.max_price) if obj.max_price else None,
+            "location": [obj.location.x, obj.location.y] if obj.location else None,
+            "created_at": obj.created_at.isoformat(),
+            "expires_at": obj.expires_at.isoformat() if obj.expires_at else None,
+            "distance": round(obj.dist.km, 2),
+            "match_score": round(best_score * 100, 1),
+            "images": image_urls,
+            "image": image_url,
+        })
+
+    # Sorts the entire list by match_score from highest to lowest
     data.sort(key=lambda x: x["match_score"], reverse=True)
+
     return JsonResponse({"success": True, "urgent_requests": data})
 
 @require_GET
@@ -2750,24 +2760,42 @@ def get_request_by_id(request, request_id):
 def create_urgent_request(request):
     data = request.POST
 
-    should_flag = getattr(request, 'needs_review', False)
-    ai_score = getattr(request, 'toxicity_score', 0.0)
+    should_flag = getattr(request, "needs_review", False)
+    ai_score = getattr(request, "toxicity_score", 0.0)
 
     trust_required = False
-    max_price = data.get('max_price', 0)
+    max_price = data.get("max_price", 0)
     if int(max_price) > 1000:
         trust_required = True
+
+    expires_at = None
+    expires_at_raw = data.get("expires_at")
+    if expires_at_raw:
+        expires_at = parse_datetime(expires_at_raw)
+        if expires_at is None:
+            for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M"):
+                try:
+                    expires_at = datetime.strptime(expires_at_raw, fmt)
+                    break
+                except ValueError:
+                    pass
+
+        if expires_at and timezone.is_naive(expires_at):
+            expires_at = timezone.make_aware(expires_at, timezone.get_current_timezone())
+
+    location = None
+    if data.get("lng") and data.get("lat"):
+        location = Point(float(data["lng"]), float(data["lat"]), srid=4326)
 
     new_request = UrgentRequest.objects.create(
         user=request.user,
         description=data.get("description"),
         title=data.get("title"),
         category=data.get("category"),
-        expires_at=data.get("expires_at"),
-        location=Point(float(data["lng"]), float(data["lat"])) if "lng" in data and "lat" in data else None,
+        expires_at=expires_at,
+        location=location,
         max_price=max_price,
         trust_required=trust_required,
-
         is_flagged=should_flag,
         is_approved=not should_flag,
         toxicity_score=ai_score,
@@ -2777,10 +2805,41 @@ def create_urgent_request(request):
     for img in images:
         UrgentRequestImage.objects.create(urgent_request=new_request, image=img)
 
+    first_image = new_request.images.first()
+    image_url = request.build_absolute_uri(first_image.image.url) if first_image else None
+
+    broadcast_payload = {
+        "id": new_request.id,
+        "user": request.user.username,
+        "title": new_request.title,
+        "description": new_request.description,
+        "max_price": float(new_request.max_price) if new_request.max_price else 0,
+        "currency": new_request.currencyType,
+        "created_at": new_request.created_at.isoformat(),
+        "expires_at": new_request.expires_at.isoformat() if new_request.expires_at else None,
+        "distance": None,
+        "location": json.loads(new_request.location.geojson) if new_request.location else None,
+        "image": image_url,
+    }
+
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "requests_feed",
+        {"type": "request.message", "data": broadcast_payload}
+    )
+
     run_hero_search_task.delay(new_request.id)
     update_user_trust_score_task.delay(request.user.id)
 
-    return JsonResponse({"success": True, "id": new_request.id})
+    return JsonResponse({
+        "success": True,
+        "request": {
+            "id": new_request.id,
+            "title": new_request.title,
+            "location": json.loads(new_request.location.geojson) if new_request.location else None,
+            "images": [request.build_absolute_uri(i.image.url) for i in new_request.images.all()]
+        }
+    }, status=201)
 
 
 @login_required
