@@ -156,6 +156,10 @@ export default function Alerts() {
                 // Functional update to prepend the new alert to the top of the list
                 setAlerts((prevAlerts) => [message.data, ...prevAlerts]);
             }
+
+            if (message.type === "alert_deleted" && message.id) {
+                setAlerts((prev) => prev.filter((p) => p.id !== message.id));
+            }
         };
 
         socketRef.current.onclose = (e) => {

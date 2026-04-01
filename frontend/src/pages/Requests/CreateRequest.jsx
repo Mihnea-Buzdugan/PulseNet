@@ -228,13 +228,20 @@ export default function CreateRequest() {
                         <div className={styles.gridRow}>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>Expiration Date</label>
+
                                 <DatePicker
                                     selected={form.expires_at ? new Date(form.expires_at) : null}
                                     onChange={(date) => {
-                                        const val = date ? date.toISOString().split('T')[0] : "";
+                                        const val = date
+                                            ? date.toISOString().slice(0, 16) // ✅ keeps YYYY-MM-DDTHH:mm
+                                            : "";
+
                                         setForm({ ...form, expires_at: val });
                                     }}
-                                    dateFormat="dd/MM/yyyy"
+                                    showTimeSelect // ✅ enables time selection
+                                    timeFormat="HH:mm"
+                                    timeIntervals={15}
+                                    dateFormat="dd/MM/yyyy HH:mm"
                                     className={styles.inputField}
                                 />
                             </div>

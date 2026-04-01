@@ -748,7 +748,8 @@
 /* shared base for all three */
 .acceptBtn,
 .rejectBtn,
-.counterBtn {
+.counterBtn,
+.signalBtn{
     display: flex;
     align-items: center;
     justify-content: center;
@@ -797,6 +798,16 @@
     transform: translateY(-1px);
 }
 
+.signalBtn {
+    background-color: transparent;
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger-border);
+}
+
+.signalBtn:hover {
+    background-color: var(--color-danger-bg);
+    transform: translateY(-1px);
+}
 /* ============================================================
    COUNTER OFFER
    ============================================================ */
@@ -1260,7 +1271,8 @@
 
     .acceptBtn,
     .rejectBtn,
-    .counterBtn {
+    .counterBtn,
+    .signalBtn{
         width: auto;
         flex: 1;
         min-width: fit-content;

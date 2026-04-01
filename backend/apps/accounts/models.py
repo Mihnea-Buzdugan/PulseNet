@@ -190,6 +190,38 @@ class PulseRental(models.Model):
     def __str__(self):
         return f"{self.pulse.title} reserved by {self.renter} ({self.start_date} - {self.end_date})"
 
+
+class PulseRentalSignal(models.Model):
+    rental = models.ForeignKey(
+        "PulseRental",
+        on_delete=models.CASCADE,
+        related_name="signals"
+    )
+    reporter = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="rental_signals"
+    )
+    message = models.TextField(help_text="Describe the problem")
+    reported_by_owner = models.BooleanField(default=False)  # <-- new field
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        # Set reported_by_owner automatically if not already set
+        if not self.pk:  # only when creating
+            self.reported_by_owner = self.reporter == self.rental.pulse.user
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        reporter_type = "Owner" if self.reported_by_owner else "Renter"
+        return f"{reporter_type} reported for {self.rental} - {'Resolved' if self.resolved else 'Pending'}"
+
+
 class PulseComment(models.Model):
     pulse = models.ForeignKey(
         Pulse,

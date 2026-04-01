@@ -7,7 +7,7 @@
 }
 
 .bodyContainer {
-    background-color: var(--color-surface-alt);
+    background-color: var(--color-bg);
     color: #1f2937;
     min-height: 100vh;
 }
@@ -31,12 +31,12 @@
     width: 100%;
     max-width: 1400px;
     display: flex;
-    gap: 32px; /* Increased gap for better breathing room */
+    gap: 32px;
     padding: 28px;
     border-radius: 24px;
     background: #ffffff;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0,0,0,0.02);
-    align-items: stretch;
+    box-shadow: 1px 1px 4px var(--color-primary);
+    align-items: flex-start; /* important for sticky */
 }
 
 .leftPanel {
@@ -50,23 +50,30 @@
 /* Tabs */
 .tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
-    background: #f1f5f9;
+    background: var(--color-primary);
     padding: 6px;
     border-radius: 14px;
     width: fit-content;
+    max-width: 100%;
 }
 
-.tab {
+.tab,
+.adminButton {
     border: none;
-    background: transparent;
-    color: #64748b;
+    color: white;
     padding: 10px 20px;
     border-radius: 10px;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.95rem;
     transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tab {
+    background: transparent;
 }
 
 .tab:hover {
@@ -331,13 +338,16 @@
     flex: 0.95;
     min-width: 0;
     display: flex;
+    position: sticky;
+    top: 24px;
+    align-self: flex-start;
+    height: 90vh;
 }
 
 .mapBox {
     width: 100%;
     height: 100%;
-    min-height: 0;
-    flex: 1;
+    min-height: 650px;
     background-color: #f8fafc;
     background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
     background-size: 24px 24px;
@@ -347,41 +357,40 @@
     position: relative;
 }
 
-.mapPlaceholder {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    color: #475569;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(2px);
+/* Make the actual map fill the container */
+.mapBox :global(.leaflet-container),
+.mapBox :global(.maplibregl-map),
+.mapBox :global(.mapboxgl-map) {
+    width: 100%;
+    height: 100%;
 }
 
-/* Responsive Breakpoints */
-@media (max-width: 1200px) {
-    .filtersControls {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
+/* Tablet */
 @media (max-width: 992px) {
     .container {
         flex-direction: column;
         padding: 20px;
     }
 
-    .mapBox {
-        min-height: 400px;
-    }
-
     .leftPanel {
         flex: none;
     }
+
+    .mapPanel {
+        position: relative;
+        top: auto;
+        height: 60vh;
+        width: 100%;
+        order: 2;
+    }
+
+    .mapBox {
+        min-height: 420px;
+        height: 100%;
+    }
 }
 
+/* Phones */
 @media (max-width: 600px) {
     .page {
         padding: 12px;
@@ -398,12 +407,46 @@
     .metaGrid {
         grid-template-columns: 1fr 1fr;
     }
+
+    .mapPanel {
+        position: relative;
+        top: auto;
+        height: 55vh;
+        min-height: 360px;
+        order: 2;
+    }
+
+    .mapBox {
+        min-height: 360px;
+        border-radius: 16px;
+    }
 }
 
 @media (max-width: 480px) {
-
-    .navbarAdjust{
+    .navbarAdjust {
         padding: 0;
+    }
 
+    .mapPanel {
+        height: 50vh;
+        min-height: 320px;
+    }
+
+    .mapBox {
+        min-height: 320px;
+    }
+}
+
+@media (max-width: 600px) {
+    .tabs {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .tab{
+        flex: 1 1 auto;
+        text-align: center;
+        padding: 10px 12px;
+        font-size: 0.9rem;
     }
 }

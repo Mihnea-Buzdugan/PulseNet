@@ -26,20 +26,25 @@ const initialVisibleCounts = {
 
 function formatDate(value) {
     if (!value) return "-";
-    const date = new Date(value);
+    const date = new Date(value.replace(" ", "T"));
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString("en-GB", {
+
+    return date.toLocaleString("en-GB", {
         day: "2-digit",
         month: "short",
         year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
     });
 }
 
 function formatTimestamp(value) {
     if (!value) return "-";
+
     const date = new Date(value.replace(" ", "T"));
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString("en-GB", {
+
+    return date.toLocaleString("en-GB", {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -77,7 +82,11 @@ function normalizePulse(item) {
         image: item.image || "https://via.placeholder.com/400x250",
         title: item.name || item.title || "Untitled pulse",
         description: item.description || "",
-        category: item.pulse_type || item.type || "Pulses",
+        category: item.pulse_type === "obiecte"
+            ? "Objects"
+            : item.pulse_type === "servicii"
+                ? "Services"
+                : item.pulse_type || item.type || "Pulses",
         distance:
             item.distance !== undefined && item.distance !== null
                 ? `${item.distance} km`
@@ -101,7 +110,9 @@ function normalizeRequest(item) {
         image: item.image || "https://via.placeholder.com/400x250",
         title: item.title || "Untitled request",
         description: item.description || "",
-        category: item.category || "Request",
+        category: item.category
+            ? item.category.charAt(0).toUpperCase() + item.category.slice(1)
+            : "Request",
         distance: item.location ? "-" : "-",
         price:
             item.max_price !== null && item.max_price !== undefined
@@ -142,6 +153,7 @@ export default function Index() {
     const [loadingPulses, setLoadingPulses] = useState(false);
     const [loadingRequests, setLoadingRequests] = useState(false);
     const [locationError, setLocationError] = useState("");
+    const [isSuperuser, setIsSuperuser] = useState(false);
 
     const pulseSocketRef = useRef(null);
     const requestSocketRef = useRef(null);
@@ -159,6 +171,7 @@ export default function Index() {
             (pos) => {
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
+
                 setUserLocation({ lat, lng });
 
                 fetch("http://localhost:8000/accounts/update_location/", {
@@ -169,7 +182,15 @@ export default function Index() {
                         "X-CSRFToken": getCookie("csrftoken"),
                     },
                     body: JSON.stringify({ lat, lng }),
-                }).catch(() => { });
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        // ✅ now you know if user is superuser
+                        if (data.is_superuser) {
+                            setIsSuperuser(true);
+                        }
+                    })
+                    .catch(() => {});
             },
             () => {
                 setLocationDenied(true);
@@ -593,6 +614,7 @@ export default function Index() {
                             >
                                 Pulses
                             </button>
+
                             <button
                                 className={`${styles.tab} ${
                                     activeTab === "Request" ? styles.activeTab : ""
@@ -601,6 +623,14 @@ export default function Index() {
                             >
                                 Request
                             </button>
+                            { isSuperuser && (
+                                <button
+                                    className={styles.tab}
+                                    onClick={() => navigate("/admin-page")}
+                                >
+                                    Admin Page
+                                </button>
+                            )}
                         </div>
 
                         <div className={styles.filtersBar}>

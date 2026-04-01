@@ -6,6 +6,7 @@ from django.middleware.csrf import get_token
 from django.utils.dateparse import parse_datetime, parse_date
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie, csrf_protect
 import os
+from datetime import datetime
 from django.views.decorators.csrf import csrf_protect
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model, login as django_login,logout as django_logout
@@ -23,7 +24,7 @@ from math import ceil
 from .decorators import api_login_required, check_hate_speech
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
     PulseComment, PulseRating, Notification, UrgentRequest, UrgentRequestImage, AlertConfirm, AlertReport, \
-    RequestComment, UrgentRequestOffer, AlertComment
+    RequestComment, UrgentRequestOffer, AlertComment, PulseRentalSignal
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
@@ -552,7 +553,7 @@ def add_pulse(request):
             "popularity_score": pulse.popularity_score if hasattr(pulse, 'popularity_score') else 0,
             "total_reviews": pulse.total_reviews if hasattr(pulse, 'total_reviews') else 0,
             "currency": pulse.currencyType,
-            "timestamp": pulse.created_at.strftime("%Y-%m-%d %H:%M"),
+            "timestamp": pulse.created_at.isoformat(),
             "distance": None,  # Calculated in consumer
             "location": json.loads(pulse.location.geojson) if pulse.location else None,
             "image": image_url,
@@ -681,13 +682,26 @@ def update_location(request):
         data = json.loads(request.body)
         lat = data.get("lat")
         lng = data.get("lng")
+
         if lat is None or lng is None:
-            return JsonResponse({"success": False, "error": "lat/lng required"}, status=400)
+            return JsonResponse(
+                {"success": False, "error": "lat/lng required"},
+                status=400
+            )
+
         request.user.location = Point(float(lng), float(lat), srid=4326)
         request.user.save(update_fields=["location"])
-        return JsonResponse({"success": True})
+
+        return JsonResponse({
+            "success": True,
+            "is_superuser": request.user.is_superuser
+        })
+
     except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=400)
+        return JsonResponse(
+            {"success": False, "error": str(e)},
+            status=400
+        )
 
 
 def get_base_pulse_queryset(user):
@@ -875,7 +889,7 @@ def get_nearest_pulses(request):
             "popularity_score": p.popularity_score,
             "total_reviews": p.total_reviews,
             "currency": p.currencyType,
-            "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
+            "timestamp": p.created_at.isoformat(),
             "distance": round(p.distance.km, 2),
             "lat": p.location.y if p.location else None,
             "lng": p.location.x if p.location else None,
@@ -1046,7 +1060,7 @@ def get_pulse_by_id(request, pulse_id):
             "price": float(pulse.price),
             "currency": pulse.currencyType,
             "location": coords,
-            "timestamp": (pulse.created_at + timedelta(hours=3)).strftime("%d %b %Y, %H:%M"),
+            "timestamp": pulse.created_at.isoformat() if pulse.created_at else None,
             "is_favorite": FavoritePulse.objects.filter(pulse=pulse, user=request.user).exists(),
             "images": images,
             "user_rating": user_rating,
@@ -1445,6 +1459,51 @@ def modify_rental_status(request, rental_id):
     return JsonResponse({"error": "Invalid method"}, status=405)
 
 
+@csrf_protect
+@login_required
+@require_POST
+def signal_pulse_rental(request):
+    try:
+        data = json.loads(request.body)
+
+        rental_id = data.get("rental_id")
+        message = data.get("message", "").strip()
+
+        if not rental_id:
+            return JsonResponse({"success": False, "error": "rental_id is required"}, status=400)
+
+        if not message:
+            return JsonResponse({"success": False, "error": "message is required"}, status=400)
+
+        rental = get_object_or_404(PulseRental, id=rental_id)
+
+        # Only the owner of the pulse or the renter can report a problem
+        is_owner = rental.pulse.user == request.user   # change `user` if your Pulse owner field has another name
+        is_renter = rental.renter == request.user
+
+        if not is_owner and not is_renter:
+            return JsonResponse(
+                {"success": False, "error": "You are not allowed to report this rental"},
+                status=403
+            )
+
+        signal = PulseRentalSignal.objects.create(
+            rental=rental,
+            reporter=request.user,
+            message=message,
+            reported_by_owner=is_owner,
+        )
+
+        return JsonResponse({
+            "success": True,
+            "signal_id": signal.id,
+            "reported_by_owner": signal.reported_by_owner,
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "error": "Invalid JSON"}, status=400)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 @login_required
 def get_rental_proposals(request):
@@ -2728,11 +2787,10 @@ def get_request_by_id(request, request_id):
             "is_approved": urgent_request.is_approved,
             "is_flagged": urgent_request.is_flagged,
             "toxicity_score": urgent_request.toxicity_score,
-            "timestamp": (urgent_request.created_at + timedelta(hours=3)).strftime("%d %b %Y, %H:%M"),
+            "timestamp": urgent_request.created_at.isoformat() if urgent_request.created_at else None,
             "has_trust_access": has_trust_access,
 
-
-            "expires_at": urgent_request.expires_at.strftime("%d %b %Y, %H:%M") if urgent_request.expires_at else None,
+            "expires_at": urgent_request.expires_at.isoformat() if urgent_request.expires_at else None,
         }
 
         return JsonResponse({

@@ -52,85 +52,151 @@
 
 
 /* Header & Title */
+.header {
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
 .headerSection {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 3rem;
-    border-bottom: 2px solid rgba(15, 23, 42, 0.05);
-    padding-bottom: 1rem;
+    gap: 1rem;
+    padding: 1rem 0 1.25rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    flex-wrap: wrap;
 }
 
-
 .title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin: 0;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.85rem;
+    margin: 0;
+    font-size: clamp(1.7rem, 3vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
     color: #0f172a;
-    letter-spacing: -0.5px;
 }
 
 .titleIcon {
     color: #ef4444;
-    filter: drop-shadow(0 4px 6px rgba(239, 68, 68, 0.2));
+    filter: drop-shadow(0 4px 8px rgba(239, 68, 68, 0.18));
+    flex-shrink: 0;
 }
 
 .alertButton {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem 1.5rem;
-    border-radius: 10px;
-    background: transparent;
+    gap: 0.65rem;
+    padding: 0.9rem 1.25rem;
+    border-radius: 14px;
+    border: 1.5px solid #ef4444;
+    background: linear-gradient(180deg, rgba(239, 68, 68, 0.06), rgba(239, 68, 68, 0.02));
     color: #ef4444;
-    font-family: sans-serif;
-    font-size: 1.25rem;
-    font-weight: 600;
-    border: 2px solid #ef4444;
-    text-transform: capitalize;
-    gap: 0.75rem;
-    transition: all 0.2s ease-in-out;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
     cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.08);
+    white-space: nowrap;
 }
 
 .alertButton .arrowIcon {
-    width: 1.5rem;
-    height: 1.5rem;
-    stroke: currentcolor;
+    width: 1.2rem;
+    height: 1.2rem;
+    stroke: currentColor;
     stroke-width: 2.5;
     stroke-linecap: round;
     stroke-linejoin: round;
+    flex-shrink: 0;
 }
 
-
 .alertButton:hover {
+    transform: translateY(-1px);
     background-color: rgba(239, 68, 68, 0.1);
     border-color: #dc2626;
     color: #dc2626;
+    box-shadow: 0 10px 28px rgba(239, 68, 68, 0.14);
+}
+
+.alertButton:active {
+    transform: translateY(0);
 }
 
 .liveIndicator {
-    padding-top: 15px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     color: var(--color-primary-dark);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 700;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    white-space: nowrap;
 }
 
 .pulseDot {
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     background-color: var(--color-primary-dark);
     border-radius: 50%;
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
     animation: pulse 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
+    flex-shrink: 0;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+@media (max-width: 768px) {
+    .headerSection {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.9rem;
+        padding-bottom: 1rem;
+    }
+
+    .title {
+        font-size: clamp(1.5rem, 6vw, 2rem);
+        gap: 0.7rem;
+    }
+
+    .alertButton {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .liveIndicator {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .headerSection {
+        gap: 0.75rem;
+    }
+
+    .titleIcon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .alertButton {
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem;
+    }
 }
 
 @keyframes pulse {

@@ -143,6 +143,9 @@ export default function Profile() {
     const [rentalProposals, setRentalProposals] = useState([]);
     const [proposalsLoading, setProposalsLoading] = useState(true);
 
+    const [signalModalOpen, setSignalModalOpen] = useState(false);
+    const [selectedRental, setSelectedRental] = useState(null);
+    const [signalMessage, setSignalMessage] = useState("");
 
     const [receivedRequestOffers, setReceivedRequestOffers] = useState([]);
     const [receivedOffersLoading, setReceivedOffersLoading] = useState(true);
@@ -193,6 +196,12 @@ export default function Profile() {
     const closeDeleteModal = () => {
         setDeleteProposalModal({ show: false, id: null });
     };
+
+    function openSignalProblemModal(rental) {
+        setSelectedRental(rental);
+        setSignalMessage("");
+        setSignalModalOpen(true);
+    }
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
@@ -717,6 +726,41 @@ export default function Profile() {
             setDeclineModal({ show: false, id: null });
         }
     };
+
+    async function submitSignalProblem() {
+        if (!signalMessage.trim() || !selectedRental) return;
+
+        try {
+            const response = await fetch(
+                "http://localhost:8000/accounts/signal_pulse_rental/", // your backend endpoint
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCookie("csrftoken"),
+                    },
+                    body: JSON.stringify({
+                        rental_id: selectedRental.id,
+                        message: signalMessage
+                        // reported_by_owner is set automatically in backend
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert("Signal submitted successfully!");
+                setSignalModalOpen(false);
+            } else {
+                alert("Error submitting signal: " + data.error);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error submitting signal.");
+        }
+    }
 
     const handleDeleteProposal = async () => {
         const id = deleteProposalModal.id;
@@ -1689,7 +1733,16 @@ export default function Profile() {
                                 )}
 
                                 {visibleRentals.map((item) => {
-                                    const isOfferTab = activeRentalTab === 'offers';
+                                    const isOfferTab = activeRentalTab === "offers";
+
+                                    const now = new Date();
+                                    const start = new Date(item.start_date);
+                                    const end = new Date(item.end_date);
+
+                                    const isInProgress =
+                                        item.status === "confirmed" &&
+                                        now >= start &&
+                                        now <= end;
 
                                     return (
                                         <motion.div
@@ -1719,45 +1772,64 @@ export default function Profile() {
                                                             <>Type: <strong>{item.pulse_type === "servicii" ? "Serviciu" : "Produs"}</strong></>
                                                         )}
                                                     </div>
+
                                                     <div>Period: {formatDate(item.start_date)} — {formatDate(item.end_date)}</div>
                                                     <div>Proposed price: <strong>{formatCurrency(item.total_price, item.currencyType || "lei")}</strong></div>
 
                                                     {item.total_price !== item.initial_price && (
                                                         <div>Initial price: <strong>{formatCurrency(item.initial_price, item.currencyType || "lei")}</strong></div>
                                                     )}
-                                                    <div>Status: <strong>{item.status}</strong></div>
+
+                                                    <div>Status: <strong>{isInProgress ? "In progress" : item.status}</strong></div>
                                                 </div>
                                             </div>
 
                                             <div className={styles.offerActions}>
+                                                {isInProgress && (
+                                                    <motion.button
+                                                        {...btnMotion}
+                                                        onClick={() => openSignalProblemModal(item)}
+                                                        className={styles.signalBtn}
+                                                    >
+                                                        Signal a problem
+                                                    </motion.button>
+                                                )}
+
                                                 {item.status === "pending" && (isOfferTab ? item.last_offer_by !== user.id : true) && (
                                                     <>
                                                         {!isOfferTab && (
                                                             <motion.button {...btnMotion} onClick={() => openDeleteModal(item)} className={styles.rejectBtn}>
-                                                                <X/>Decline
+                                                                <X />Decline
                                                             </motion.button>
                                                         )}
 
                                                         {(isOfferTab || (item.total_price !== item.initial_price && item.last_offer_by !== user.id)) && (
                                                             <>
                                                                 <motion.button {...btnMotion} onClick={() => openAcceptModal(item)} className={styles.acceptBtn}>
-                                                                    <Handshake className='mr-1'/>{isOfferTab ? "Accept" : "Accept the offer"}
+                                                                    <Handshake className="mr-1" />
+                                                                    {isOfferTab ? "Accept" : "Accept the offer"}
                                                                 </motion.button>
 
                                                                 {isOfferTab && (
                                                                     <motion.button {...btnMotion} onClick={() => openDeclineModal(item)} className={styles.rejectBtn}>
-                                                                        <X/>Decline
+                                                                        <X />Decline
                                                                     </motion.button>
                                                                 )}
 
                                                                 {!isOfferTab && (
                                                                     <motion.button {...btnMotion} onClick={() => openDeclineModal(item)} className={styles.rejectBtn}>
-                                                                        <X/>Refuse the offer
+                                                                        <X />Refuse the offer
                                                                     </motion.button>
                                                                 )}
 
-                                                                <motion.button {...btnMotion} onClick={() => openCounterModal(item)} className={styles.counterBtn} style={!isOfferTab ? { marginLeft: "8px" } : {}}>
-                                                                    <Repeat className='mr-1'/>Counteroffer
+                                                                <motion.button
+                                                                    {...btnMotion}
+                                                                    onClick={() => openCounterModal(item)}
+                                                                    className={styles.counterBtn}
+                                                                    style={!isOfferTab ? { marginLeft: "8px" } : {}}
+                                                                >
+                                                                    <Repeat className="mr-1" />
+                                                                    Counteroffer
                                                                 </motion.button>
                                                             </>
                                                         )}
@@ -1766,7 +1838,7 @@ export default function Profile() {
 
                                                 {(item.status === "confirmed" || item.status === "declined" || item.status === "completed") && (
                                                     <div className={styles.smallNote}>
-                                                        {item.status === "confirmed" && (isOfferTab ? "Offer accepted" : "Rental confirmed.")}
+                                                        {!isInProgress && item.status === "confirmed" && (isOfferTab ? "Offer accepted" : "Rental confirmed.")}
                                                         {item.status === "declined" && (isOfferTab ? "Offer rejected" : "The offer has been declined.")}
                                                         {item.status === "completed" && "Rental finished"}
                                                     </div>
@@ -2292,6 +2364,58 @@ export default function Profile() {
                             </div>
                         </div>
                     </div>
+                )}
+
+                {signalModalOpen && (
+                    <motion.div
+                        className={styles.modalOverlay}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className={styles.modal}
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <h3 className={styles.modalTitle}>
+                                Signal a problem for {selectedRental?.pulse_title || "this rental"}
+                            </h3>
+                            <p className={styles.modalText}>
+                                Describe the problem you encountered:
+                            </p>
+
+                            <div className={styles.inputGroup}>
+                                <label className={styles.inputLabel}>Message</label>
+                                <textarea
+                                    value={signalMessage}
+                                    onChange={(e) => setSignalMessage(e.target.value)}
+                                    placeholder="Enter the issue..."
+                                    className={styles.editInput} // reuse editInput style for textarea
+                                    rows={4}
+                                />
+                            </div>
+
+                            <div className={styles.modalActions}>
+                                <motion.button
+                                    {...btnMotion}
+                                    onClick={() => setSignalModalOpen(false)}
+                                    className={styles.modalCancel}
+                                >
+                                    Cancel
+                                </motion.button>
+                                <motion.button
+                                    {...btnMotion}
+                                    onClick={submitSignalProblem}
+                                    className={styles.saveButton}
+                                >
+                                    Submit
+                                </motion.button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </div>
             <Footer />

@@ -452,6 +452,13 @@ class AlertConsumer(AsyncWebsocketConsumer):
                 "data": alert_data
             }))
 
+    async def alert_deleted(self, event):
+        # This sends the deleted alert ID to clients
+        await self.send(text_data=json.dumps({
+            "type": "alert_deleted",
+            "id": event["id"]
+        }))
+
     async def weather_message(self, event):
 
         message = event.get("message")
