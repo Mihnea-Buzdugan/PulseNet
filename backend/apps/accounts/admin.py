@@ -40,7 +40,7 @@ class CustomUserAdmin(UserAdmin):
                 'profile_picture', 'biography', 'lat', 'lng', 'trust_score',
                 'visibility_radius', 'quiet_hours_start', 'quiet_hours_end',
                 'online_status', 'private_account',
-                'banned_until', 'public_key',  # <--- Added here
+                'banned_until', 'public_key','is_verified',
             )
         }),
     )

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import {useNavigate} from "react-router-dom";
 import Footer from "@/components/Footer";
+
 function ChangeView({ center, radiusKm }) {
     const map = useMap();
     useEffect(() => {
@@ -782,13 +783,13 @@ export default function Profile() {
                     updateProposalInState(id, {
                         total_price: updated.total_price != null ? updated.total_price : parsed,
                         status: updated.status || "pending",
-                        last_offer_by: updated.last_offer_by // ← add this line
+                        last_offer_by: updated.last_offer_by
                     });
                 } else {
                     updateOfferInState(id, {
                         total_price: updated.total_price != null ? updated.total_price : parsed,
                         status: updated.status || "pending",
-                        last_offer_by: updated.last_offer_by // ← add this line
+                        last_offer_by: updated.last_offer_by
                     });
                 }
 
@@ -975,7 +976,7 @@ export default function Profile() {
 
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    const itemsPerPage = 4;
+    const itemsPerPage = 3;
 
     const handleFilterChange = (type) => {
         setPulseFilter(type);
@@ -996,7 +997,57 @@ export default function Profile() {
         }
     };
 
+    const [activeRentalTab, setActiveRentalTab] = useState('offers');
 
+    const [rentalCurrentIndex, setRentalCurrentIndex] = useState(0);
+    const rentalItemsPerPage = 2;
+
+    const handleRentalFilterChange = (tab) => {
+        setActiveRentalTab(tab);
+        setRentalCurrentIndex(0); // Resetăm la prima pagină când schimbăm tab-ul
+    };
+
+    const currentRentalData = activeRentalTab === 'offers' ? rentalOffers : rentalProposals;
+    const currentRentalLoading = activeRentalTab === 'offers' ? offersLoading : proposalsLoading;
+    const visibleRentals = currentRentalData.slice(rentalCurrentIndex, rentalCurrentIndex + rentalItemsPerPage);
+
+    const handleRentalNext = () => {
+        if (rentalCurrentIndex + rentalItemsPerPage < currentRentalData.length) {
+            setRentalCurrentIndex(prev => prev + rentalItemsPerPage);
+        }
+    };
+
+    const handleRentalPrev = () => {
+        if (rentalCurrentIndex - rentalItemsPerPage >= 0) {
+            setRentalCurrentIndex(prev => prev - rentalItemsPerPage);
+        }
+    };
+
+    const [activeRequestTab, setActiveRequestTab] = useState('received');
+
+    const [requestCurrentIndex, setRequestCurrentIndex] = useState(0);
+    const requestItemsPerPage = 2;
+
+    const handleRequestFilterChange = (tab) => {
+        setActiveRequestTab(tab);
+        setRequestCurrentIndex(0); // Resetăm la prima pagină când schimbăm tab-ul
+    };
+
+    const currentRequestData = activeRequestTab === 'received' ? receivedRequestOffers : sentRequestOffers;
+    const currentRequestLoading = activeRequestTab === 'received' ? receivedOffersLoading : sentOffersLoading;
+    const visibleRequests = currentRequestData.slice(requestCurrentIndex, requestCurrentIndex + requestItemsPerPage);
+
+    const handleRequestNext = () => {
+        if (requestCurrentIndex + requestItemsPerPage < currentRequestData.length) {
+            setRequestCurrentIndex(prev => prev + requestItemsPerPage);
+        }
+    };
+
+    const handleRequestPrev = () => {
+        if (requestCurrentIndex - requestItemsPerPage >= 0) {
+            setRequestCurrentIndex(prev => prev - requestItemsPerPage);
+        }
+    };
     if (loading) return <Loading />;
     if (!user) return <div className={styles.error}>Could not load user data.</div>;
 
@@ -1276,7 +1327,6 @@ export default function Profile() {
                                     </div>
                                 ) : (
                                     <div className={styles.infoContent}>
-                                        {/* ...same display as before... */}
                                         <div className={styles.titleRow}>
                                             <h1 className={styles.title}>
                                                 {user.firstName} {user.lastName}
@@ -1336,7 +1386,6 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            {/* Pulse list - Acum mapează doar elementele din pagina curentă (currentPulses) */}
                             <div className={styles.objectGrid}>
                                 {filteredPulses.length === 0 && (
                                     <p className={styles.emptyState}>No posts of type „{pulseFilter}” yet.</p>
@@ -1597,7 +1646,6 @@ export default function Profile() {
                         )}
                     </motion.div>
 
-                    {/* RENTAL OFFERS SECTION */}
                     <motion.div className={styles.contentArea}>
                         <motion.div
                             className={styles.card}
@@ -1605,383 +1653,315 @@ export default function Profile() {
                             transition={{ duration: 0.2 }}
                         >
                             <div className={styles.pulsesHeader}>
-                                <h2 className={styles.sectionTitle}>Rental offers</h2>
-                                <p className={styles.sectionSubtitle}>
-                                    Here you can view rental requests for your listings — you can accept, decline, or send a counteroffer.
-                                </p>
+                                <div className="flex flex-col">
+                                    <h2 className={styles.sectionTitle}>Rentals</h2>
+                                    <p className={styles.sectionSubtitle} style={{ marginTop: '4px' }}>
+                                        Manage your received rental offers and the proposals you've sent.
+                                    </p>
+                                </div>
+
+                                <div className={styles.filterButtonsRow}>
+                                    <button
+                                        className={`${styles.filterBtn} ${activeRentalTab === "offers" ? styles.activeFilter : ""}`}
+                                        onClick={() => handleRentalFilterChange("offers")}
+                                    >
+                                        Rental offers
+                                    </button>
+                                    <button
+                                        className={`${styles.filterBtn} ${activeRentalTab === "proposals" ? styles.activeFilter : ""}`}
+                                        onClick={() => handleRentalFilterChange("proposals")}
+                                    >
+                                        Rental proposals
+                                    </button>
+                                </div>
                             </div>
 
+                            {/* LISTA PROPRIU-ZISĂ (GRID) */}
                             <div className={styles.offersList}>
-                                {offersLoading && <p>Offers loading...</p>}
-                                {!offersLoading && rentalOffers.length === 0 && (
-                                    <p className={styles.emptyState}>There are currently no offers for your listings.</p>
-                                )}
+                                {currentRentalLoading && <p>Loading...</p>}
 
-                                {rentalOffers.map((offer) => (
-                                    <motion.div
-                                                key={offer.id}
-                                                className={styles.offerCard}
-                                                initial={{ opacity: 0, x: -12 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ duration: 0.25}}
-                                                whileHover={{ scale: 1.02 }}>
-                                        <div className={styles.offerLeft}>
-                                            <div className={styles.offerPulseTitle}>{offer.pulse?.title || "—"}</div>
-                                            <div className={styles.offerMeta}>
-                                                <div>
-                                                    From: <strong>{offer.renter?.username || offer.renter}</strong>
-                                                </div>
-                                                <div>
-                                                    {offer.pulse_type === "servicii" ? (
-                                                        <span>Service: <strong>{offer.pulse_title}</strong></span>
-                                                    ) : (
-                                                        <span>Product: <strong>{offer.pulse_title}</strong></span>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    Period: {formatDate(offer.start_date)} — {formatDate(offer.end_date)}
-                                                </div>
-                                                <div>
-                                                    Proposed price:{" "}
-                                                    <strong>{formatCurrency(offer.total_price, offer.currencyType || "lei")}</strong>
-                                                </div>
-                                                {offer.total_price !== offer.initial_price && (
-                                                    <div>
-                                                        Initial price:{" "}
-                                                        <strong>
-                                                            {formatCurrency(offer.initial_price, offer.currencyType || "lei")}
-                                                        </strong>
-                                                    </div>
-                                                )}
-                                                <div>Status: <strong>{offer.status}</strong></div>
-                                            </div>
-                                        </div>
-
-                                        <div className={styles.offerActions}>
-                                            {offer.status === "pending" && offer.last_offer_by !== user.id ? (
-                                                <>
-                                                    <motion.button {...btnMotion} onClick={() => openAcceptModal(offer)} className={styles.acceptBtn}>
-                                                        <Handshake className='mr-1'/>Accept
-                                                    </motion.button>
-                                                    <motion.button {...btnMotion} onClick={() => openDeclineModal(offer)} className={styles.rejectBtn}>
-                                                        <X/>Decline
-                                                    </motion.button>
-                                                    <motion.button {...btnMotion} onClick={() => openCounterModal(offer)} className={styles.counterBtn}>
-                                                        <Repeat className='mr-1'/>Counteroffer
-                                                    </motion.button>
-                                                </>
-                                            ) : (
-                                                <div className={styles.smallNote}>
-                                                    {offer.status === "confirmed" && "Offer accepted"}
-                                                    {offer.status === "declined" && "Offer rejected"}
-                                                    {offer.status === "completed" && "Rental finished"}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </motion.div>
-
-                    <motion.div className={styles.contentArea}>
-                        <motion.div
-                            className={styles.card}
-                            whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <div className={styles.pulsesHeader}>
-                                <h2 className={styles.sectionTitle}>My rental proposals</h2>
-                                <p className={styles.sectionSubtitle}>
-                                    Here you can see all the proposals you’ve sent and their status.
-                                </p>
-                            </div>
-
-                            <div className={styles.offersList}>
-                                {proposalsLoading && <p>Proposals loading...</p>}
-
-                                {!proposalsLoading && rentalProposals.length === 0 && (
+                                {!currentRentalLoading && currentRentalData.length === 0 && (
                                     <p className={styles.emptyState}>
-                                        You haven’t sent any rental proposals yet.
+                                        {activeRentalTab === 'offers'
+                                            ? "There are currently no offers for your listings."
+                                            : "You haven’t sent any rental proposals yet."}
                                     </p>
                                 )}
 
-                                {rentalProposals.map((proposal) => (
-                                    <motion.div
-                                        key={proposal.id}
-                                        className={styles.offerCard}
-                                        initial={{ opacity: 0, x: -12 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ duration: 0.25 }}
-                                        whileHover={{ scale: 1.02, boxShadow: "0 6px 20px rgba(0,0,0,0.08)" }}
-                                    >
+                                {visibleRentals.map((item) => {
+                                    const isOfferTab = activeRentalTab === 'offers';
 
-                                        <div className={styles.offerLeft}>
-                                            <div className={styles.offerPulseTitle}>
-                                                {proposal.pulse_title}
+                                    return (
+                                        <motion.div
+                                            key={item.id}
+                                            className={styles.offerCard}
+                                            initial={{ opacity: 0, x: -12 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ duration: 0.25 }}
+                                            whileHover={{ scale: 1.02, boxShadow: "0 6px 20px rgba(0,0,0,0.08)" }}
+                                        >
+                                            <div className={styles.offerLeft}>
+                                                <div className={styles.offerPulseTitle}>
+                                                    {isOfferTab ? (item.pulse?.title || "—") : item.pulse_title}
+                                                </div>
+
+                                                <div className={styles.offerMeta}>
+                                                    {isOfferTab ? (
+                                                        <div>From: <strong>{item.renter?.username || item.renter}</strong></div>
+                                                    ) : null}
+
+                                                    <div>
+                                                        {isOfferTab ? (
+                                                            item.pulse_type === "servicii"
+                                                                ? <span>Service: <strong>{item.pulse_title}</strong></span>
+                                                                : <span>Product: <strong>{item.pulse_title}</strong></span>
+                                                        ) : (
+                                                            <>Type: <strong>{item.pulse_type === "servicii" ? "Serviciu" : "Produs"}</strong></>
+                                                        )}
+                                                    </div>
+                                                    <div>Period: {formatDate(item.start_date)} — {formatDate(item.end_date)}</div>
+                                                    <div>Proposed price: <strong>{formatCurrency(item.total_price, item.currencyType || "lei")}</strong></div>
+
+                                                    {item.total_price !== item.initial_price && (
+                                                        <div>Initial price: <strong>{formatCurrency(item.initial_price, item.currencyType || "lei")}</strong></div>
+                                                    )}
+                                                    <div>Status: <strong>{item.status}</strong></div>
+                                                </div>
                                             </div>
 
-                                            <div className={styles.offerMeta}>
-                                                <div>
-                                                    Type:{" "}
-                                                    <strong>
-                                                        {proposal.pulse_type === "servicii"
-                                                            ? "Serviciu"
-                                                            : "Produs"}
-                                                    </strong>
-                                                </div>
-
-                                                <div>
-                                                    Period: {formatDate(proposal.start_date)} —{" "}
-                                                    {formatDate(proposal.end_date)}
-                                                </div>
-
-                                                <div>
-                                                    Proposed price:{" "}
-                                                    <strong>
-                                                        {formatCurrency(
-                                                            proposal.total_price,
-                                                            "lei"
+                                            <div className={styles.offerActions}>
+                                                {item.status === "pending" && (isOfferTab ? item.last_offer_by !== user.id : true) && (
+                                                    <>
+                                                        {!isOfferTab && (
+                                                            <motion.button {...btnMotion} onClick={() => openDeleteModal(item)} className={styles.rejectBtn}>
+                                                                <X/>Decline
+                                                            </motion.button>
                                                         )}
-                                                    </strong>
-                                                </div>
 
-                                                {proposal.initial_price &&
-                                                    proposal.initial_price !==
-                                                    proposal.total_price && (
-                                                        <div>
-                                                            Initial price:{" "}
-                                                            <strong>
-                                                                {formatCurrency(
-                                                                    proposal.initial_price,
-                                                                    "lei"
+                                                        {(isOfferTab || (item.total_price !== item.initial_price && item.last_offer_by !== user.id)) && (
+                                                            <>
+                                                                <motion.button {...btnMotion} onClick={() => openAcceptModal(item)} className={styles.acceptBtn}>
+                                                                    <Handshake className='mr-1'/>{isOfferTab ? "Accept" : "Accept the offer"}
+                                                                </motion.button>
+
+                                                                {isOfferTab && (
+                                                                    <motion.button {...btnMotion} onClick={() => openDeclineModal(item)} className={styles.rejectBtn}>
+                                                                        <X/>Decline
+                                                                    </motion.button>
                                                                 )}
-                                                            </strong>
-                                                        </div>
+
+                                                                {!isOfferTab && (
+                                                                    <motion.button {...btnMotion} onClick={() => openDeclineModal(item)} className={styles.rejectBtn}>
+                                                                        <X/>Refuse the offer
+                                                                    </motion.button>
+                                                                )}
+
+                                                                <motion.button {...btnMotion} onClick={() => openCounterModal(item)} className={styles.counterBtn} style={!isOfferTab ? { marginLeft: "8px" } : {}}>
+                                                                    <Repeat className='mr-1'/>Counteroffer
+                                                                </motion.button>
+                                                            </>
+                                                        )}
+                                                    </>
+                                                )}
+
+                                                {(item.status === "confirmed" || item.status === "declined" || item.status === "completed") && (
+                                                    <div className={styles.smallNote}>
+                                                        {item.status === "confirmed" && (isOfferTab ? "Offer accepted" : "Rental confirmed.")}
+                                                        {item.status === "declined" && (isOfferTab ? "Offer rejected" : "The offer has been declined.")}
+                                                        {item.status === "completed" && "Rental finished"}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+
+                            {currentRentalData.length > rentalItemsPerPage && (
+                                <div className={styles.carouselControls}>
+                                    <motion.button
+                                        {...btnMotion}
+                                        onClick={handleRentalPrev}
+                                        disabled={rentalCurrentIndex === 0}
+                                        className={styles.carouselBtn}
+                                    >
+                                        &larr; Prev
+                                    </motion.button>
+
+                                    <span className={styles.carouselIndicator}>
+                    {Math.floor(rentalCurrentIndex / rentalItemsPerPage) + 1} / {Math.ceil(currentRentalData.length / rentalItemsPerPage)}
+                </span>
+
+                                    <motion.button
+                                        {...btnMotion}
+                                        onClick={handleRentalNext}
+                                        disabled={rentalCurrentIndex + rentalItemsPerPage >= currentRentalData.length}
+                                        className={styles.carouselBtn}
+                                    >
+                                        Next &rarr;
+                                    </motion.button>
+                                </div>
+                            )}
+                        </motion.div>
+                    </motion.div>
+
+                    <motion.div className={styles.contentArea}>
+                        <motion.div
+                            className={styles.card}
+                            whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            {/* HEADER - Cu titlu și tab-uri identice ca la Rentals/Listings */}
+                            <div className={styles.pulsesHeader}>
+                                <div className="flex flex-col">
+                                    <h2 className={styles.sectionTitle}>Requests & Help</h2>
+                                    <p className={styles.sectionSubtitle} style={{ marginTop: '4px' }}>
+                                        Manage offers for your requests and the help you've offered to others.
+                                    </p>
+                                </div>
+
+                                <div className={styles.filterButtonsRow}>
+                                    <motion.button {...btnMotion}
+                                                   className={`${styles.filterBtn} ${activeRequestTab === "received" ? styles.activeFilter : ""}`}
+                                                   onClick={() => handleRequestFilterChange("received")}
+                                    >
+                                        Offers for requests
+                                    </motion.button>
+                                    <motion.button {...btnMotion}
+                                                   className={`${styles.filterBtn} ${activeRequestTab === "sent" ? styles.activeFilter : ""}`}
+                                                   onClick={() => handleRequestFilterChange("sent")}
+                                    >
+                                        My offers to help
+                                    </motion.button>
+                                </div>
+                            </div>
+
+                            {/* LISTA PROPRIU-ZISĂ */}
+                            <div className={styles.offersList}>
+                                {currentRequestLoading && <p>Loading...</p>}
+
+                                {!currentRequestLoading && currentRequestData.length === 0 && (
+                                    <p className={styles.emptyState}>
+                                        {activeRequestTab === 'received'
+                                            ? "You haven’t received any offers for your urgent requests yet."
+                                            : "You haven’t sent any help offers yet."}
+                                    </p>
+                                )}
+
+                                {visibleRequests.map((item) => {
+                                    const isReceivedTab = activeRequestTab === 'received';
+
+                                    return (
+                                        <motion.div
+                                            key={item.id}
+                                            className={styles.offerCard}
+                                            initial={{ opacity: 0, x: -12 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ duration: 0.25 }}
+                                            whileHover={{ scale: 1.02, boxShadow: "0 6px 20px rgba(0,0,0,0.08)" }}
+                                        >
+                                            {/* INFORMAȚII CARD */}
+                                            <div className={styles.offerLeft}>
+                                                <div className={styles.offerPulseTitle}>{item.request_title || "Untitled request"}</div>
+
+                                                <div className={styles.offerMeta}>
+                                                    {isReceivedTab && (
+                                                        <>
+                                                            <div>De la: <strong>@{item.proposer}</strong></div>
+                                                            <div>Trimisă la: <strong>{new Date(item.created_at).toLocaleDateString('ro-RO')}</strong></div>
+                                                        </>
                                                     )}
 
-                                                <div>
-                                                    Status: <strong>{proposal.status}</strong>
+                                                    <div>
+                                                        {isReceivedTab ? "Preț solicitat:" : "Proposed price:"} <strong>{formatCurrency(item.total_price, "lei")}</strong>
+                                                    </div>
+
+                                                    {item.initial_price && item.initial_price !== item.total_price && (
+                                                        <div>
+                                                            Initial price: <strong>{formatCurrency(item.initial_price, "lei")}</strong>
+                                                        </div>
+                                                    )}
+                                                    <div>Status: <strong>{item.status}</strong></div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className={styles.offerActions}>
-                                            {proposal.status === "pending" && (
-                                                <>
-                                                    <motion.button {...btnMotion}
-                                                        onClick={() => openDeleteModal(proposal)}
-                                                        className={styles.rejectBtn}
-                                                    >
-                                                        <X/>Decline
-                                                    </motion.button>
-
-                                                    {/* Counteroffer button for renter's own proposals */}
-                                                </>
-                                            )}
-
-                                            {proposal.total_price !== proposal.initial_price &&
-                                                proposal.last_offer_by !== user.id &&
-                                                proposal.status === "pending" &&
-                                                (
+                                            {/* ACȚIUNI CARD */}
+                                            <div className={styles.offerActions}>
+                                                {isReceivedTab ? (
+                                                    /* Butoane pentru "Offers for my requests" */
+                                                    item.status === "pending" && item.last_offer_by !== user.id ? (
+                                                        <>
+                                                            <motion.button {...btnMotion} onClick={() => openAcceptOfferModal(item)} className={styles.acceptBtn}>
+                                                                <Handshake className='mr-1'/>Accept
+                                                            </motion.button>
+                                                            <motion.button {...btnMotion} onClick={() => openDeclineOfferModal(item)} className={styles.rejectBtn}>
+                                                                <X/>Decline
+                                                            </motion.button>
+                                                            <motion.button {...btnMotion} onClick={() => openCounterOfferModal(item)} className={styles.counterBtn}>
+                                                                <Repeat className='mr-1'/>Counteroffer
+                                                            </motion.button>
+                                                        </>
+                                                    ) : (
+                                                        <div className={styles.smallNote}>
+                                                            {item.status === "confirmed" && "Offer accepted"}
+                                                            {item.status === "declined" && "Offer refused"}
+                                                            {item.status === "pending" && item.last_offer_by === user.id && "Waiting for counteroffer"}
+                                                        </div>
+                                                    )
+                                                ) : (
+                                                    /* Butoane pentru "My offers to help" */
                                                     <>
-                                                        <motion.button {...btnMotion}
-                                                            onClick={() => openCounterModal(proposal)}
-                                                            className={styles.counterBtn}
-                                                            style={{ marginLeft: "8px" }}
-                                                        >
-                                                            <Repeat className='mr-1'/>Counteroffer
-                                                        </motion.button>
+                                                        {item.status === "pending" && (
+                                                            <motion.button {...btnMotion} onClick={() => openDeleteOfferModal(item)} className={styles.rejectBtn}>
+                                                                <Undo className='mr-1'/>Withdraw offer
+                                                            </motion.button>
+                                                        )}
 
-                                                        <motion.button {...btnMotion}
-                                                            onClick={() => openAcceptModal(proposal)}
-                                                            className={styles.acceptBtn}
-                                                        >
-                                                            <Handshake className='mr-1'/>Accept the offer
-                                                        </motion.button>
+                                                        {item.status === "pending" && item.total_price !== item.initial_price && item.last_offer_by !== user.id && (
+                                                            <>
+                                                                <motion.button {...btnMotion} onClick={() => openAcceptOfferModal(item)} className={styles.acceptBtn} style={{ marginLeft: "8px" }}>
+                                                                    <Handshake className='mr-1'/>Accept new price
+                                                                </motion.button>
+                                                                <motion.button {...btnMotion} onClick={() => openCounterOfferModal(item)} className={styles.counterBtn} style={{ marginLeft: "8px" }}>
+                                                                    <Repeat className='mr-1'/>Negotiate
+                                                                </motion.button>
+                                                            </>
+                                                        )}
 
-                                                        <motion.button {...btnMotion}
-                                                            onClick={() => openDeclineModal(proposal)}
-                                                            className={styles.rejectBtn}
-                                                        >
-                                                            <X/>Refuse the offer
-                                                        </motion.button>
+                                                        {item.status === "confirmed" && <div className={styles.smallNote}>Confirmed — you can start working!</div>}
+                                                        {item.status === "declined" && <div className={styles.smallNote}>The offer has been declined</div>}
                                                     </>
                                                 )}
-
-                                            {proposal.status === "confirmed" && (
-                                                <div className={styles.smallNote}>Rental confirmed.</div>
-                                            )}
-
-                                            {proposal.status === "declined" && (
-                                                <div className={styles.smallNote}>The offer has been declined.</div>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </motion.div>
-
-                    <motion.div className={styles.contentArea}>
-                        <motion.div
-                            className={styles.card}
-                            whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <div className={styles.pulsesHeader}>
-                                <h2 className={styles.sectionTitle}>Offers for my requests</h2>
-                                <p className={styles.sectionSubtitle}>
-                                    Users have offered to help you — you can accept their offer, decline, or negotiate the price.
-                                </p>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
                             </div>
 
-                            <div className={styles.offersList}>
-                                {receivedOffersLoading && <p>Offers are loading...</p>}
-                                {!receivedOffersLoading && receivedRequestOffers.length === 0 && (
-                                    <p className={styles.emptyState}>You haven’t received any offers for your urgent requests yet.</p>
-                                )}
-
-                                {receivedRequestOffers.map((offer) => (
-                                    <motion.div
-                                        key={offer.id}
-                                        className={styles.offerCard}
-                                        initial={{ opacity: 0, x: -12 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ duration: 0.25 }}
-                                        whileHover={{ scale: 1.02, boxShadow: "0 6px 20px rgba(0,0,0,0.08)" }}
+                            {/* CONTROALE CAROUSEL */}
+                            {currentRequestData.length > requestItemsPerPage && (
+                                <div className={styles.carouselControls}>
+                                    <motion.button {...btnMotion}
+                                                   onClick={handleRequestPrev}
+                                                   disabled={requestCurrentIndex === 0}
+                                                   className={styles.carouselBtn}
                                     >
-                                        <div className={styles.offerLeft}>
-                                            <div className={styles.offerPulseTitle}>{offer.request_title || "Untitled request"}</div>
-                                            <div className={styles.offerMeta}>
-                                                <div>
-                                                    De la: <strong>@{offer.proposer}</strong>
-                                                </div>
-                                                <div>
-                                                    Trimisă la: <strong>{new Date(offer.created_at).toLocaleDateString('ro-RO')}</strong>
-                                                </div>
-                                                <div>
-                                                    Preț solicitat:{" "}
-                                                    <strong>{formatCurrency(offer.total_price, "lei")}</strong>
-                                                </div>
-                                                {offer.total_price !== offer.initial_price && (
-                                                    <div>
-                                                        First offer:{" "}
-                                                        <strong>{formatCurrency(offer.initial_price, "lei")}</strong>
-                                                    </div>
-                                                )}
-                                                <div>Status: <strong>{offer.status}</strong></div>
-                                            </div>
-                                        </div>
+                                        &larr; Prev
+                                    </motion.button>
 
-                                        <div className={styles.offerActions}>
-                                            {offer.status === "pending" && offer.last_offer_by !== user.id ? (
-                                                <>
-                                                    <motion.button {...btnMotion} onClick={() => openAcceptOfferModal(offer)} className={styles.acceptBtn}>
-                                                        <Handshake className='mr-1'/>Accept
-                                                    </motion.button>
-                                                    <motion.button {...btnMotion} onClick={() => openDeclineOfferModal(offer)} className={styles.rejectBtn}>
-                                                        <X/>Decline
-                                                    </motion.button>
-                                                    <motion.button {...btnMotion} onClick={() => openCounterOfferModal(offer)} className={styles.counterBtn}>
-                                                        <Repeat className='mr-1'/>Counteroffer
-                                                    </motion.button>
-                                                </>
-                                            ) : (
-                                                <div className={styles.smallNote}>
-                                                    {offer.status === "confirmed" && "Offer accepted"}
-                                                    {offer.status === "declined" && "Offer refused"}
-                                                    {offer.status === "pending" && offer.last_offer_by === user.id && "Waiting for counteroffer"}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </motion.div>
+                                    <span className={styles.carouselIndicator}>
+                    {Math.floor(requestCurrentIndex / requestItemsPerPage) + 1} / {Math.ceil(currentRequestData.length / requestItemsPerPage)}
+                </span>
 
-                    <motion.div className={styles.contentArea}>
-                        <motion.div
-                            className={styles.card}
-                            whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <div className={styles.pulsesHeader}>
-                                <h2 className={styles.sectionTitle}>My offers to help</h2>
-                                <p className={styles.sectionSubtitle}>
-                                    Here you can see all the offers you’ve sent to help other users.
-                                </p>
-                            </div>
-
-                            <div className={styles.offersList}>
-                                {sentOffersLoading && <p>Proposals loading...</p>}
-                                {!sentOffersLoading && sentRequestOffers.length === 0 && (
-                                    <p className={styles.emptyState}>You haven’t sent any help offers yet.</p>
-                                )}
-
-                                {sentRequestOffers.map((proposal) => (
-                                    <div key={proposal.id} className={styles.offerCard}>
-                                        <div className={styles.offerLeft}>
-                                            <div className={styles.offerPulseTitle}>{proposal.request_title}</div>
-                                            <div className={styles.offerMeta}>
-                                                <div>
-                                                    Status: <strong>{proposal.status}</strong>
-                                                </div>
-                                                <div>
-                                                    Proposed price: <strong>{formatCurrency(proposal.total_price, "lei")}</strong>
-                                                </div>
-                                                {proposal.initial_price && proposal.initial_price !== proposal.total_price && (
-                                                    <div>
-                                                        Initial price: <strong>{formatCurrency(proposal.initial_price, "lei")}</strong>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className={styles.offerActions}>
-                                            {/* Option to cancel if still pending and you made the last move */}
-                                            {proposal.status === "pending" && (
-                                                <motion.button {...btnMotion}
-                                                    onClick={() => openDeleteOfferModal(proposal)}
-                                                    className={styles.rejectBtn}
-                                                >
-                                                    <Undo/> Withdraw offer
-                                                </motion.button>
-                                            )}
-
-                                            {/* If the Requester sent a counteroffer, you see these options */}
-                                            {proposal.status === "pending" &&
-                                                proposal.total_price !== proposal.initial_price &&
-                                                proposal.last_offer_by !== user.id && (
-                                                    <>
-                                                        <motion.button {...btnMotion}
-                                                            onClick={() => openAcceptOfferModal(proposal)}
-                                                            className={styles.acceptBtn}
-                                                            style={{ marginLeft: "8px" }}
-                                                        >
-                                                            <Handshake className='mr-1'/>Accept new price
-                                                        </motion.button>
-                                                        <motion.button {...btnMotion}
-                                                            onClick={() => openCounterOfferModal(proposal)}
-                                                            className={styles.counterBtn}
-                                                            style={{ marginLeft: "8px" }}
-                                                        >
-                                                            <Repeat className='mr-1'/>Negotiate
-                                                        </motion.button>
-                                                    </>
-                                                )}
-
-                                            {proposal.status === "confirmed" && (
-                                                <div className={styles.smallNote}>Confirmed — you can start working!</div>
-                                            )}
-                                            {proposal.status === "declined" && (
-                                                <div className={styles.smallNote}>The offer has been declined</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    <motion.button {...btnMotion}
+                                                   onClick={handleRequestNext}
+                                                   disabled={requestCurrentIndex + requestItemsPerPage >= currentRequestData.length}
+                                                   className={styles.carouselBtn}
+                                    >
+                                        Next &rarr;
+                                    </motion.button>
+                                </div>
+                            )}
                         </motion.div>
                     </motion.div>
                 </div>

@@ -190,6 +190,7 @@
     @apply inline-flex items-center mt-2 px-2.5 py-0.5 rounded-full text-xs font-bold;
     background: var(--color-info-bg);
     color: var(--color-info);
+    white-space: nowrap;
 }
 
 .askVerified {
@@ -394,7 +395,11 @@
 /* ============================================================
    OBJECT / PULSE CARDS
    ============================================================ */
-.objectGrid { @apply grid grid-rows-4 gap-4; }
+.objectGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
 
 .objectCard {
     @apply bg-white rounded-2xl flex flex-col sm:flex-row gap-4 p-4 items-start sm:items-center transition-all duration-300;
@@ -737,6 +742,8 @@
     align-self: center;
     margin-right: 16px;
 }
+
+
 
 /* shared base for all three */
 .acceptBtn,
@@ -1237,5 +1244,31 @@
     .mainContainer{
         padding: 0;
 
+    }
+}
+
+@media (max-width: 768px) {
+    .offerActions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+        margin-right: 0;
+        margin-top: 12px;
+        justify-content: flex-start;
+        align-self: flex-start;
+    }
+
+    .acceptBtn,
+    .rejectBtn,
+    .counterBtn {
+        width: auto;
+        flex: 1;
+        min-width: fit-content;
+        font-size: 14px;
+        padding: 6px 10px;
+    }
+
+    .rejectBtn {
+        min-width: auto;
     }
 }

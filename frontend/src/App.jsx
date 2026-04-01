@@ -43,7 +43,11 @@ const NotificationHandler = ({ currentUser }) => {
             // --- CHAT NOTIFICATIONS ---
             if (data.type === "new_message") {
                 const currentChatPath = `/direct-chat/${data.sender_id}`;
-                if (location.pathname !== currentChatPath) {
+
+                const isAlreadyOnChat = location.pathname === currentChatPath;
+                const isOnMessagesPage = location.pathname === '/messages';
+
+                if (!isAlreadyOnChat && !isOnMessagesPage) {
                     toast.custom((t) => (
                         <div
                             onClick={() => {
