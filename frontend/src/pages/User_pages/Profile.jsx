@@ -17,10 +17,12 @@ import {
     Boxes,
     BriefcaseBusiness,
     Handshake,
-    Repeat, Undo, Save
+    Repeat, Undo, Save,
+    Star
 } from 'lucide-react';
 import {useNavigate} from "react-router-dom";
 import Footer from "@/components/Footer";
+
 
 function ChangeView({ center, radiusKm }) {
     const map = useMap();
@@ -147,6 +149,13 @@ export default function Profile() {
     const [selectedRental, setSelectedRental] = useState(null);
     const [signalMessage, setSignalMessage] = useState("");
 
+    const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+    const [feedbackItem, setFeedbackItem] = useState(null);
+    const [feedbackRating, setFeedbackRating] = useState(0);
+    const [feedbackHover, setFeedbackHover] = useState(0);
+    const [feedbackComment, setFeedbackComment] = useState("");
+
+
     const [receivedRequestOffers, setReceivedRequestOffers] = useState([]);
     const [receivedOffersLoading, setReceivedOffersLoading] = useState(true);
 
@@ -202,6 +211,71 @@ export default function Profile() {
         setSignalMessage("");
         setSignalModalOpen(true);
     }
+
+    const openFeedbackModal = (item) => {
+        setFeedbackItem(item);
+        setFeedbackRating(0);
+        setFeedbackHover(0);
+        setFeedbackComment("");
+        setFeedbackModalOpen(true);
+    };
+
+    const closeFeedbackModal = () => {
+        setFeedbackItem(null);
+        setFeedbackRating(0);
+        setFeedbackHover(0);
+        setFeedbackComment("");
+        setFeedbackModalOpen(false);
+    };
+
+    const submitFeedback = async () => {
+        if (!feedbackItem) return;
+
+        const payload = {
+            rating: parseInt(feedbackRating, 10),
+            comment: feedbackComment,
+        };
+
+        try {
+            let endpoint = "";
+
+            if (feedbackItem.pulse_title) {
+                // Pulse rental feedback
+                endpoint = `http://localhost:8000/accounts/pulse_rental_feedback/${feedbackItem.id}/`;
+            } else if (feedbackItem.request_title) {
+                // Request rental feedback
+                endpoint = `http://localhost:8000/accounts/request_rental_feedback/${feedbackItem.id}/`;
+            } else {
+                console.warn("Unknown feedback item type:", feedbackItem);
+                return;
+            }
+            const csrfToken = getCookie("csrftoken");
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                },
+                credentials: "include",
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Feedback submission failed:", errorData);
+                alert("Failed to submit feedback.");
+                return;
+            }
+
+            const data = await response.json();
+            console.log("Feedback submitted:", data);
+
+            closeFeedbackModal();
+        } catch (err) {
+            console.error("Error submitting feedback:", err);
+            alert("An error occurred while submitting feedback.");
+        }
+    };
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
@@ -1738,6 +1812,7 @@ export default function Profile() {
                                     const now = new Date();
                                     const start = new Date(item.start_date);
                                     const end = new Date(item.end_date);
+                                    end.setDate(end.getDate() + 1);
 
                                     const isInProgress =
                                         item.status === "confirmed" &&
@@ -1837,11 +1912,33 @@ export default function Profile() {
                                                 )}
 
                                                 {(item.status === "confirmed" || item.status === "declined" || item.status === "completed") && (
-                                                    <div className={styles.smallNote}>
-                                                        {!isInProgress && item.status === "confirmed" && (isOfferTab ? "Offer accepted" : "Rental confirmed.")}
-                                                        {item.status === "declined" && (isOfferTab ? "Offer rejected" : "The offer has been declined.")}
-                                                        {item.status === "completed" && "Rental finished"}
-                                                    </div>
+                                                    item.status === "confirmed" && !isInProgress ? (
+                                                        <div className={styles.confirmedActions}>
+
+                                                            <div className={styles.rightActions}>
+                                                                <motion.button
+                                                                    {...btnMotion}
+                                                                    onClick={() => openFeedbackModal(item)}
+                                                                    className={styles.feedbackBtn}
+                                                                >
+                                                                    Give feedback
+                                                                </motion.button>
+
+                                                                <motion.button
+                                                                    {...btnMotion}
+                                                                    onClick={() => openDeleteModal(item)}
+                                                                    className={styles.deleteIconBtn}
+                                                                >
+                                                                    <X />
+                                                                </motion.button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className={styles.smallNote}>
+                                                            {item.status === "declined" && (isOfferTab ? "Offer rejected" : "The offer has been declined.")}
+                                                            {item.status === "completed" && "Rental finished"}
+                                                        </div>
+                                                    )
                                                 )}
                                             </div>
                                         </motion.div>
@@ -1932,7 +2029,6 @@ export default function Profile() {
                                             transition={{ duration: 0.25 }}
                                             whileHover={{ scale: 1.02, boxShadow: "0 6px 20px rgba(0,0,0,0.08)" }}
                                         >
-                                            {/* INFORMAȚII CARD */}
                                             <div className={styles.offerLeft}>
                                                 <div className={styles.offerPulseTitle}>{item.request_title || "Untitled request"}</div>
 
@@ -1957,50 +2053,69 @@ export default function Profile() {
                                                 </div>
                                             </div>
 
-                                            {/* ACȚIUNI CARD */}
                                             <div className={styles.offerActions}>
-                                                {isReceivedTab ? (
-                                                    /* Butoane pentru "Offers for my requests" */
+                                                {item.status === "confirmed" ? (
+                                                    <div className={styles.confirmedActions}>
+
+                                                        <div className={styles.rightActions}>
+                                                            <motion.button
+                                                                {...btnMotion}
+                                                                onClick={() => openFeedbackModal(item)}
+                                                                className={styles.feedbackBtn}
+                                                            >
+                                                                Give Feedback
+                                                            </motion.button>
+
+                                                            <motion.button
+                                                                {...btnMotion}
+                                                                onClick={() =>
+                                                                    openDeleteOfferModal(item)
+                                                                }
+                                                                className={styles.deleteIconBtn}
+                                                                aria-label="Delete"
+                                                            >
+                                                                <X />
+                                                            </motion.button>
+                                                        </div>
+                                                    </div>
+                                                ) : isReceivedTab ? (
                                                     item.status === "pending" && item.last_offer_by !== user.id ? (
                                                         <>
                                                             <motion.button {...btnMotion} onClick={() => openAcceptOfferModal(item)} className={styles.acceptBtn}>
-                                                                <Handshake className='mr-1'/>Accept
+                                                                <Handshake className='mr-1' />Accept
                                                             </motion.button>
                                                             <motion.button {...btnMotion} onClick={() => openDeclineOfferModal(item)} className={styles.rejectBtn}>
-                                                                <X/>Decline
+                                                                <X />Decline
                                                             </motion.button>
                                                             <motion.button {...btnMotion} onClick={() => openCounterOfferModal(item)} className={styles.counterBtn}>
-                                                                <Repeat className='mr-1'/>Counteroffer
+                                                                <Repeat className='mr-1' />Counteroffer
                                                             </motion.button>
                                                         </>
                                                     ) : (
                                                         <div className={styles.smallNote}>
-                                                            {item.status === "confirmed" && "Offer accepted"}
                                                             {item.status === "declined" && "Offer refused"}
                                                             {item.status === "pending" && item.last_offer_by === user.id && "Waiting for counteroffer"}
                                                         </div>
                                                     )
                                                 ) : (
-                                                    /* Butoane pentru "My offers to help" */
                                                     <>
                                                         {item.status === "pending" && (
                                                             <motion.button {...btnMotion} onClick={() => openDeleteOfferModal(item)} className={styles.rejectBtn}>
-                                                                <Undo className='mr-1'/>Withdraw offer
+                                                                <Undo className='mr-1' />Withdraw offer
                                                             </motion.button>
                                                         )}
 
                                                         {item.status === "pending" && item.total_price !== item.initial_price && item.last_offer_by !== user.id && (
                                                             <>
                                                                 <motion.button {...btnMotion} onClick={() => openAcceptOfferModal(item)} className={styles.acceptBtn} style={{ marginLeft: "8px" }}>
-                                                                    <Handshake className='mr-1'/>Accept new price
+                                                                    <Handshake className='mr-1' />Accept new price
                                                                 </motion.button>
                                                                 <motion.button {...btnMotion} onClick={() => openCounterOfferModal(item)} className={styles.counterBtn} style={{ marginLeft: "8px" }}>
-                                                                    <Repeat className='mr-1'/>Negotiate
+                                                                    <Repeat className='mr-1' />Negotiate
                                                                 </motion.button>
                                                             </>
                                                         )}
 
-                                                        {item.status === "confirmed" && <div className={styles.smallNote}>Confirmed — you can start working!</div>}
                                                         {item.status === "declined" && <div className={styles.smallNote}>The offer has been declined</div>}
                                                     </>
                                                 )}
@@ -2410,6 +2525,90 @@ export default function Profile() {
                                     {...btnMotion}
                                     onClick={submitSignalProblem}
                                     className={styles.saveButton}
+                                >
+                                    Submit
+                                </motion.button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {feedbackModalOpen && (
+                    <motion.div
+                        className={styles.modalOverlay}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className={styles.modal}
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <h3 className={styles.modalTitle}>
+                                Feedback for {feedbackItem?.pulse_title || feedbackItem?.request_title || "this rental"}
+                            </h3>
+                            <p className={styles.modalText}>
+                                Rate your experience and leave a comment:
+                            </p>
+
+                            <div className={styles.inputGroup}>
+                                <label className={styles.inputLabel}>Rating</label>
+
+                                <div className={styles.starRow}>
+                                    {Array.from({ length: 10 }, (_, index) => {
+                                        const starValue = index + 1;
+                                        const filled = starValue <= (feedbackHover || feedbackRating);
+
+                                        return (
+                                            <button
+                                                key={starValue}
+                                                type="button"
+                                                className={styles.starBtn}
+                                                onMouseEnter={() => setFeedbackHover(starValue)}
+                                                onMouseLeave={() => setFeedbackHover(0)}
+                                                onClick={() => setFeedbackRating(starValue)}
+                                                aria-label={`Rate ${starValue} out of 10`}
+                                            >
+                                                <Star
+                                                    className={filled ? styles.starFilled : styles.starEmpty}
+                                                />
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className={styles.starText}>
+                                    {feedbackRating > 0 ? `${feedbackRating}/10` : "Select a rating"}
+                                </div>
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                                <label className={styles.inputLabel}>Comment</label>
+                                <textarea
+                                    value={feedbackComment}
+                                    onChange={(e) => setFeedbackComment(e.target.value)}
+                                    className={styles.editInput}
+                                    placeholder="Write your comment..."
+                                    rows={4}
+                                />
+                            </div>
+
+                            <div className={styles.modalActions}>
+                                <motion.button
+                                    {...btnMotion}
+                                    onClick={closeFeedbackModal}
+                                    className={styles.modalCancel}
+                                >
+                                    Cancel
+                                </motion.button>
+                                <motion.button
+                                    {...btnMotion}
+                                    onClick={submitFeedback}
+                                    className={styles.saveButton}
+                                    disabled={feedbackRating === 0}
                                 >
                                     Submit
                                 </motion.button>

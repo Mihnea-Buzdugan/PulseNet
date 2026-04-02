@@ -36,6 +36,7 @@ urlpatterns = [
     path("pulse_rentals/", views.get_user_rentals, name="get_user_rental"),
     path("pulse_rentals/<int:rental_id>/", views.modify_rental_status, name="modify_rental_status"),
     path("signal_pulse_rental/", views.signal_pulse_rental, name="signal_pulse_rental"),
+    path("pulse_rental_feedback/<int:rental_id>/", views.pulse_rental_feedback, name="pulse_rental_feedback"),
     path("pulse_own_proposals/", views.get_rental_proposals, name="get_rental_proposals"),
     path('favorites/', views.get_favorite_pulses, name="get_favorite_pulses"),
     path('add_to_favorites/<int:pulse_id>/', views.add_pulse_to_favorites, name='add_to_favorites'),
@@ -78,6 +79,7 @@ urlpatterns = [
     path('request-offers/received/', views.get_user_request_offers, name='get_user_request_offers'),
     path('request-offers/<int:offer_id>/', views.modify_offer_status, name='modify_offer_status'),
     path('own-request-offers/', views.get_my_offers, name='own-request-offers'),
+    path("request_rental_feedback/<int:rental_id>/", views.request_rental_feedback, name="request_rental_feedback"),
 
     #Admin urls
     path('admin_alert_reports/', views.admin_alert_reports, name='admin_reports'),

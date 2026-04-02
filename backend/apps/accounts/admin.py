@@ -7,7 +7,7 @@ from .models import (
     Group_Conversation, DirectConversation, FavoritePulse,
     PulseRental, Alert, AlertImage, PulseComment,
     PulseRating, Notification, UrgentRequest, AlertReport, AlertConfirm, UrgentRequestImage, RequestComment,
-    UrgentRequestOffer, DirectMessage, Group_Message, AlertComment, PulseRentalSignal
+    UrgentRequestOffer, DirectMessage, Group_Message, AlertComment, PulseRentalSignal, PulseFeedback, UrgentRequestFeedback
 )
 
 class LocationAdminForm(forms.ModelForm):
@@ -74,5 +74,6 @@ admin.site.register([
     Follow, Friendship, PendingFollow, PulseImage,
     Group_Conversation, DirectConversation, FavoritePulse,
     PulseRental, AlertImage, PulseComment, DirectMessage, Group_Message,
-    PulseRating, Notification, AlertReport, AlertConfirm, UrgentRequestImage, RequestComment, UrgentRequestOffer, AlertComment, PulseRentalSignal
+    PulseRating, Notification, AlertReport, AlertConfirm, UrgentRequestImage, RequestComment, UrgentRequestOffer, AlertComment, PulseRentalSignal,
+    PulseFeedback, UrgentRequestFeedback
 ])

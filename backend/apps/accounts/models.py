@@ -222,6 +222,46 @@ class PulseRentalSignal(models.Model):
         return f"{reporter_type} reported for {self.rental} - {'Resolved' if self.resolved else 'Pending'}"
 
 
+class PulseFeedback(models.Model):
+    pulse = models.ForeignKey(
+        Pulse,
+        on_delete=models.CASCADE,
+        related_name="feedbacks"
+    )
+
+    reviewer = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="given_feedbacks"
+    )
+
+    # Optional: who owns the Pulse (denormalized for faster queries)
+    owner = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="received_feedbacks"
+    )
+
+    rating = models.PositiveSmallIntegerField(
+        help_text="Rating from 1 to 10"
+    )
+
+    comment = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        unique_together = ("pulse", "reviewer")
+        # prevents same user from reviewing same Pulse multiple times
+
+    def __str__(self):
+        return f"{self.reviewer} rated {self.pulse.title} ({self.rating}/10)"
+
+
 class PulseComment(models.Model):
     pulse = models.ForeignKey(
         Pulse,
@@ -698,6 +738,47 @@ class UrgentRequestOffer(models.Model):
 
     def __str__(self):
         return f"{self.request.title} reserved by {self.proposer}"
+
+
+class UrgentRequestFeedback(models.Model):
+    request = models.ForeignKey(
+        UrgentRequest,
+        on_delete=models.CASCADE,
+        related_name="feedbacks"
+    )
+
+    reviewer = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="given_urgent_feedbacks"
+    )
+
+    # Owner of the request (denormalized for performance)
+    owner = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="received_urgent_feedbacks"
+    )
+
+    rating = models.PositiveSmallIntegerField(
+        help_text="Rating from 1 to 10"
+    )
+
+    comment = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        unique_together = ("request", "reviewer")
+        # prevent multiple reviews from same user for same request
+
+    def __str__(self):
+        return f"{self.reviewer} rated request #{self.request.id} ({self.rating}/10)"
+
 
 
 class UrgentRequestImage(models.Model):

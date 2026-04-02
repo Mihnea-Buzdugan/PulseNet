@@ -738,7 +738,7 @@
     flex-direction: column;
     gap: 8px;
     flex-shrink: 0;
-    width: 140px;
+    width: 160px;
     align-self: center;
     margin-right: 16px;
 }
@@ -805,6 +805,66 @@
 }
 
 .signalBtn:hover {
+    background-color: var(--color-danger-bg);
+    transform: translateY(-1px);
+}
+
+.confirmedActions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.rightActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Feedback button → based on acceptBtn */
+.feedbackBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+}
+
+.feedbackBtn:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Delete button → based on rejectBtn but icon style */
+.deleteIconBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-danger);
+    background-color: transparent;
+
+    color: var(--color-danger);
+    cursor: pointer;
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-sm);
+}
+
+.deleteIconBtn:hover {
     background-color: var(--color-danger-bg);
     transform: translateY(-1px);
 }
@@ -932,6 +992,50 @@
 .modalActions button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 
+.starRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.starBtn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.starFilled {
+    width: 26px;
+    height: 26px;
+    fill: #FFC107;
+    stroke: #FFC107;
+    transition: transform 0.15s ease, fill 0.15s ease, stroke 0.15s ease;
+}
+
+.starEmpty {
+    width: 26px;
+    height: 26px;
+    fill: transparent;
+    stroke: var(--color-border);
+    transition: transform 0.15s ease, fill 0.15s ease, stroke 0.15s ease;
+}
+
+.starBtn:hover .starFilled,
+.starBtn:hover .starEmpty {
+    transform: scale(1.12);
+}
+
+.starText {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-subtle);
+}
 
 /* ============================================================
    CARD ACTION BUTTONS (edit / remove)

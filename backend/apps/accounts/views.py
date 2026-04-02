@@ -24,7 +24,7 @@ from math import ceil
 from .decorators import api_login_required, check_hate_speech
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
     PulseComment, PulseRating, Notification, UrgentRequest, UrgentRequestImage, AlertConfirm, AlertReport, \
-    RequestComment, UrgentRequestOffer, AlertComment, PulseRentalSignal
+    RequestComment, UrgentRequestOffer, AlertComment, PulseRentalSignal, PulseFeedback, UrgentRequestFeedback
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
@@ -1504,6 +1504,118 @@ def signal_pulse_rental(request):
         return JsonResponse({"success": False, "error": "Invalid JSON"}, status=400)
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+
+@login_required
+@require_POST
+def pulse_rental_feedback(request, rental_id):
+    # Fetch the rental
+    rental = get_object_or_404(PulseRental, id=rental_id)
+
+    try:
+        data = json.loads(request.body)
+        rating = data.get("rating")
+        comment = data.get("comment", "").strip()
+    except json.JSONDecodeError:
+        return JsonResponse({"detail": "Invalid JSON payload."}, status=400)
+
+        # 2. Validation
+    try:
+        # This will now correctly see the number 7 from your JSON
+        rating = int(rating)
+    except (TypeError, ValueError):
+        return JsonResponse({"detail": "Rating must be an integer."}, status=400)
+
+    # Validate rating falls within the 1-10 range
+    if rating < 1 or rating > 10:
+        return JsonResponse({"detail": "Rating must be between 1 and 10."}, status=400)
+
+    # The owner of the pulse
+    pulse_owner = rental.pulse.user
+
+    # 1. Create or update the detailed PulseFeedback
+    feedback, feedback_created = PulseFeedback.objects.update_or_create(
+        pulse=rental.pulse,
+        reviewer=request.user,
+        defaults={
+            "owner": pulse_owner,
+            "rating": rating,
+            "comment": comment,
+        }
+    )
+
+    # 2. Create or update the simplified PulseRating
+    if request.user != rental.pulse.user:
+        pulse_rating, rating_created = PulseRating.objects.update_or_create(
+            pulse=rental.pulse,
+            user=request.user,
+            defaults={
+                "rating": rating,
+            }
+        )
+
+    # Return the response
+    return JsonResponse({
+        "feedback_id": feedback.id,
+        "pulse_id": rental.pulse.id,
+        "rental_id": rental.id,
+        "reviewer_id": request.user.id,
+        "owner_id": pulse_owner.id,
+        "rating": feedback.rating,
+        "comment": feedback.comment,
+        "feedback_created": feedback_created
+    }, status=201 if feedback_created else 200)
+
+
+@login_required
+@require_POST
+def request_rental_feedback(request, rental_id):
+    # Fetch the UrgentRequest (the 'rental' context here)
+    urgent_request = get_object_or_404(UrgentRequestOffer, id=rental_id)
+
+    try:
+        data = json.loads(request.body)
+        rating_val = data.get("rating")
+        comment = data.get("comment", "").strip()
+    except json.JSONDecodeError:
+        return JsonResponse({"detail": "Invalid JSON payload."}, status=400)
+
+        # 2. Validation
+    try:
+        # This will now correctly see the number 7 from your JSON
+        rating_val = int(rating_val)
+    except (TypeError, ValueError):
+        return JsonResponse({"detail": "Rating must be an integer."}, status=400)
+
+    if rating_val < 1 or rating_val > 10:
+        return JsonResponse({"detail": "Rating must be between 1 and 10."}, status=400)
+
+    # The owner of the request is the person who created the UrgentRequest
+    request_owner = urgent_request.request.user
+
+    # 1. Create or update UrgentRequestFeedback
+    feedback, feedback_created = UrgentRequestFeedback.objects.update_or_create(
+        request=urgent_request.request,
+        reviewer=request.user,
+        defaults={
+            "owner": request_owner,
+            "rating": rating_val,
+            "comment": comment,
+        }
+    )
+
+
+    # Return response
+    return JsonResponse({
+        "feedback_id": feedback.id,
+        "request_id": urgent_request.id,
+        "reviewer_id": request.user.id,
+        "owner_id": request_owner.id,
+        "rating": feedback.rating,
+        "comment": feedback.comment,
+        "created": feedback_created,
+    }, status=201 if feedback_created else 200)
+
 
 @login_required
 def get_rental_proposals(request):
