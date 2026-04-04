@@ -152,6 +152,30 @@ def process_pet_match_task(alert_id):
         print(e)
 
 
+_AWARENESS_TYPES = {
+    "1": "Wind", "2": "Snow / Ice", "3": "Thunderstorm", "4": "Fog",
+    "5": "Extreme Heat", "6": "Extreme Cold", "7": "Coastal Event",
+    "8": "Forest Fire", "9": "Avalanche", "10": "Heavy Rain",
+    "11": "Flooding", "12": "Rain & Flooding",
+}
+_AWARENESS_LEVELS = {
+    "1": "Minor", "2": "Moderate", "3": "Severe", "4": "Extreme",
+}
+
+def _parse_event_name(raw):
+
+    params = {}
+    for part in raw.replace(";", ",").split(","):
+        if "=" in part:
+            k, _, v = part.strip().partition("=")
+            params[k.strip()] = v.strip()
+    atype = _AWARENESS_TYPES.get(params.get("awareness_type", ""), "")
+    alevel = _AWARENESS_LEVELS.get(params.get("awareness_level", ""), "")
+    if atype:
+        return f"{alevel} {atype} Warning".strip() if alevel else f"{atype} Warning"
+    return raw
+
+
 @shared_task
 def fetch_severe_weather_alerts():
     key = os.getenv("openweather_api_key")
@@ -177,7 +201,7 @@ def fetch_severe_weather_alerts():
         try:
             response = requests.get(url)
             data = response.json()
-            alert_location = Point(lat, lon, srid=4326)
+            alert_location = Point(lon, lat, srid=4326)
 
             # --- A. CACHE THE WEATHER FOR THE FRONTEND VIEW ---
             current = data.get("current", {})
@@ -204,7 +228,7 @@ def fetch_severe_weather_alerts():
             # --- B. HANDLE OFFICIAL SEVERE WEATHER (Safety Check-in) ---
             if "alerts" in data:
                 for weather_alert in data["alerts"]:
-                    event_name = weather_alert.get("event", "Severe Weather")
+                    event_name = _parse_event_name(weather_alert.get("event", "Severe Weather"))
                     description = weather_alert.get("description", "Please stay safe!")
 
                     alert_exists = Alert.objects.filter(
@@ -230,7 +254,7 @@ def fetch_severe_weather_alerts():
                             "alerts_feed",
                             {
                                 "type": "weather_message",
-                                "message": f"SEVERE ALERT: {event_name}. Please check in.",
+                                "message": f"Severe weather alert: {event_name}. Please stay safe.",
                                 "priority": "high"
                             }
                         )
@@ -241,7 +265,6 @@ def fetch_severe_weather_alerts():
                     weather_code = hour_data.get("weather", [{}])[0].get("id", 800)
                     pop = hour_data.get("pop", 0)
 
-                    # Code < 700 = Rain/Snow/Storms, pop > 0.7 = 70%+ chance
                     if weather_code < 700 or pop > 0.70:
                         weather_desc = hour_data.get("weather", [{}])[0].get("description", "bad weather")
 
@@ -262,7 +285,6 @@ def fetch_severe_weather_alerts():
                             )
                             alerts_created += 1
 
-                            # Broadcast MEDIUM priority WebSocket message
                             async_to_sync(channel_layer.group_send)(
                                 "alerts_feed",
                                 {
@@ -271,7 +293,7 @@ def fetch_severe_weather_alerts():
                                     "priority": "medium"
                                 }
                             )
-                        break  # Found bad weather, warn once, then stop checking hours
+                        break
 
         except Exception as e:
             print(f"Error fetching weather for cluster {lat}, {lon}: {e}")
@@ -284,7 +306,6 @@ def update_user_trust_score_task(user_id):
 
         score = calculate_trust_score(user)
 
-        # ✅ clamp
         score = max(-500, min(score, 500))
 
         user.trust_score = score

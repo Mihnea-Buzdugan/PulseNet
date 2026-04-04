@@ -123,13 +123,7 @@ export default function UrgentRequests() {
             const data = await res.json();
             const fetchedResults = data.results || [];
 
-            // Preluăm adresa direct din răspunsul backend-ului
-            const requestsWithAddress = fetchedResults.map(req => ({
-                ...req,
-                address: req.address || (req.location ? "Se caută adresa..." : "Global / Online")
-            }));
-
-            setRequests(requestsWithAddress);
+            setRequests(fetchedResults);
             setHasNext(data.has_next);
             setHasPrevious(data.has_previous);
             setPage(data.page);

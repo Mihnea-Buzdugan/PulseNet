@@ -2868,6 +2868,7 @@ def list_all_requests(request):
             "max_price": str(req.max_price) if req.max_price else None,
             "currencyType": req.currencyType,
             "location": location_data,
+            "address": req.address or ("Searching address..." if req.location else "Global / Online"),
             "created_at": req.created_at.isoformat() if req.created_at else None,
             "expires_at": req.expires_at.isoformat() if req.expires_at else None,
             "images": images,

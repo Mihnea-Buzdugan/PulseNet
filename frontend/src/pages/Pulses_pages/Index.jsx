@@ -273,22 +273,9 @@ export default function Index() {
                     return;
                 }
 
-                // Handle new/updated requests
+                // Handle new/updated requests — re-fetch so match_score is computed correctly
                 if (!message.id) return;
-
-                // Calculate lat/lng from GeoJSON location for frontend
-                let lat, lng;
-                if (message.location && message.location.coordinates) {
-                    [lng, lat] = message.location.coordinates;
-                }
-
-                const newRequest = { ...message, lat, lng };
-
-                // Add to state if not already present
-                setUrgentRequests((prev) => {
-                    if (prev.find((p) => p.id === newRequest.id)) return prev;
-                    return [newRequest, ...prev];
-                });
+                fetchUrgentRequests();
 
             } catch (err) {
                 console.error("Error parsing websocket message:", err);
@@ -702,7 +689,7 @@ export default function Index() {
 
                         <div className={styles.cardsGrid}>
                             {!loadingPulses && !loadingRequests && visibleProducts.length > 0 ? (
-                                visibleProducts.map((product) => {
+                                visibleProducts.filter(product => activeTab !== "Request" || product.rating > 50).map((product) => {
                                     const isRequest = activeTab === "Request";
                                     const scoreClass =
                                         product.rating >= 80
