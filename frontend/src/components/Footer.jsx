@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "../styles/Components/Footer.module.css";
 import '../index.css';
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
     return (
@@ -12,6 +12,7 @@ const Footer = () => {
                 </p>
                 <p>
                     Designed & Developed by Buzdugan Mihnea-Andrei & Covaliuc Lucian.
+                    {" "}Have questions or feedbacks?
                     <Link to="/contact" className={styles.link}> Contact us</Link>
                 </p>
             </div>

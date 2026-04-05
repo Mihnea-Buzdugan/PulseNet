@@ -237,6 +237,73 @@ const NotificationHandler = ({ currentUser }) => {
                         </div>
                     </div>
                 ), { duration: 15000 });
+            } else if (data.type === "signal_resolved") {
+                // Dispatch custom event for global state updates (e.g., updating a notification bell count)
+                window.dispatchEvent(new CustomEvent("signal_resolved", { detail: data }));
+
+                toast.custom((t) => (
+                    <div
+                        onClick={() => {
+                            // Navigate to the rental associated with the signal if available
+                            if (data.metadata?.rental_id) {
+                                navigate(`/pulse/rental/${data.metadata.rental_id}`);
+                            }
+                            toast.dismiss(t.id);
+                        }}
+                        style={{
+                            display: 'flex',
+                            width: '384px',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            borderRadius: '16px',
+                            border: '1px solid rgba(0, 0, 0, 0.05)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                            cursor: 'pointer',
+                            overflow: 'hidden',
+                            borderLeft: '6px solid #10b981', // Success Green
+                            animation: t.visible ? 'enter 0.4s ease' : 'leave 0.4s ease',
+                        }}
+                    >
+                        <div style={{ flex: 1, padding: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <div style={{
+                                    height: '48px', width: '48px', borderRadius: '50%',
+                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: 'white', fontWeight: 'bold', fontSize: '22px',
+                                    flexShrink: 0, boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                }}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                </div>
+                                <div style={{ marginLeft: '12px', flex: 1 }}>
+                        <span style={{ fontSize: '14px', fontWeight: '800', color: '#111827' }}>
+                            Report Resolved
+                        </span>
+                                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#4b5563', lineHeight: '1.4' }}>
+                                        {data.title}
+                                    </p>
+                                    {data.metadata?.resolution_note && (
+                                        <p style={{
+                                            marginTop: '6px',
+                                            padding: '6px 8px',
+                                            background: '#f0fdf4',
+                                            borderRadius: '6px',
+                                            fontSize: '12px',
+                                            color: '#166534',
+                                            fontStyle: 'italic',
+                                            border: '1px solid #dcfce7'
+                                        }}>
+                                            "{data.metadata.resolution_note}"
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ), { duration: 8000 });
             }
         };
 

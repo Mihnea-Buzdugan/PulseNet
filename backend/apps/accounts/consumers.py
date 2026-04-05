@@ -262,6 +262,22 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    async def send_signal_resolved(self, event):
+        """Handler for signal resolution notifications."""
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "signal_resolved",
+                    "notification_id": event.get("notification_id"),
+                    "title": event.get("title"),
+                    "message": event.get("message"),
+                    "created_at": event.get("created_at"),
+                    "metadata": event.get("metadata"),
+                    "is_read": False,
+                }
+            )
+        )
+
 class PulseConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_group_name = "pulses_feed"

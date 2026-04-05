@@ -789,11 +789,13 @@ def list_all_pulses(request):
 
     results = []
     for pulse in pulses:
-        images = [
+        images_qs = [
             request.build_absolute_uri(img.image.url)
             for img in pulse.images.all()
             if img.image
         ]
+
+        images = images_qs if images_qs else None
 
         location_data = None
         if pulse.location:
@@ -2846,11 +2848,13 @@ def list_all_requests(request):
 
     results = []
     for req in urgent_requests:
-        images = [
+        images_qs = [
             request.build_absolute_uri(img.image.url)
             for img in req.images.all()
             if img.image
         ]
+
+        images = images_qs if images_qs else None
 
         location_data = None
         if req.location:
@@ -3492,6 +3496,48 @@ def get_my_offers(request):
         return JsonResponse(data, safe=False)
 
 
+@require_http_methods(["POST"])
+@login_required
+def create_contact_post(request):
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    first_name = data.get("first_name", "").strip()
+    last_name = data.get("last_name", "").strip()
+    email = data.get("email", "").strip()
+    phone_number = data.get("phone_number", "").strip()
+    complaint_message = data.get("complaint_message", "").strip()
+
+    if not all([first_name, last_name, email, complaint_message]):
+        return JsonResponse({"error": "first_name, last_name, email and complaint_message are required."}, status=400)
+
+    if len(complaint_message) > 500:
+        return JsonResponse({"error": "Message must be 500 characters or fewer."}, status=400)
+
+    contact = Contact.objects.create(
+        user=request.user,
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        phone_number=phone_number or None,
+        complaint_message=complaint_message,
+    )
+
+    return JsonResponse({
+        "success": True,
+        "contact": {
+            "id": contact.id,
+            "first_name": contact.first_name,
+            "last_name": contact.last_name,
+            "email": contact.email,
+            "phone_number": contact.phone_number,
+            "complaint_message": contact.complaint_message,
+            "created_at": contact.created_at.isoformat(),
+        }
+    }, status=201)
+
 
 def admin_alert_reports(request):
     if not request.user.is_staff:
@@ -3514,13 +3560,16 @@ def admin_alert_reports(request):
     return JsonResponse({"reports": data})
 
 
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+
 @login_required
 def admin_feedbacks(request):
     if not request.user.is_staff:
         return JsonResponse({"error": "Unauthorized"}, status=403)
 
     try:
-        # 🔹 Rental Signals
+        # 🔹 Rental Signals (unchanged)
         rental_signals = []
         for signal in PulseRentalSignal.objects.select_related("reporter", "rental__pulse"):
             rental_signals.append({
@@ -3540,11 +3589,14 @@ def admin_feedbacks(request):
                 "description": signal.message,
             })
 
-        # 🔹 Pulse Feedbacks
+        # 🔹 MERGED Feedbacks (Pulse + Rental)
         rental_feedbacks = []
+
+        # Pulse Feedbacks
         for feedback in PulseFeedback.objects.select_related("reviewer", "pulse", "owner"):
             rental_feedbacks.append({
                 "id": feedback.id,
+                "type": "pulse",  # 👈 category
                 "rating": feedback.rating,
                 "comment": feedback.comment,
                 "created_at": feedback.created_at.isoformat(),
@@ -3556,44 +3608,63 @@ def admin_feedbacks(request):
                     "id": feedback.owner.id,
                     "username": feedback.owner.username,
                 },
-                "pulse": {
+                "target": {
                     "id": feedback.pulse.id,
                     "title": feedback.pulse.title,
+                    "category": feedback.pulse.pulse_type,
                 },
                 "description": feedback.comment,
             })
 
-        # 🔹 Urgent Request Feedbacks
-        user_contacts = []
-        for contact in UrgentRequestFeedback.objects.select_related("reviewer", "request", "owner"):
-            user_contacts.append({
-                "id": contact.id,
-                "rating": contact.rating,
-                "comment": contact.comment,
-                "created_at": contact.created_at.isoformat(),
+        # Rental Feedbacks (if you have a separate model)
+        for feedback in UrgentRequestFeedback.objects.select_related("reviewer", "request", "owner"):
+            rental_feedbacks.append({
+                "id": feedback.id,
+                "type": "rental",  # 👈 category
+                "rating": feedback.rating,
+                "comment": feedback.comment,
+                "created_at": feedback.created_at.isoformat(),
                 "reviewer": {
-                    "id": contact.reviewer.id,
-                    "username": contact.reviewer.username,
+                    "id": feedback.reviewer.id,
+                    "username": feedback.reviewer.username,
                 },
                 "owner": {
-                    "id": contact.owner.id,
-                    "username": contact.owner.username,
+                    "id": feedback.owner.id,
+                    "username": feedback.owner.username,
                 },
-                "request": {
-                    "id": contact.request.id,
-                    "title": getattr(contact.request, "title", f"Request #{contact.request.id}"),
+                "target": {
+                    "id": feedback.request.id,
+                    "title": getattr(feedback.request, "title", f"Request #{feedback.request.id}"),
                 },
-                "description": contact.comment,
+                "description": feedback.comment,
+            })
+
+        # 🔹 Contacts (NEW MODEL)
+        user_contacts = []
+        for contact in Contact.objects.select_related("user"):
+            user_contacts.append({
+                "id": contact.id,
+                "first_name": contact.first_name,
+                "last_name": contact.last_name,
+                "email": contact.email,
+                "phone_number": contact.phone_number,
+                "message": contact.complaint_message,
+                "created_at": contact.created_at.isoformat(),
+                "user": {
+                    "id": contact.user.id,
+                    "username": contact.user.username,
+                },
+                "description": contact.complaint_message,
             })
 
         return JsonResponse({
             "success": True,
             "feedbacks": {
                 "rental_signals": rental_signals,
-                "rental_feedbacks": rental_feedbacks,
-                "user_contacts": user_contacts,
+                "rental_feedbacks": rental_feedbacks,  # merged
+                "user_contacts": user_contacts,        # from Contact model
             }
-        }, safe=False)
+        })
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
@@ -3729,10 +3800,21 @@ def delete_rental_signal(request, id):
 @require_http_methods(["DELETE"])
 @login_required
 def delete_rental_feedback(request, id):
+    feedback_type = request.GET.get("type")  # ?type=pulse or ?type=rental
+
     try:
-        PulseFeedback.objects.get(id=id).delete()
+        if feedback_type == "pulse":
+            PulseFeedback.objects.get(id=id).delete()
+
+        elif feedback_type == "request":
+            UrgentRequestFeedback.objects.get(id=id).delete()
+
+        else:
+            return JsonResponse({"error": "Invalid feedback type"}, status=400)
+
         return JsonResponse({"success": True})
-    except PulseFeedback.DoesNotExist:
+
+    except (PulseFeedback.DoesNotExist, UrgentRequestFeedback.DoesNotExist):
         return JsonResponse({"error": "Not found"}, status=404)
 
 
@@ -3740,50 +3822,64 @@ def delete_rental_feedback(request, id):
 @login_required
 def delete_user_contact(request, id):
     try:
-        UrgentRequestFeedback.objects.get(id=id).delete()
+        Contact.objects.get(id=id).delete()
         return JsonResponse({"success": True})
-    except UrgentRequestFeedback.DoesNotExist:
+    except Contact.DoesNotExist:
         return JsonResponse({"error": "Not found"}, status=404)
+
 
 @require_http_methods(["POST"])
 @login_required
-def create_contact_post(request):
+def resolve_rental_signal(request, id):
     try:
+        # 1. Fetch the signal
+        signal = PulseRentalSignal.objects.get(id=id)
+        reporter = signal.reporter
+
+        # 2. Parse the resolution message
         data = json.loads(request.body)
-    except (json.JSONDecodeError, ValueError):
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
+        resolution_note = data.get('message', 'No additional details provided.')
 
-    first_name = data.get("first_name", "").strip()
-    last_name = data.get("last_name", "").strip()
-    email = data.get("email", "").strip()
-    phone_number = data.get("phone_number", "").strip()
-    complaint_message = data.get("complaint_message", "").strip()
+        # 3. Create the Database Notification
+        # We use 'rental_proposal' or a custom type if you update the model choices
+        notification = Notification.objects.create(
+            user=reporter,
+            sender=request.user,  # The admin/owner resolving the signal
+            type="signal_resolved",
+            title="Signal Resolved",
+            message=f"Your report has been resolved. Note: {resolution_note}",
+            rental_id=signal.rental.id if hasattr(signal, 'rental') else None,
+            metadata={
+                "signal_id": id,
+                "resolution_note": resolution_note
+            }
+        )
 
-    if not all([first_name, last_name, email, complaint_message]):
-        return JsonResponse({"error": "first_name, last_name, email and complaint_message are required."}, status=400)
+        # 4. Trigger Real-time WebSocket Notification
+        channel_layer = get_channel_layer()
+        notification_group = f"user_notifications_{reporter.id}"
 
-    if len(complaint_message) > 500:
-        return JsonResponse({"error": "Message must be 500 characters or fewer."}, status=400)
+        async_to_sync(channel_layer.group_send)(
+            notification_group,
+            {
+                "type": "send_signal_resolved",
+                "notification_id": notification.id,
+                "title": notification.title,
+                "message": notification.message,
+                "created_at": notification.created_at.isoformat(),
+                "metadata": notification.metadata,
+            }
+        )
 
-    contact = Contact.objects.create(
-        user=request.user,
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        phone_number=phone_number or None,
-        complaint_message=complaint_message,
-    )
+        # 5. Delete the signal
+        signal.delete()
 
-    return JsonResponse({
-        "success": True,
-        "contact": {
-            "id": contact.id,
-            "first_name": contact.first_name,
-            "last_name": contact.last_name,
-            "email": contact.email,
-            "phone_number": contact.phone_number,
-            "complaint_message": contact.complaint_message,
-            "created_at": contact.created_at.isoformat(),
-        }
-    }, status=201)
+        return JsonResponse({
+            "success": True,
+            "message": "Signal resolved, notification saved and sent."
+        })
 
+    except PulseRentalSignal.DoesNotExist:
+        return JsonResponse({"error": "Rental Signal not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

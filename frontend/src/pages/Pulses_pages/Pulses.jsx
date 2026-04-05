@@ -157,8 +157,8 @@ export default function Pulses() {
 
                     <select value={pulseType} onChange={(e) => setPulseType(e.target.value)}>
                         <option value="">All Types</option>
-                        <option value="servicii">Servicii</option>
-                        <option value="obiecte">Obiecte</option>
+                        <option value="servicii">Services</option>
+                        <option value="obiecte">Objects</option>
                     </select>
 
                     <input
@@ -182,12 +182,17 @@ export default function Pulses() {
                     {pulses.map((pulse) => (
                         <div className={styles.urgentRequestCard} key={pulse.id} onClick={() => navigate(`/pulse/${pulse.pulse_type}/${pulse.id}`)}>
                             <div className={styles.cardHeader}>
-                                {pulse.image ? (
-                                    <img src={pulse.image} alt={pulse.title} className={styles.urgentRequestImage} />
+                                {pulse.images ? (
+                                    <img src={pulse.images[0]} alt={pulse.title} className={styles.urgentRequestImage} />
                                 ) : (
                                     <div className={styles.imagePlaceholder}>No Preview</div>
                                 )}
-                                <span className={styles.categoryBadge}>{pulse.pulse_type || 'General'}</span>
+                                <span className={styles.categoryBadge}>
+                                {pulse.pulse_type === "servicii"
+                                ? "Services"
+                                : pulse.pulse_type === "obiecte" ? "Objects"
+                                : "General"}
+                                </span>
                             </div>
 
                             <div className={styles.cardBody}>

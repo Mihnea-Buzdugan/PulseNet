@@ -377,7 +377,7 @@ export default function PulseDetails() {
     if (!pulse) return null;
 
     const coords = getLocationCoords(pulse.location);
-    const isService = type === "servicii";
+    const isService = type === "Services";
 
     return (
         <div className={styles.body}>
@@ -412,7 +412,7 @@ export default function PulseDetails() {
                             <p className={styles.description}>{pulse.description}</p>
 
                             <div className={styles.badges}>
-                                <div className={styles.typeBadge}>{isService ? "Serviciu" : "Obiect"}</div>
+                                <div className={styles.typeBadge}>{isService ? "Services" : "Objects"}</div>
                                 <div className={styles.priceBadge}>{pulse.price} {pulse.currency}</div>
                             </div>
 

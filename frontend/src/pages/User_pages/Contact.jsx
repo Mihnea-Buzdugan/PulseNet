@@ -181,15 +181,17 @@ const ContactPage = () => {
     };
 
     return (
-        <div style={{ backgroundColor: 'var(--color-bg)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <Navbar />
+        <div className={styles.bodyContainer}>
+            <div className={styles.navbarAdjust}>
+                <Navbar />
+            </div>
             <div className={styles.pageContainer}>
                 <div className={styles.card}>
                     {/* Left Side: Form */}
                     <div className={styles.leftPanel}>
                         <div className={styles.header}>
                             <h1>Chat to our team</h1>
-                            <p>Need help with something? Get in touch with our friendly team and we'll get in touch within 2 hours.</p>
+                            <p>Need help with something? Get in touch with our friendly team and we'll get in touch within 2 days.</p>
                         </div>
 
                         {status.message && (

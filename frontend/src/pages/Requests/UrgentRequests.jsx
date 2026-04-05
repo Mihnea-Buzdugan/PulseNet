@@ -207,8 +207,8 @@ export default function UrgentRequests() {
                 {requests.map((req) => (
                     <div className={styles.urgentRequestCard} key={req.id} onClick={() => navigate(`/request/${req.id}`)}>
                         <div className={styles.cardHeader}>
-                            {req.image ? (
-                                <img src={req.image} alt={req.title} className={styles.urgentRequestImage} />
+                            {req.images ? (
+                                <img src={req.images[0]} alt={req.title} className={styles.urgentRequestImage} />
                             ) : (
                                 <div className={styles.imagePlaceholder}>No Preview</div>
                             )}

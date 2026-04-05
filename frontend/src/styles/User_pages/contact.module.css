@@ -1,4 +1,23 @@
 /* ContactPage.module.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+
+.bodyContainer {
+    background-color: var(--color-bg);
+    color: black;
+    min-height: 140vh;
+}
+
+.navbarAdjust {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
+}
 
 .pageContainer {
     display: flex;
@@ -265,5 +284,13 @@
 @media (max-width: 600px) {
     .row {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .navbarAdjust{
+        padding: 0;
+
     }
 }

@@ -18,7 +18,6 @@ function getCookie(name) {
 
 function formatTimestamp(value) {
     if (!value) return "-";
-
     const date = new Date(value.replace(" ", "T"));
     if (Number.isNaN(date.getTime())) return value;
 
@@ -26,6 +25,8 @@ function formatTimestamp(value) {
         day: "2-digit",
         month: "short",
         year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
     });
 }
 
@@ -76,6 +77,17 @@ const Admin = () => {
         user_contacts: [],
     });
 
+    const [modalData, setModalData] = useState(null);
+
+    const [resolutionMessage, setResolutionMessage] = useState('');
+
+    const openModal = (kind, item) => {
+        setModalData({ kind, item });
+    };
+
+    const closeModal = () => {
+        setModalData(null);
+    };
     // Selected report for modal
     const [selectedReport, setSelectedReport] = useState(null);
 
@@ -163,12 +175,16 @@ const Admin = () => {
         try {
             let url = '';
 
-            // Adjust these endpoints to match your backend
             if (itemType === 'rental_signal') {
                 url = `http://localhost:8000/accounts/delete-rental-signal/${item.id}/`;
-            } else if (itemType === 'rental_feedback') {
-                url = `http://localhost:8000/accounts/delete-rental-feedback/${item.id}/`;
-            } else if (itemType === 'user_contact') {
+            }
+            else if (itemType === 'rental_feedback' || itemType === 'pulse_feedback') {
+                // Your backend expects ?type=pulse or ?type=request
+                // Mapping: 'rental' -> 'request', 'pulse' -> 'pulse'
+                const backendType = item.type === 'rental' ? 'request' : 'pulse';
+                url = `http://localhost:8000/accounts/delete-rental-feedback/${item.id}/?type=${backendType}`;
+            }
+            else if (itemType === 'contact' || itemType === 'user_contact') {
                 url = `http://localhost:8000/accounts/delete-user-contact/${item.id}/`;
             }
 
@@ -186,26 +202,75 @@ const Admin = () => {
                 throw new Error(data.error || 'Delete failed');
             }
 
+            // State update
             setFeedbackData((prev) => ({
                 ...prev,
                 rental_signals:
                     itemType === 'rental_signal'
                         ? prev.rental_signals.filter((x) => x.id !== item.id)
                         : prev.rental_signals,
-                rental_feedbacks:
-                    itemType === 'rental_feedback'
-                        ? prev.rental_feedbacks.filter((x) => x.id !== item.id)
-                        : prev.rental_feedbacks,
+                rental_feedbacks: (itemType === 'rental_feedback' || itemType === 'pulse_feedback')
+                    ? prev.rental_feedbacks.filter((x) => !(x.id === item.id && x.type === item.type))
+                    : prev.rental_feedbacks,
                 user_contacts:
-                    itemType === 'user_contact'
+                    (itemType === 'contact' || itemType === 'user_contact')
                         ? prev.user_contacts.filter((x) => x.id !== item.id)
                         : prev.user_contacts,
             }));
+
+            // Close modal if the deleted item was currently open
+            if (modalData?.item.id === item.id) {
+                closeModal();
+            }
+
         } catch (error) {
             console.error(error);
-            alert('Could not delete this item.');
+            alert(error.message || 'Could not delete this item.');
         } finally {
             setDeletingItemId(null);
+        }
+    };
+
+    const handleResolveSignal = async (signalId, message) => {
+        try {
+            const response = await fetch(`http://localhost:8000/accounts/resolve-rental-signal/${signalId}/`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+                // Add the message to the body
+                body: JSON.stringify({ message: message }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.error || 'Failed to resolve signal');
+            }
+
+            // Update local state for rental_signals
+            setFeedbackData((prev) => ({
+                ...prev,
+                rental_signals: prev.rental_signals.map((sig) =>
+                    sig.id === signalId ? { ...sig, resolved: true } : sig
+                ),
+            }));
+
+            // Update modal state
+            if (modalData?.item.id === signalId) {
+                setModalData(prev => ({
+                    ...prev,
+                    item: { ...prev.item, resolved: true }
+                }));
+            }
+
+            // Clear the message box after success
+            setResolutionMessage('');
+
+        } catch (error) {
+            console.error(error);
+            alert(error.message || "Could not mark signal as resolved.");
         }
     };
 
@@ -888,19 +953,19 @@ const Admin = () => {
                             <div>
                                 <h2 className={styles.panelTitle}>Feedback Review</h2>
                                 <p className={styles.flaggedSubtitle}>
-                                    Review rental signals, pulse feedback, and urgent request feedback.
+                                    Review rental signals, pulse feedback, rental feedback, and contact submissions.
                                 </p>
                             </div>
 
                             <div className={styles.flaggedSummary}>
                                 <div className={styles.summaryChip}>
-                                    Rental Signals <span>{feedbackData.rental_signals.length}</span>
+                                    Rental Signals <span>{feedbackData?.rental_signals?.length ?? 0}</span>
                                 </div>
                                 <div className={styles.summaryChip}>
-                                    Pulse Feedbacks <span>{feedbackData.rental_feedbacks.length}</span>
+                                    Feedbacks <span>{feedbackData?.rental_feedbacks?.length ?? 0}</span>
                                 </div>
                                 <div className={styles.summaryChip}>
-                                    Request Feedbacks <span>{feedbackData.user_contacts.length}</span>
+                                    Contacts <span>{feedbackData?.user_contacts?.length ?? 0}</span>
                                 </div>
                             </div>
                         </div>
@@ -913,23 +978,25 @@ const Admin = () => {
                                 <div className={styles.flaggedCard}>
                                     <div className={styles.cardHeader}>
                                         <span>Rental Signals</span>
-                                        <span className={styles.countBadge}>{feedbackData.rental_signals.length}</span>
+                                        <span className={styles.countBadge}>
+                            {feedbackData?.rental_signals?.length ?? 0}
+                        </span>
                                     </div>
 
                                     <div className={styles.cardBody}>
-                                        {feedbackData.rental_signals.length === 0 ? (
+                                        {(feedbackData?.rental_signals ?? []).length === 0 ? (
                                             <div className={styles.emptyState}>No rental signals.</div>
                                         ) : (
                                             feedbackData.rental_signals.map((item) => (
                                                 <div
                                                     key={item.id}
                                                     className={styles.flaggedItem}
-                                                    onClick={() => navigate(`/rental-signals/${item.id}`)}
-                                                    title="Open rental signal"
+                                                    onClick={() => openModal('rental_signal', item)}
+                                                    title="Open rental signal details"
                                                 >
                                                     <div className={styles.itemTopRow}>
                                                         <h4 className={styles.itemTitle}>
-                                                            {item.rental.pulse_title || `Rental #${item.rental.id}`}
+                                                            {item.rental?.pulse_title || `Rental #${item.rental?.id}`}
                                                         </h4>
                                                         <span className={styles.toxScore}>
                                             {item.resolved ? 'Resolved' : 'Pending'}
@@ -937,7 +1004,7 @@ const Admin = () => {
                                                     </div>
 
                                                     <p className={styles.metaData}>
-                                                        Reporter: <strong>@{item.reporter.username}</strong>
+                                                        Reporter: <strong>@{item.reporter?.username}</strong>
                                                     </p>
 
                                                     <p className={styles.subText}>{item.message}</p>
@@ -947,15 +1014,14 @@ const Admin = () => {
                                                     </p>
 
                                                     <p className={styles.metaData}>
-                                                        Created:{" "}
-                                                        {formatTimestamp(item.created_at)}
+                                                        Created: {formatTimestamp(item.created_at)}
                                                     </p>
 
                                                     <div className={styles.itemActions} onClick={(e) => e.stopPropagation()}>
                                                         <button
                                                             type="button"
                                                             className={styles.openButton}
-                                                            onClick={() => navigate(`/rental-signals/${item.id}`)}
+                                                            onClick={() => openModal('rental_signal', item)}
                                                         >
                                                             Open
                                                         </button>
@@ -974,119 +1040,144 @@ const Admin = () => {
                                     </div>
                                 </div>
 
-                                {/* Pulse Feedbacks */}
+                                {/* Merged Feedbacks */}
                                 <div className={styles.flaggedCard}>
                                     <div className={styles.cardHeader}>
-                                        <span>Pulse Feedbacks</span>
-                                        <span className={styles.countBadge}>{feedbackData.rental_feedbacks.length}</span>
+                                        <span>Feedbacks</span>
+                                        <span className={styles.countBadge}>
+                            {feedbackData?.rental_feedbacks?.length ?? 0}
+                        </span>
                                     </div>
 
                                     <div className={styles.cardBody}>
-                                        {feedbackData.rental_feedbacks.length === 0 ? (
-                                            <div className={styles.emptyState}>No pulse feedbacks.</div>
+                                        {(feedbackData?.rental_feedbacks ?? []).length === 0 ? (
+                                            <div className={styles.emptyState}>No feedbacks.</div>
                                         ) : (
-                                            feedbackData.rental_feedbacks.map((item) => (
-                                                <div
-                                                    key={item.id}
-                                                    className={styles.flaggedItem}
-                                                    onClick={() => navigate(`/pulse/${item.pulse.id}`)}
-                                                    title="Open pulse feedback"
-                                                >
-                                                    <div className={styles.itemTopRow}>
-                                                        <h4 className={styles.itemTitle}>
-                                                            {item.pulse.title || `Pulse #${item.pulse.id}`}
-                                                        </h4>
-                                                        <span className={styles.toxScore}>{item.rating}/10</span>
+                                            feedbackData.rental_feedbacks.map((item) => {
+                                                const isPulse = item.type === 'pulse';
+
+                                                return (
+                                                    <div
+                                                        key={`${item.type}-${item.id}`}
+                                                        className={styles.flaggedItem}
+                                                        onClick={() => openModal('feedback', item)}
+                                                        title={isPulse ? 'Open pulse feedback details' : 'Open rental feedback details'}
+                                                    >
+                                                        <div className={styles.itemTopRow}>
+                                                            <h4 className={styles.itemTitle}>
+                                                                {isPulse
+                                                                    ? item.target?.title || `Pulse #${item.target?.id}`
+                                                                    : item.target?.title || `Request #${item.target?.id}`}
+                                                            </h4>
+                                                            <span className={styles.toxScore}>
+                                                {item.rating}/10
+                                            </span>
+                                                        </div>
+
+                                                        <p className={styles.metaData}>
+                                                            Reviewer: <strong>@{item.reviewer?.username}</strong>
+                                                        </p>
+
+                                                        <p className={styles.metaData}>
+                                                            Owner: <strong>@{item.owner?.username}</strong>
+                                                        </p>
+
+                                                        <p className={styles.metaData}>
+                                                            Type: <strong>{item.type}</strong>
+                                                        </p>
+
+                                                        <p className={styles.subText}>{item.comment || 'No comment.'}</p>
+
+                                                        <p className={styles.metaData}>
+                                                            Created: {formatTimestamp(item.created_at)}
+                                                        </p>
+
+                                                        <div className={styles.itemActions} onClick={(e) => e.stopPropagation()}>
+                                                            <button
+                                                                type="button"
+                                                                className={styles.openButton}
+                                                                onClick={() => openModal('feedback', item)}
+                                                            >
+                                                                Open
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className={styles.deleteMiniButton}
+                                                                onClick={() =>
+                                                                    handleDeleteFeedbackItem(
+                                                                        item,
+                                                                        isPulse ? 'pulse_feedback' : 'rental_feedback'
+                                                                    )
+                                                                }
+                                                                disabled={deletingItemId === item.id}
+                                                            >
+                                                                {deletingItemId === item.id ? 'Deleting...' : 'Delete'}
+                                                            </button>
+                                                        </div>
                                                     </div>
-
-                                                    <p className={styles.metaData}>
-                                                        Reviewer: <strong>@{item.reviewer.username}</strong>
-                                                    </p>
-                                                    <p className={styles.metaData}>
-                                                        Owner: <strong>@{item.owner.username}</strong>
-                                                    </p>
-
-                                                    <p className={styles.subText}>{item.comment || 'No comment.'}</p>
-
-                                                    <p className={styles.metaData}>
-                                                        Created:{" "}
-                                                        {formatTimestamp(item.created_at)}
-                                                    </p>
-
-                                                    <div className={styles.itemActions} onClick={(e) => e.stopPropagation()}>
-                                                        <button
-                                                            type="button"
-                                                            className={styles.openButton}
-                                                            onClick={() => navigate(`/pulse/${item.pulse.id}`)}
-                                                        >
-                                                            Open
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            className={styles.deleteMiniButton}
-                                                            onClick={() => handleDeleteFeedbackItem(item, 'rental_feedback')}
-                                                            disabled={deletingItemId === item.id}
-                                                        >
-                                                            {deletingItemId === item.id ? 'Deleting...' : 'Delete'}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))
+                                                );
+                                            })
                                         )}
                                     </div>
                                 </div>
 
-                                {/* Request Feedbacks */}
+                                {/* Contact Submissions */}
                                 <div className={styles.flaggedCard}>
                                     <div className={styles.cardHeader}>
-                                        <span>Request Feedbacks</span>
-                                        <span className={styles.countBadge}>{feedbackData.user_contacts.length}</span>
+                                        <span>Contact Submissions</span>
+                                        <span className={styles.countBadge}>
+                            {feedbackData?.user_contacts?.length ?? 0}
+                        </span>
                                     </div>
 
                                     <div className={styles.cardBody}>
-                                        {feedbackData.user_contacts.length === 0 ? (
-                                            <div className={styles.emptyState}>No request feedbacks.</div>
+                                        {(feedbackData?.user_contacts ?? []).length === 0 ? (
+                                            <div className={styles.emptyState}>No contact submissions.</div>
                                         ) : (
                                             feedbackData.user_contacts.map((item) => (
                                                 <div
                                                     key={item.id}
                                                     className={styles.flaggedItem}
-                                                    onClick={() => navigate(`/requests/${item.request.id}`)}
-                                                    title="Open request feedback"
+                                                    title="Open contact submission details"
+                                                    onClick={() => openModal('contact', item)}
                                                 >
                                                     <div className={styles.itemTopRow}>
                                                         <h4 className={styles.itemTitle}>
-                                                            {item.request.title || `Request #${item.request.id}`}
+                                                            {item.first_name} {item.last_name}
                                                         </h4>
-                                                        <span className={styles.toxScore}>{item.rating}/10</span>
+                                                        <span className={styles.toxScore}>Contact</span>
                                                     </div>
 
                                                     <p className={styles.metaData}>
-                                                        Reviewer: <strong>@{item.reviewer.username}</strong>
-                                                    </p>
-                                                    <p className={styles.metaData}>
-                                                        Owner: <strong>@{item.owner.username}</strong>
+                                                        User: <strong>@{item.user?.username}</strong>
                                                     </p>
 
-                                                    <p className={styles.subText}>{item.comment || 'No comment.'}</p>
+                                                    <p className={styles.metaData}>
+                                                        Email: <strong>{item.email}</strong>
+                                                    </p>
 
                                                     <p className={styles.metaData}>
-                                                        Created:{" "}
-                                                        {formatTimestamp(item.created_at)}
+                                                        Phone: <strong>{item.phone_number || '—'}</strong>
+                                                    </p>
+
+                                                    <p className={styles.subText}>{item.message}</p>
+
+                                                    <p className={styles.metaData}>
+                                                        Created: {formatTimestamp(item.created_at)}
                                                     </p>
 
                                                     <div className={styles.itemActions} onClick={(e) => e.stopPropagation()}>
                                                         <button
                                                             type="button"
                                                             className={styles.openButton}
-                                                            onClick={() => navigate(`/requests/${item.request.id}`)}
+                                                            onClick={() => openModal('contact', item)}
                                                         >
                                                             Open
                                                         </button>
                                                         <button
                                                             type="button"
                                                             className={styles.deleteMiniButton}
-                                                            onClick={() => handleDeleteFeedbackItem(item, 'user_contact')}
+                                                            onClick={() => handleDeleteFeedbackItem(item, 'contact')}
                                                             disabled={deletingItemId === item.id}
                                                         >
                                                             {deletingItemId === item.id ? 'Deleting...' : 'Delete'}
@@ -1231,6 +1322,247 @@ const Admin = () => {
                                 onClick={() => setSelectedUserToUnban(null)}
                             >
                                 Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
+            {modalData && (
+                <div
+                    className={styles.modalOverlay}
+                    onClick={closeModal}
+                >
+                    <div
+                        className={styles.modal}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className={styles.modalHeader}>
+                            <div>
+                                <h2 className={styles.modalTitle}>
+                                    {modalData.kind === 'rental_signal' && `Rental Signal #${modalData.item.id}`}
+                                    {modalData.kind === 'feedback' && `Feedback #${modalData.item.id}`}
+                                    {modalData.kind === 'contact' && `Contact #${modalData.item.id}`}
+                                </h2>
+                                <p className={styles.modalSubtitle}>
+                                    {modalData.kind === 'rental_signal' && 'Full rental signal details'}
+                                    {modalData.kind === 'feedback' && 'Full feedback details'}
+                                    {modalData.kind === 'contact' && 'Full contact submission details'}
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                className={styles.closeIconButton}
+                                onClick={closeModal}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className={styles.modalGrid}>
+                            {modalData.kind === 'rental_signal' && (
+                                <>
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>Rental</span>
+                                        <span className={styles.modalValue}>
+                                {modalData.item.rental?.pulse_title || `Rental #${modalData.item.rental?.id}`}
+                            </span>
+                                    </div>
+
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>Reporter</span>
+                                        <span className={styles.modalValue}>
+                                @{modalData.item.reporter?.username}
+                            </span>
+                                    </div>
+
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>Status</span>
+                                        <span className={styles.modalValue}>
+                                {modalData.item.resolved ? 'Resolved' : 'Pending'}
+                            </span>
+                                    </div>
+
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>Reported By</span>
+                                        <span className={styles.modalValue}>
+                                {modalData.item.reported_by_owner ? 'Owner' : 'Renter'}
+                            </span>
+                                    </div>
+
+                                    <div className={styles.modalFieldFull}>
+                                        <span className={styles.modalLabel}>Message</span>
+                                        <p className={styles.modalText}>
+                                            {modalData.item.message || 'No additional details provided.'}
+                                        </p>
+                                    </div>
+
+                                    <div className={styles.modalFieldFull}>
+                                        <span className={styles.modalLabel}>Submitted At</span>
+                                        <p className={styles.modalText}>
+                                            {formatTimestamp(modalData.item.created_at)}
+                                        </p>
+                                    </div>
+                                        <div className={styles.modalFieldFull}>
+                                            <span className={styles.modalLabel}>Resolution Note (Optional)</span>
+                                            <textarea
+                                                className={styles.modalTextarea} // Add appropriate styling in your CSS
+                                                placeholder="Explain how this was resolved..."
+                                                value={resolutionMessage}
+                                                onChange={(e) => setResolutionMessage(e.target.value)}
+                                            />
+                                        </div>
+                                </>
+                            )}
+
+                            {modalData.kind === 'feedback' && (
+                                <>
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>
+                                        {modalData.item.type === 'pulse' ? 'Pulse' : 'Request'}
+                                        </span>
+                                        <span className={styles.modalValue}>
+                                        {modalData.item.target?.title ||
+                                        (modalData.item.type === 'pulse'
+                                        ? `Pulse #${modalData.item.target?.id}`
+                                        : `Request #${modalData.item.target?.id}`)}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>Reviewer</span>
+                                        <span className={styles.modalValue}>
+                                @{modalData.item.reviewer?.username}
+                            </span>
+                                    </div>
+
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>Owner</span>
+                                        <span className={styles.modalValue}>
+                                @{modalData.item.owner?.username}
+                            </span>
+                                    </div>
+
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>Rating</span>
+                                        <span className={styles.modalValue}>{modalData.item.rating}/10</span>
+                                    </div>
+
+                                    <div className={styles.modalFieldFull}>
+                                        <span className={styles.modalLabel}>Comment</span>
+                                        <p className={styles.modalText}>
+                                            {modalData.item.comment || 'No comment.'}
+                                        </p>
+                                    </div>
+
+                                    <div className={styles.modalFieldFull}>
+                                        <span className={styles.modalLabel}>Submitted At</span>
+                                        <p className={styles.modalText}>
+                                            {formatTimestamp(modalData.item.created_at)}
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+
+                            {modalData.kind === 'contact' && (
+                                <>
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>Name</span>
+                                        <span className={styles.modalValue}>
+                                {modalData.item.first_name} {modalData.item.last_name}
+                            </span>
+                                    </div>
+
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>User</span>
+                                        <span className={styles.modalValue}>
+                                @{modalData.item.user?.username}
+                            </span>
+                                    </div>
+
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>Email</span>
+                                        <span className={styles.modalValue}>{modalData.item.email}</span>
+                                    </div>
+
+                                    <div className={styles.modalField}>
+                                        <span className={styles.modalLabel}>Phone</span>
+                                        <span className={styles.modalValue}>
+                                {modalData.item.phone_number || '—'}
+                            </span>
+                                    </div>
+
+                                    <div className={styles.modalFieldFull}>
+                                        <span className={styles.modalLabel}>Message</span>
+                                        <p className={styles.modalText}>
+                                            {modalData.item.message || 'No additional details provided.'}
+                                        </p>
+                                    </div>
+
+                                    <div className={styles.modalFieldFull}>
+                                        <span className={styles.modalLabel}>Submitted At</span>
+                                        <p className={styles.modalText}>
+                                            {formatTimestamp(modalData.item.created_at)}
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div className={styles.modalActions}>
+
+                            {modalData.kind === 'rental_signal' && !modalData.item.resolved && (
+                                <button
+                                    type="button"
+                                    className={styles.resolveButton}
+                                    onClick={() => handleResolveSignal(modalData.item.id, resolutionMessage)}
+                                >
+                                    Mark Resolved
+                                </button>
+                            )}
+
+                            {modalData.kind === 'feedback' && (
+                                <button
+                                    type="button"
+                                    className={styles.primaryButton}
+                                    onClick={() =>
+                                        navigate(
+                                            modalData.item.type === 'pulse'
+                                                ? `/pulse/${modalData.item.target?.category}/${modalData.item.target?.id}`
+                                                : `/request/${modalData.item.target?.id}`
+                                        )
+                                    }
+                                >
+                                    Open
+                                </button>
+                            )}
+
+                            <button
+                                type="button"
+                                className={styles.deleteButton}
+                                onClick={() =>
+                                    handleDeleteFeedbackItem(
+                                        modalData.item,
+                                        modalData.kind === 'rental_signal'
+                                            ? 'rental_signal'
+                                            : modalData.kind === 'feedback'
+                                                ? (modalData.item.type === 'pulse' ? 'pulse_feedback' : 'rental_feedback')
+                                                : 'contact'
+                                    )
+                                }
+                                disabled={deletingItemId === modalData.item.id}
+                            >
+                                {deletingItemId === modalData.item.id ? 'Deleting...' : 'Delete'}
+                            </button>
+
+                            <button
+                                type="button"
+                                className={styles.secondaryButton}
+                                onClick={closeModal}
+                            >
+                                Close
                             </button>
                         </div>
                     </div>
