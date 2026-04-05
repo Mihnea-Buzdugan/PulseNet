@@ -153,11 +153,14 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'pulsenet',
+        'NAME': os.environ.get('db_name'),
         'USER': os.environ.get('db_user'),
         'PASSWORD': os.environ.get('db_password'),
-        'HOST': 'db',   # IMPORTANT (service name!)
-        'PORT': '5432',
+        'HOST': os.environ.get('db_host'),
+        'PORT': os.environ.get('db_port', '5432'),
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
 }
 
