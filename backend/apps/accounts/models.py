@@ -325,6 +325,9 @@ class PulseImage(models.Model):
     image = models.ImageField(upload_to="pulse_images/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"{self.pulse.title}"
+
 class Follow(models.Model):
     follower = models.ForeignKey(
         User,
