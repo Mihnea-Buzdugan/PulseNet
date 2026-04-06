@@ -78,6 +78,7 @@ def sign_up(request):
                 first_name=first_name,
                 last_name=last_name,
                 username=username,
+                is_private=False,
             )
         except ValidationError as e:
             return JsonResponse({'message': str(e)}, status=400)
@@ -175,7 +176,8 @@ def google_login(request):
                             email=google_email,
                             first_name=first_name,
                             last_name=last_name,
-                            password=hashed_password  # Random password
+                            password=hashed_password,  # Random password
+                            is_private = False,
                         )
 
                     # Use the dotted path to the backend
@@ -901,9 +903,10 @@ def get_nearest_pulses(request):
         return JsonResponse({"success": False, "error": "Location required"}, status=400)
 
     radius_km = request.user.visibility_radius
-
+    user = request.user
     pulses = (
         Pulse.objects
+        .exclude(user=user)
         .filter(location__dwithin=(ref_location, radius_km / 111.32))
         .select_related("user")
         .prefetch_related("images")

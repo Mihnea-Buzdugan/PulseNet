@@ -232,9 +232,14 @@ export default function CreateRequest() {
                                 <DatePicker
                                     selected={form.expires_at ? new Date(form.expires_at) : null}
                                     onChange={(date) => {
-                                        const val = date
-                                            ? date.toISOString().slice(0, 16) // ✅ keeps YYYY-MM-DDTHH:mm
-                                            : "";
+                                        if (!date) {
+                                            setForm({ ...form, expires_at: "" });
+                                            return;
+                                        }
+
+                                        const pad = (n) => n.toString().padStart(2, "0");
+
+                                        const val = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
                                         setForm({ ...form, expires_at: val });
                                     }}
