@@ -299,28 +299,33 @@ const ContactPage = () => {
                     {/* Right Side: Image Placeholder & Testimonial */}
                     <div className={styles.rightPanel}>
                         <div className={styles.imageOverlay}>
+
+                            {/* Logo at the top */}
                             <div className={styles.logoTop}>
-                                <span>✻ Untitled UI</span>
+                                <span>✻ PulseNet</span>
                             </div>
 
+                            {/* Testimonial / About section */}
                             <div className={styles.testimonialWrapper}>
-                                <p className={styles.testimonialText}>
-                                    Untitled's software helps us manage cash flow, financial reporting and payroll with ease. It's a great solution for startups looking for an efficient way to manage their finances all-in-one.
-                                </p>
+
+                                {/* Authors info */}
                                 <div className={styles.testimonialAuthor}>
-                                    <div>
-                                        <strong>Maya Rothwell</strong>
-                                        <span>Founder & CEO</span>
+                                    <div className={styles.authorDetails}>
+                                        <strong>Buzdugan Mihnea-Andrei & Covaliuc Lucian</strong>
+                                        <span>Founders | Iași, Romania</span>
                                     </div>
                                     <div className={styles.companyLogo}>
-                                        ◯ Open Ventures
+                                        ◯ PulseNet
                                     </div>
                                 </div>
                             </div>
+
                         </div>
+
+                        {/* Background image */}
                         <img
-                            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800&auto=format&fit=crop"
-                            alt="Team member placeholder"
+                            src="./logo.png"
+                            alt="PulseNet placeholder"
                             className={styles.backgroundImage}
                         />
                     </div>
