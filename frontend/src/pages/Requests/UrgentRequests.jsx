@@ -140,7 +140,7 @@ export default function UrgentRequests() {
         }, 400);
 
         return () => clearTimeout(delay);
-    }, [search, category, minPrice, maxPrice, page]);
+    }, [search, category, minPrice, maxPrice]);
 
     const handleNext = () => { if (hasNext) fetchRequests(page + 1); };
     const handlePrevious = () => { if (hasPrevious) fetchRequests(page - 1); };

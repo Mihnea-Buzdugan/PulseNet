@@ -7,14 +7,12 @@
     font-family: Arial, sans-serif;
 }
 
-
 .bodyContainer {
     background-color: var(--color-bg);
     color: black;
 }
 
-
-.main-container {
+.mainContainer {
     position: relative;
 }
 
@@ -32,7 +30,8 @@
 }
 
 /* Ambient Background Blooms */
-.bgBloom1, .bgBloom2 {
+.bgBloom1,
+.bgBloom2 {
     position: absolute;
     border-radius: 50%;
     filter: blur(80px);
@@ -41,6 +40,21 @@
     pointer-events: none;
 }
 
+.bgBloom1 {
+    width: 320px;
+    height: 320px;
+    top: 5%;
+    left: -80px;
+    background: rgba(239, 68, 68, 0.14);
+}
+
+.bgBloom2 {
+    width: 260px;
+    height: 260px;
+    right: -60px;
+    bottom: 10%;
+    background: rgba(59, 130, 246, 0.12);
+}
 
 .mainContainer {
     max-width: 1200px;
@@ -49,7 +63,6 @@
     position: relative;
     z-index: 1;
 }
-
 
 /* Header & Title */
 .header {
@@ -93,13 +106,22 @@
     padding: 0.9rem 1.25rem;
     border-radius: 14px;
     border: 1.5px solid #ef4444;
-    background: linear-gradient(180deg, rgba(239, 68, 68, 0.06), rgba(239, 68, 68, 0.02));
+    background: linear-gradient(
+            180deg,
+            rgba(239, 68, 68, 0.06),
+            rgba(239, 68, 68, 0.02)
+    );
     color: #ef4444;
     font-size: 1rem;
     font-weight: 700;
     font-family: inherit;
     cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+            transform 0.2s ease,
+            background-color 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease,
+            box-shadow 0.2s ease;
     box-shadow: 0 8px 24px rgba(239, 68, 68, 0.08);
     white-space: nowrap;
 }
@@ -160,57 +182,65 @@
     }
 }
 
-@media (max-width: 768px) {
-    .headerSection {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.9rem;
-        padding-bottom: 1rem;
-    }
-
-    .title {
-        font-size: clamp(1.5rem, 6vw, 2rem);
-        gap: 0.7rem;
-    }
-
-    .alertButton {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .liveIndicator {
-        font-size: 0.75rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .headerSection {
-        gap: 0.75rem;
-    }
-
-    .titleIcon {
-        width: 30px;
-        height: 30px;
-    }
-
-    .alertButton {
-        padding: 0.85rem 1rem;
-        font-size: 0.95rem;
-    }
-}
-
-@keyframes pulse {
-    to { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
-}
-
-/* Grid Layout */
+/* Layout */
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 2rem;
 }
 
-/* Light Frosted Glass Cards */
+.parent {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-column-gap: 1.5rem;
+    grid-row-gap: 1.5rem;
+    width: 100%;
+}
+
+.div1 {
+    grid-area: 1 / 1 / 3 / 4;
+    display: flex;
+    flex-direction: column;
+}
+
+.div2 {
+    grid-area: 1 / 4 / 3 / 7;
+    display: flex;
+    flex-direction: column;
+}
+
+.div3 {
+    grid-area: 3 / 1 / 4 / 7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(15, 23, 42, 0.05);
+    padding-bottom: 0.5rem;
+    margin-top: 1rem;
+}
+
+.div4 {
+    grid-area: 4 / 1 / 6 / 3;
+    display: flex;
+}
+
+.div5 {
+    grid-area: 4 / 3 / 6 / 5;
+    display: flex;
+}
+
+.div6 {
+    grid-area: 4 / 5 / 6 / 7;
+    display: flex;
+}
+
+/* Make grid children stretch consistently */
+.parent > div {
+    align-items: stretch;
+}
+
+/* Card */
 .card {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(20px);
@@ -225,9 +255,12 @@
             0 4px 6px -1px rgba(0, 0, 0, 0.03),
             0 10px 15px -3px rgba(0, 0, 0, 0.03),
             0 20px 40px -10px rgba(31, 38, 135, 0.05);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy hover */
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
+    width: 100%;
+    height: 100%;
+    min-height: 560px;
 }
 
 .card:hover {
@@ -238,15 +271,14 @@
     background: rgba(255, 255, 255, 0.9);
 }
 
-/* Colored top edge accent */
 .card::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 4px;
-    background:  var(--color-border-focus);
+    background: var(--color-border-focus);
     opacity: 0.8;
 }
 
@@ -254,8 +286,9 @@
 .cardHeader {
     display: flex;
     align-items: center;
-    gap: 8px; /* Spacing between badges */
+    gap: 8px;
     margin-bottom: 12px;
+    flex-wrap: wrap;
 }
 
 .categoryBadge {
@@ -276,8 +309,8 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    background: #eff6ff; /* Light blue bg */
-    color: #1d4ed8; /* Dark blue text */
+    background: #eff6ff;
+    color: #1d4ed8;
     padding: 2px 8px;
     border-radius: 999px;
     font-size: 11px;
@@ -290,7 +323,6 @@
     letter-spacing: 0.05em;
 }
 
-/* Ensure user name stays pushed to the right if needed */
 .user {
     margin-left: auto;
     font-size: 13px;
@@ -303,6 +335,11 @@
     margin: 0;
     color: #0f172a;
     line-height: 1.3;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .description {
@@ -311,12 +348,17 @@
     line-height: 1.6;
     margin: 0;
     flex-grow: 1;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
-/* Horizontal Scrolling Image Carousel */
+/* Placeholder */
 .noImagePlaceholder {
     width: 100%;
-    height: 180px; /* same height as your image */
+    height: 220px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -326,36 +368,73 @@
     border-radius: 12px;
 }
 
-.imageCarousel {
-    display: flex;
-    gap: 0.75rem;
-    overflow-x: auto;
-    padding-bottom: 0.75rem;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
+/* Image Carousel */
+.carouselContainer {
+    position: relative;
+    width: 100%;
+    height: 220px;
     margin: 0.5rem 0;
-}
-
-.imageCarousel::-webkit-scrollbar {
-    height: 6px;
-}
-
-.imageCarousel::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 10px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f1f5f9;
+    flex-shrink: 0;
 }
 
 .carouselImg {
-    height: 160px;
-    min-width: 240px;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    border-radius: 12px;
-    scroll-snap-align: start;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: opacity 0.3s ease-in-out;
+    display: block;
 }
 
-/* Card Footer */
+.navBtn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    color: #0f172a;
+    transition: all 0.2s ease;
+    z-index: 5;
+}
+
+.navBtn:hover {
+    background: #ffffff;
+    transform: translateY(-50%) scale(1.1);
+    color: var(--color-primary);
+}
+
+.left {
+    left: 8px;
+}
+
+.right {
+    right: 8px;
+}
+
+.imageCounter {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(4px);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+/* Footer / Meta */
 .cardFooter {
     display: flex;
     flex-wrap: wrap;
@@ -400,7 +479,9 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .emptyState {
@@ -414,101 +495,15 @@
     font-weight: 500;
 }
 
-
-/* ... Keep previous styles ... */
-
-.carouselContainer {
-    position: relative;
-    width: 100%;
-    height: 220px;
-    margin: 0.5rem 0;
-    border-radius: 12px;
-    overflow: hidden;
-    background: #f1f5f9;
-}
-
-.carouselImg {
-    width: 100%;
+.emptyCardSlot {
     height: 100%;
-    object-fit: cover;
-    transition: opacity 0.3s ease-in-out;
+    min-height: 200px;
+    border: 2px dashed #e2e8f0;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.3);
 }
 
-.navBtn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.9);
-    border: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    color: #0f172a;
-    transition: all 0.2s ease;
-    z-index: 5;
-}
-
-.navBtn:hover {
-    background: #ffffff;
-    scale: 1.1;
-    color:  var(--color-primary);
-}
-
-.left { left: 8px; }
-.right { right: 8px; }
-
-.imageCounter {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    background: rgba(15, 23, 42, 0.7);
-    backdrop-filter: blur(4px);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 0.7rem;
-    font-weight: 600;
-}
-
-/* Ensure the card doesn't jump when switching images */
-.card {
-    min-height: 480px;
-}
-
-/* Noul Grid Layout */
-.parent {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    grid-template-rows: auto auto auto; /* Lăsăm rândurile să se adapteze la conținut */
-    grid-column-gap: 1.5rem; /* Recomandat pentru a separa cardurile */
-    grid-row-gap: 1.5rem;
-    width: 100%;
-}
-
-.div1 { grid-area: 1 / 1 / 3 / 4; display: flex; flex-direction: column; }
-.div2 { grid-area: 1 / 4 / 3 / 7; display: flex; flex-direction: column; }
-
-/* Bara de mijloc (Other Alerts + Dropdown) */
-.div3 {
-    grid-area: 3 / 1 / 4 / 7;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid rgba(15, 23, 42, 0.05);
-    padding-bottom: 0.5rem;
-    margin-top: 1rem;
-}
-
-.div4 { grid-area: 4 / 1 / 6 / 3; }
-.div5 { grid-area: 4 / 3 / 6 / 5; }
-.div6 { grid-area: 4 / 5 / 6 / 7; }
-
-/* --- Styling pentru noile elemente --- */
+/* Controls */
 .sectionHeading {
     font-size: 1.25rem;
     font-weight: 800;
@@ -547,7 +542,7 @@
 }
 
 .categoryDropdown:focus {
-    border-color:  var(--color-border-focus);
+    border-color: var(--color-border-focus);
 }
 
 .carouselControls {
@@ -581,26 +576,102 @@
     background: #f1f5f9;
 }
 
-.emptyCardSlot {
-    height: 100%;
-    min-height: 200px;
-    border: 2px dashed #e2e8f0;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.3);
+/* Make the lower cards visually equal */
+.div4 .card,
+.div5 .card,
+.div6 .card {
+    min-height: 560px;
 }
 
-/* Responsivitate pentru Grid */
+/* Responsive */
 @media (max-width: 1024px) {
     .parent {
         display: flex;
         flex-direction: column;
     }
+
+    .div1,
+    .div2,
+    .div4,
+    .div5,
+    .div6 {
+        width: 100%;
+    }
+
+    .card {
+        min-height: unset;
+    }
+
+    .div4 .card,
+    .div5 .card,
+    .div6 .card {
+        min-height: unset;
+    }
+}
+
+@media (max-width: 768px) {
+    .headerSection {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.9rem;
+        padding-bottom: 1rem;
+    }
+
+    .title {
+        font-size: clamp(1.5rem, 6vw, 2rem);
+        gap: 0.7rem;
+    }
+
+    .alertButton {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .liveIndicator {
+        font-size: 0.75rem;
+    }
+
+    .div3 {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .controlsLeft {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .categoryDropdown {
+        width: 100%;
+    }
 }
 
 @media (max-width: 480px) {
-
-    .navbarAdjust{
+    .navbarAdjust {
         padding: 0;
+    }
 
+    .headerSection {
+        gap: 0.75rem;
+    }
+
+    .titleIcon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .alertButton {
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .card {
+        padding: 1.1rem;
+    }
+
+    .carouselContainer,
+    .noImagePlaceholder {
+        height: 180px;
     }
 }

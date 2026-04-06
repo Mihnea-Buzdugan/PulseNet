@@ -81,7 +81,7 @@ export default function Pulses() {
         }, 400);
 
         return () => clearTimeout(delay);
-    }, [search, category, pulseType, minPrice, maxPrice, page]);
+    }, [search, category, pulseType, minPrice, maxPrice]);
 
     const navigate = useNavigate();
     const fetchPulses = async (pageNumber = 1) => {
