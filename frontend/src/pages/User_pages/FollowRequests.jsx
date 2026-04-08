@@ -61,7 +61,7 @@ export default function FollowRequests() {
             );
 
             if (res.ok) {
-                // Remove accepted request with small delay for better UX
+
                 setRequests((prev) => prev.filter((r) => r.id !== id));
             }
         } catch (err) {
@@ -122,7 +122,7 @@ export default function FollowRequests() {
                             <div className={styles.actions}>
                                 <button
                                     onClick={(e) => {
-                                        e.stopPropagation(); // <-- This stops the card from being clicked
+                                        e.stopPropagation();
                                         acceptRequest(req.id);
                                     }}
                                     className={styles.acceptBtn}
@@ -132,7 +132,7 @@ export default function FollowRequests() {
 
                                 <button
                                     onClick={(e) => {
-                                        e.stopPropagation(); // <-- Apply it to the reject button too!
+                                        e.stopPropagation();
                                         rejectRequest(req.id);
                                     }}
                                     className={styles.rejectBtn}

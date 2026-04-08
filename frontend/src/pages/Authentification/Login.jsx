@@ -93,7 +93,7 @@ const Login = () => {
                 localStorage.setItem('auth-token', 'true');
                 localStorage.setItem('token-expiration', expirationTime.toString());
                 setTimeout(() => {
-                    window.location.href = '/'; // Redirect to home page
+                    window.location.href = '/';
                 }, 0);
             } else {
                 const errorData = await response.json();
@@ -107,7 +107,7 @@ const Login = () => {
 
 
     const handleGoogleLogin = async (response) => {
-        const googleToken = response.credential; // Tokenul Google
+        const googleToken = response.credential;
 
         console.log("Google Token: ", googleToken);
         const csrfToken = getCookie('csrftoken');
@@ -123,7 +123,7 @@ const Login = () => {
                 'X-CSRFToken': csrfToken,
             },
             credentials: 'include',
-            body: JSON.stringify({ google_token: googleToken })  // Trimite tokenul Google către backend
+            body: JSON.stringify({ google_token: googleToken })
         });
         if (resp.ok) {
             const data = await resp.json();

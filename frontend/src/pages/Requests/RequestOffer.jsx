@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { ArrowLeft, ArrowRight, MessageSquare, MapPin, CreditCard } from "lucide-react";
-// Assuming you reuse the same stylesheet or create a similar one
+
 import styles from "../../styles/Pulses_pages/pulseTransaction.module.css";
 import { Map, MapMarker, MarkerContent } from "@/components/ui/map";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -20,7 +20,7 @@ function getLocationCoords(location) {
 function getMapInstance(candidate) {
     if (!candidate) return null;
     if (typeof candidate.getMap === "function") {
-        try { return candidate.getMap(); } catch (e) { /* ignore */ }
+        try { return candidate.getMap(); } catch (e) {  }
     }
     if (candidate.mapInstance) return candidate.mapInstance;
     if (candidate.map) return candidate.map;
@@ -39,18 +39,18 @@ export default function RequestOffer() {
     const [transactionLoading, setTransactionLoading] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
 
-    // For the UrgentRequestOffer total_price
+
     const [offerPrice, setOfferPrice] = useState("");
     const [priceError, setPriceError] = useState("");
 
     const mapRef = useRef(null);
 
-    // Fetch Urgent Request Details
+
     useEffect(() => {
         let mounted = true;
         const fetchRequest = async () => {
             try {
-                // UPDATE THIS ENDPOINT to match your Django URL for fetching a single UrgentRequest
+
                 const res = await fetch(`http://localhost:8000/accounts/urgent-request/${requestId}/`, {
                     method: "GET",
                     credentials: "include",
@@ -58,7 +58,7 @@ export default function RequestOffer() {
                 const data = await res.json();
                 if (mounted && data.success) {
                     setRequestItem(data.request);
-                    // Initialize with a default budget/price if the request model has one
+
                     setOfferPrice(String(data.request?.max_price ?? ""));
                 } else {
                     if (mounted) setStatusMsg("❌ Could not load the request.");
@@ -74,7 +74,7 @@ export default function RequestOffer() {
         return () => (mounted = false);
     }, [requestId]);
 
-    // Fetch Current User
+
     useEffect(() => {
         let mounted = true;
         const fetchUser = async () => {
@@ -100,7 +100,7 @@ export default function RequestOffer() {
         return () => (mounted = false);
     }, []);
 
-    // Map Initialization
+
     useEffect(() => {
         if (!requestItem) return;
 
@@ -141,7 +141,7 @@ export default function RequestOffer() {
         return () => { mounted = false; };
     }, [requestItem]);
 
-    // Resize fallback
+
     useEffect(() => {
         const t = setTimeout(() => window.dispatchEvent(new Event("resize")), 500);
         return () => clearTimeout(t);
@@ -151,7 +151,7 @@ export default function RequestOffer() {
     const next = () => images.length && setIndex(i => (i + 1) % images.length);
     const prev = () => images.length && setIndex(i => (i - 1 + images.length) % images.length);
 
-    // Validate if current user is the original requester
+
     const isOwner = !!(currentUser && requestItem && Number(currentUser.id) === Number(requestItem.user_id));
 
     const validatePrice = () => {
@@ -165,7 +165,7 @@ export default function RequestOffer() {
             return false;
         }
 
-        // --- NEW VALIDATION: Ensure price doesn't exceed the max budget ---
+
         if (requestItem && requestItem.max_price !== null && requestItem.max_price !== undefined) {
             const maxBudget = Number(requestItem.max_price);
             if (!Number.isNaN(maxBudget) && num > maxBudget) {
@@ -202,7 +202,7 @@ export default function RequestOffer() {
                 proposed_price: Number(offerPrice),
             };
 
-            // UPDATE THIS ENDPOINT to match your Django URL for creating a RequestOffer
+
             const res = await fetch(`http://localhost:8000/accounts/create_request_offer/`, {
                 method: "POST",
                 credentials: "include",
@@ -216,7 +216,7 @@ export default function RequestOffer() {
             const data = await res.json();
             if (res.ok && data.success) {
                 setStatusMsg("✅ Offer submitted successfully!");
-                setTimeout(() => navigate("/"), 1600); // Navigate to a success/dashboard page
+                setTimeout(() => navigate("/"), 1600);
             } else {
                 setStatusMsg(`❌ ${data.error || "Failed to submit offer."}`);
             }
@@ -243,7 +243,7 @@ export default function RequestOffer() {
                 </div>
 
                 <div className={styles.pageGrid}>
-                    {/* LEFT COLUMN: Carousel + Form */}
+
                     <div className={styles.leftCard}>
                         <div className={styles.carousel}>
                             <button className={styles.carouselBtn} onClick={prev}><ArrowLeft size={20} /></button>
@@ -268,7 +268,7 @@ export default function RequestOffer() {
                                     </button>
                                 </div>
                             </div>
-                            {/* Target budget display */}
+
                             {requestItem.max_price && (
                                 <div className={styles.priceTag}>
                                     <h2>{requestItem.max_price} {requestItem.currency || "USD"}</h2>
@@ -311,7 +311,7 @@ export default function RequestOffer() {
                             <button
                                 className={styles.buyBtn}
                                 onClick={handleCreateOffer}
-                                // Added `!!priceError` to instantly disable the button if the validation fails
+
                                 disabled={transactionLoading || isOwner || !offerPrice || !!priceError}
                             >
                                 {transactionLoading ? "Submitting..." : "Submit Offer"}
@@ -320,7 +320,7 @@ export default function RequestOffer() {
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN: Map */}
+
                     <div className={styles.sidebar}>
                         <div className={styles.card}>
                             <h3 className={styles.sectionTitle}><MapPin size={18}/> Request Location</h3>

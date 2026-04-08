@@ -61,12 +61,12 @@ const Admin = () => {
 
     const [activeTab, setActiveTab] = useState('users');
 
-    // User Search State
+
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
 
-    // Reports & Flagged State
+
     const [reports, setReports] = useState([]);
     const [flaggedData, setFlaggedData] = useState({ pulses: [], alerts: [], urgent_requests: [] });
     const [loadingData, setLoadingData] = useState(false);
@@ -88,10 +88,10 @@ const Admin = () => {
     const closeModal = () => {
         setModalData(null);
     };
-    // Selected report for modal
+
     const [selectedReport, setSelectedReport] = useState(null);
 
-    // Ban modal state
+
     const [selectedUserToBan, setSelectedUserToBan] = useState(null);
     const [banUntil, setBanUntil] = useState('');
     const [banSubmitting, setBanSubmitting] = useState(false);
@@ -115,7 +115,7 @@ const Admin = () => {
         try {
             let url = '';
 
-            // Adjust these endpoints to match your backend
+
             if (itemType === 'pulse') {
                 url = `http://localhost:8000/accounts/delete-pulse/${item.id}/`;
             } else if (itemType === 'alert') {
@@ -138,7 +138,7 @@ const Admin = () => {
                 throw new Error(data.error || 'Delete failed');
             }
 
-            // remove from UI immediately
+
             setFlaggedData((prev) => ({
                 ...prev,
                 pulses:
@@ -179,8 +179,8 @@ const Admin = () => {
                 url = `http://localhost:8000/accounts/delete-rental-signal/${item.id}/`;
             }
             else if (itemType === 'rental_feedback' || itemType === 'pulse_feedback') {
-                // Your backend expects ?type=pulse or ?type=request
-                // Mapping: 'rental' -> 'request', 'pulse' -> 'pulse'
+
+
                 const backendType = item.type === 'rental' ? 'request' : 'pulse';
                 url = `http://localhost:8000/accounts/delete-rental-feedback/${item.id}/?type=${backendType}`;
             }
@@ -202,7 +202,7 @@ const Admin = () => {
                 throw new Error(data.error || 'Delete failed');
             }
 
-            // State update
+
             setFeedbackData((prev) => ({
                 ...prev,
                 rental_signals:
@@ -218,7 +218,7 @@ const Admin = () => {
                         : prev.user_contacts,
             }));
 
-            // Close modal if the deleted item was currently open
+
             if (modalData?.item.id === item.id) {
                 closeModal();
             }
@@ -240,7 +240,7 @@ const Admin = () => {
                     'X-CSRFToken': getCookie('csrftoken'),
                     'Content-Type': 'application/json',
                 },
-                // Add the message to the body
+
                 body: JSON.stringify({ message: message }),
             });
 
@@ -249,7 +249,7 @@ const Admin = () => {
                 throw new Error(data.error || 'Failed to resolve signal');
             }
 
-            // Update local state for rental_signals
+
             setFeedbackData((prev) => ({
                 ...prev,
                 rental_signals: prev.rental_signals.map((sig) =>
@@ -257,7 +257,7 @@ const Admin = () => {
                 ),
             }));
 
-            // Update modal state
+
             if (modalData?.item.id === signalId) {
                 setModalData(prev => ({
                     ...prev,
@@ -265,7 +265,7 @@ const Admin = () => {
                 }));
             }
 
-            // Clear the message box after success
+
             setResolutionMessage('');
 
         } catch (error) {
@@ -369,7 +369,7 @@ const Admin = () => {
 
             setReports((prevReports) => prevReports.filter(report => report.id !== reportId));
 
-            // Close the modal
+
             setSelectedReport(null);
         } catch (error) {
             console.error(error);
@@ -457,7 +457,7 @@ const Admin = () => {
             if (response.ok) {
                 alert(`Success: ${data.message}`);
 
-                // ✅ Update UI instantly
+
                 setResults(prev =>
                     prev.map(user =>
                         user.id === selectedUserToUnban.id
@@ -974,7 +974,7 @@ const Admin = () => {
                             <div className={styles.loader}>Loading Feedback Data...</div>
                         ) : (
                             <div className={styles.gridContainer}>
-                                {/* Rental Signals */}
+
                                 <div className={styles.flaggedCard}>
                                     <div className={styles.cardHeader}>
                                         <span>Rental Signals</span>
@@ -1040,7 +1040,6 @@ const Admin = () => {
                                     </div>
                                 </div>
 
-                                {/* Merged Feedbacks */}
                                 <div className={styles.flaggedCard}>
                                     <div className={styles.cardHeader}>
                                         <span>Feedbacks</span>
@@ -1121,7 +1120,6 @@ const Admin = () => {
                                     </div>
                                 </div>
 
-                                {/* Contact Submissions */}
                                 <div className={styles.flaggedCard}>
                                     <div className={styles.cardHeader}>
                                         <span>Contact Submissions</span>
@@ -1408,7 +1406,7 @@ const Admin = () => {
                                         <div className={styles.modalFieldFull}>
                                             <span className={styles.modalLabel}>Resolution Note (Optional)</span>
                                             <textarea
-                                                className={styles.modalTextarea} // Add appropriate styling in your CSS
+                                                className={styles.modalTextarea}
                                                 placeholder="Explain how this was resolved..."
                                                 value={resolutionMessage}
                                                 onChange={(e) => setResolutionMessage(e.target.value)}

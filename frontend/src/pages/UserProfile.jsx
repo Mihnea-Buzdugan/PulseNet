@@ -46,10 +46,10 @@ export default function Profile() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
-    // Pulse filter — "obiecte" by default
+
     const [pulseFilter, setPulseFilter] = useState("obiecte");
 
-    // image/upload state
+
     const [preview, setPreview] = useState(null);
     const fileInputRef = useRef(null);
     const { id } = useParams();
@@ -99,7 +99,7 @@ export default function Profile() {
     const handleUserAction = async (e, targetUser, action) => {
         e.stopPropagation();
         const csrf = getCookie("csrftoken");
-        // Use targetUser.id to ensure we hit the right endpoint
+
         const url = `http://localhost:8000/accounts/${action}/${targetUser.id}/`;
 
         try {
@@ -109,7 +109,7 @@ export default function Profile() {
                 headers: { "X-CSRFToken": csrf },
             });
 
-            // Optimistic UI Update for a SINGLE object
+
             setUser(prev => {
                 if (!prev) return null;
 
@@ -120,7 +120,7 @@ export default function Profile() {
                         pending_follow: prev.private_account
                     };
                 } else {
-                    // handles 'unfollow'
+
                     return {
                         ...prev,
                         is_following: false,
@@ -192,7 +192,6 @@ export default function Profile() {
 
                 <div className={styles.container}>
 
-                    {/* HEADER CARD */}
                     <motion.div
                         className={styles.headerCard}
                         whileHover={{scale: 1.02}}
@@ -201,7 +200,7 @@ export default function Profile() {
                         transition={{ duration: 0.4, ease: "easeOut" }}>
 
                         <div className={styles.headerLayout}>
-                            {/* Avatar & Trust Score */}
+
                             <div className={styles.avatarSection}>
                                 <div className={styles.avatarWrapper}>
                                     <div
@@ -261,10 +260,8 @@ export default function Profile() {
                                 )}
                             </div>
 
-                            {/* Profile Info / Edit Form */}
                             <div className={styles.profileInfo}>
                                     <div className={styles.infoContent}>
-                                        {/* ...same display as before... */}
                                         <div className={styles.titleRow}>
                                             <h1 className={styles.title}>
                                                 {user.firstName} {user.lastName}
@@ -292,14 +289,14 @@ export default function Profile() {
                         </div>
                     </motion.div>
 
-                    {/* PULSES SECTION */}
+
                     <motion.div className={styles.contentArea}>
                         <motion.div
                             className={styles.card}
                             whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
                             transition={{ duration: 0.2 }}
                         >
-                            {/* Header modificat cu butoane */}
+
                             <div className={styles.pulsesHeader}>
                                 <h2 className={styles.sectionTitle}>User listings</h2>
                                 <div className={styles.filterButtonsRow}>
@@ -318,7 +315,6 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            {/* Pulse list - Acum mapează doar elementele din pagina curentă (currentPulses) */}
                             <div className={styles.objectGrid}>
                                 {filteredPulses.length === 0 && (
                                     <p className={styles.emptyState}>No posts of type „{pulseFilter}” yet.</p>
@@ -425,7 +421,6 @@ export default function Profile() {
                                 <h2 className={styles.sectionTitle}>User's requests</h2>
                             </div>
 
-                            {/* Requests list */}
                             <div className={styles.objectGrid}>
                                 {requests.length === 0 && (
                                     <p className={styles.emptyState}>No requests yet.</p>
@@ -487,7 +482,6 @@ export default function Profile() {
                                 ))}
                             </div>
 
-                            {/* Carousel Controls */}
                             {requests.length > itemsPerPage && (
                                 <div className={styles.carouselControls}>
                                     <motion.button {...btnMotion}

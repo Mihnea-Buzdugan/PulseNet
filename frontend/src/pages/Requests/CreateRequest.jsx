@@ -27,7 +27,7 @@ const CATEGORIES = [
 export default function CreateRequest() {
     const [loading, setLoading] = useState(false);
 
-    // Image Upload State
+
     const [imagesPreview, setImagesPreview] = useState([]);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const fileInputRef = useRef(null);
@@ -69,7 +69,7 @@ export default function CreateRequest() {
         }));
     };
 
-    // --- Image Handlers ---
+
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
@@ -173,7 +173,6 @@ export default function CreateRequest() {
 
                     <form onSubmit={handleSubmit} className={styles.form}>
 
-                        {/* 1. Title (Now Full Width) */}
                         <div className={styles.inputGroup}>
                             <label className={styles.label}>Request Title</label>
                             <input
@@ -186,7 +185,7 @@ export default function CreateRequest() {
                             />
                         </div>
 
-                        {/* 2. Description */}
+
                         <div className={styles.inputGroup}>
                             <label className={styles.label}>Description</label>
                             <textarea
@@ -200,11 +199,11 @@ export default function CreateRequest() {
                             />
                         </div>
 
-                        {/* 3. Image Upload Section */}
+
                         <div className={styles.imageUploadSection}>
                             <label className={styles.label}>Images (Max 4)</label>
                             <div className={styles.imageGrid}>
-                                {/* Preview Boxes */}
+
                                 {imagesPreview.map((img, idx) => (
                                     <div key={idx} className={styles.imagePreviewBox} style={{ backgroundImage: `url(${img})` }}>
                                         <button type="button" onClick={() => removeImageAt(idx)} className={styles.removeImgBtn}>
@@ -213,7 +212,6 @@ export default function CreateRequest() {
                                     </div>
                                 ))}
 
-                                {/* Add Button Box */}
                                 {imagesPreview.length < 4 && (
                                     <label className={styles.uploadBtnBox}>
                                         <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageChange} hidden />
@@ -224,7 +222,6 @@ export default function CreateRequest() {
                             </div>
                         </div>
 
-                        {/* 4. Date and Price (Same Row) */}
                         <div className={styles.gridRow}>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>Expiration Date</label>
@@ -243,7 +240,7 @@ export default function CreateRequest() {
 
                                         setForm({ ...form, expires_at: val });
                                     }}
-                                    showTimeSelect // ✅ enables time selection
+                                    showTimeSelect
                                     timeFormat="HH:mm"
                                     timeIntervals={15}
                                     dateFormat="dd/MM/yyyy HH:mm"
@@ -264,7 +261,7 @@ export default function CreateRequest() {
                             </div>
                         </div>
 
-                        {/* 5. Categories */}
+
                         <div>
                             <label className={styles.categoryLabel}>Select your functional category</label>
                             <div className={styles.categoryGrid}>
@@ -292,7 +289,7 @@ export default function CreateRequest() {
                             </div>
                         </div>
 
-                        {/* Submit Button */}
+
                         <div className={styles.submitWrapper}>
                             <button
                                 type="submit"

@@ -12,7 +12,7 @@ from transformers import pipeline
 from PIL import Image
 from pgvector.django import CosineDistance
 from django.db.models import Avg
-# Import your models here - update paths as necessary
+
 from .models import UrgentRequest, User, Notification, AlertImage
 
 _model = None
@@ -85,7 +85,6 @@ def find_heroes_for_urgent_requests(request_id):
         for match in matches:
             neighbor = User.objects.get(id=match["neighbor_id"])
 
-            # --- ANTI-SPAM CHECK ---
             already_notified = Notification.objects.filter(
                 user=neighbor,
                 sender=req.user,
@@ -178,7 +177,6 @@ def process_pet_image_and_find_matches(alert_instance):
 def calculate_trust_score(user):
     score = 0
 
-    # ALERTS
     alerts = user.notices.all()
     for alert in alerts:
         if alert.is_flagged:
@@ -191,7 +189,6 @@ def calculate_trust_score(user):
         else:
             score += 2
 
-    # PULSES
     pulses = user.pulses.all()
     for pulse in pulses:
         if pulse.is_flagged:
@@ -202,17 +199,13 @@ def calculate_trust_score(user):
         if pulse.is_available:
             score += 3
 
-        # ⭐ NEW: ratings impact
         avg_rating = pulse.pulserating_set.aggregate(avg=Avg("rating"))["avg"]
 
         if avg_rating:
-            # Normalize around 5 (neutral midpoint if rating is 1–10)
             normalized = avg_rating - 5
 
-            # Weight it (important: don’t make it too strong)
             score += normalized * 2  # tweakable
 
-    # URGENT REQUESTS
     requests = user.urgent_requests.all()
     for req in requests:
         if req.is_flagged:

@@ -50,7 +50,7 @@
     letter-spacing: -1px;
 }
 
-/* Status Messages */
+
 .loadingPulse {
     font-weight: 600;
     color: #ff4b2b;
@@ -75,7 +75,7 @@
     border: 1px dashed #ccc;
 }
 
-/* Filter / Search Bar */
+
 .filterBar {
     display: grid;
     grid-template-columns: 1.8fr 1fr 1fr 0.8fr 0.8fr auto;
@@ -140,7 +140,7 @@
     box-shadow: none;
 }
 
-/* Optional helper row for active filters / reset */
+
 .filterActions {
     display: flex;
     gap: 0.75rem;
@@ -164,7 +164,7 @@
     border-color: #d5d5d5;
 }
 
-/* Responsive */
+
 @media (max-width: 1100px) {
     .filterBar {
         grid-template-columns: 1fr 1fr;
@@ -186,14 +186,14 @@
     }
 }
 
-/* Grid Layout */
+
 .urgentRequestsGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 2rem;
 }
 
-/* Card Styling */
+
 .urgentRequestCard {
     background: #ffffff;
     border-radius: 20px;
@@ -212,7 +212,7 @@
     border-color: var(--color-border-focus);
 }
 
-/* Card Header (Image) */
+
 .cardHeader {
     position: relative;
     height: 200px;
@@ -256,7 +256,7 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Card Body */
+
 .cardBody {
     padding: 1.5rem;
     flex-grow: 1;
@@ -290,7 +290,7 @@
     overflow: hidden;
 }
 
-/* Meta Data (Dates, Location) */
+
 .metaData {
     background: #f8f9fa;
     padding: 1rem;
@@ -317,7 +317,7 @@
     white-space: nowrap;
 }
 
-/* Card Footer */
+
 .cardFooter {
     padding: 1.2rem 1.5rem;
     border-top: 1px solid #f0f0f0;
@@ -362,7 +362,7 @@
     box-shadow: 0 4px 12px rgba(255, 75, 43, 0.3);
 }
 
-/* Pagination Controls */
+
 .carouselControls {
     display: flex;
     justify-content: center;
@@ -408,12 +408,12 @@
     max-width: 200px;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Adds '...' if the street name is too long */
+    text-overflow: ellipsis; 
     color: #444;
     font-weight: 500;
 }
 
-/* Optional: Show full address on hover */
+
 .addressText:hover {
     white-space: normal;
     overflow: visible;
@@ -422,7 +422,7 @@
     z-index: 10;
 }
 
-/* Animations */
+
 @keyframes pulse {
     0% { opacity: 1; }
     50% { opacity: 0.5; }

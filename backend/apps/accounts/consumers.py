@@ -28,19 +28,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4001)
             return
 
-        # 1. Get the conversation object
         self.conversation = await self._get_conversation()
         if not self.conversation:
             await self.close(code=4004)
             return
 
-        # 2. Check if user belongs here
         is_participant = await self._check_participant(user, self.conversation)
         if not is_participant:
             await self.close(code=4003)
             return
 
-        # 3. Privacy/Friendship check for Direct Chats
         if self.chat_type == "direct":
             other_user = await self._get_other_direct_participant(user, self.conversation)
             if other_user:
@@ -67,10 +64,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except json.JSONDecodeError:
             return
 
-        # 1. Save message to DB
         message_obj = await self._create_message(user, content)
 
-        # 2. Build payload for the chat room
         payload = {
             "type": "chat.message",
             "message_id": message_obj.id,
@@ -82,16 +77,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "timestamp": message_obj.timestamp.isoformat(),
         }
 
-        # 3. Broadcast message to the chat room
         await self.channel_layer.group_send(self.room_group_name, payload)
 
-        # 4. Handle Global Notifications (for Direct Chats)
         if self.chat_type == "direct":
             other_user = await self._get_other_direct_participant(user, self.conversation)
             if other_user:
 
                 notification_text = f"{user.username} sent a new message"
-                # Create DB notification first (so it exists even if recipient is offline)
                 await self._create_message_notification(
                     receiver_id=other_user.id,
                     sender_id=user.id,
@@ -100,16 +92,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     message_id=message_obj.id,
                 )
 
-                # Then push a websocket notification (recipient may or may not be connected)
                 notification_group = f"user_notifications_{other_user.id}"
                 await self.channel_layer.group_send(
                     notification_group,
                     {
-                        "type": "send_notification",  # handled by NotificationConsumer.send_notification
+                        "type": "send_notification",
                         "conversation_id": self.conversation_id,
                         "sender_id": user.id,
                         "sender_name": user.username,
-                        "content": notification_text,  # Send a preview
+                        "content": notification_text,
                     },
                 )
 
@@ -118,7 +109,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         client_payload = {k: v for k, v in event.items() if k != "type"}
         await self.send(text_data=json.dumps(client_payload))
 
-    # ---- Database Helpers ----
 
     @database_sync_to_async
     def _get_conversation(self):
@@ -241,22 +231,19 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 {
                     "type": "hero_alert",
 
-                    # Notification core fields
+
                     "notification_id": event["notification_id"],
                     "title": event["title"],
                     "message": event["message"],
                     "created_at": event["created_at"],
                     "is_read": False,
 
-                    # Sender info (optional but VERY useful for UI)
                     "sender_id": event.get("sender_id"),
                     "sender_username": event.get("sender_username"),
 
-                    # Hero-specific data
                     "request_id": event["request_id"],
                     "score": event["score"],
 
-                    # Optional extras
                     "metadata": event.get("metadata", {}),
                 }
             )
@@ -324,18 +311,15 @@ class PulseConsumer(AsyncWebsocketConsumer):
         if not pulse_data or not pulse_data.get("location") or not self.user_coords:
             return
 
-        # Extract coordinates from GeoJSON location
         coords = pulse_data["location"].get("coordinates")
         if not coords or len(coords) < 2:
             return
 
-        pulse_point = (coords[1], coords[0])  # GeoJSON: [lng, lat]
+        pulse_point = (coords[1], coords[0])
         user_point = (self.user_coords["lat"], self.user_coords["lng"])
 
-        # Calculate distance
         distance_km = geodesic(user_point, pulse_point).km
 
-        # Send only if within visibility radius
         if distance_km <= self.visibility_radius:
             pulse_data["distance"] = round(distance_km, 2)
             await self.send(text_data=json.dumps(pulse_data))
@@ -343,7 +327,6 @@ class PulseConsumer(AsyncWebsocketConsumer):
             print(f"Pulse ignored. Distance: {distance_km}km > Radius: {self.visibility_radius}km")
 
     async def pulse_deleted(self, event):
-        # This sends the deleted pulse ID to clients
         await self.send(text_data=json.dumps({
             "type": "pulse_deleted",
             "id": event["id"]
@@ -403,18 +386,15 @@ class RequestConsumer(AsyncWebsocketConsumer):
         if not request_data or not request_data.get("location") or not self.user_coords:
             return
 
-        # Extract coordinates from GeoJSON location
         coords = request_data["location"].get("coordinates")
         if not coords or len(coords) < 2:
             return
 
-        request_point = (coords[1], coords[0])  # GeoJSON: [lng, lat]
+        request_point = (coords[1], coords[0])
         user_point = (self.user_coords["lat"], self.user_coords["lng"])
 
-        # Calculate distance
         distance_km = geodesic(user_point, request_point).km
 
-        # Send only if within visibility radius
         if distance_km <= self.visibility_radius:
             request_data["distance"] = round(distance_km, 2)
             await self.send(text_data=json.dumps(request_data))
@@ -422,7 +402,6 @@ class RequestConsumer(AsyncWebsocketConsumer):
             print(f"Request ignored. Distance: {distance_km}km > Radius: {self.visibility_radius}km")
 
     async def request_deleted(self, event):
-        # This sends the deleted request ID to clients
         await self.send(text_data=json.dumps({
             "type": "request_deleted",
             "id": event["id"]
@@ -440,7 +419,6 @@ class AlertConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         try:
             self.room_group_name = "alerts_feed"
-            # Join the alerts group
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.accept()
 
@@ -454,7 +432,6 @@ class AlertConsumer(AsyncWebsocketConsumer):
             raise
 
     async def disconnect(self, close_code):
-        # Leave the group
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         print(f"AlertConsumer disconnected: {close_code}")
 
@@ -466,7 +443,6 @@ class AlertConsumer(AsyncWebsocketConsumer):
         if not alert_data:
             return
 
-        # Admin-posted weather alerts go to the news bar
         if alert_data.get("category") == "weather" and alert_data.get("is_admin_alert"):
             await self.send(text_data=json.dumps({
                 "type": "weather_alert",
@@ -483,7 +459,6 @@ class AlertConsumer(AsyncWebsocketConsumer):
             }))
 
     async def alert_deleted(self, event):
-        # This sends the deleted alert ID to clients
         await self.send(text_data=json.dumps({
             "type": "alert_deleted",
             "id": event["id"]

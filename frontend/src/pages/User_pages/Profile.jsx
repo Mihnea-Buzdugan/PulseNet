@@ -113,8 +113,8 @@ export default function Profile() {
     const [pulseFilter, setPulseFilter] = useState("obiecte");
     const [reqIndex, setReqIndex] = useState(0);
 
-    const [imagesPreview, setImagesPreview] = useState([]); // URLs for preview
-    const [newImages, setNewImages] = useState([]);         // File objects to send
+    const [imagesPreview, setImagesPreview] = useState([]);
+    const [newImages, setNewImages] = useState([]);
     const pulseFileInputRef = useRef(null);
     const requestFileInputRef = useRef(null);
     const [removedImages, setRemovedImages] = useState([]);
@@ -174,7 +174,7 @@ export default function Profile() {
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState(null);
 
-    // rental offers state (offers for user's pulses)
+
     const [rentalOffers, setRentalOffers] = useState([]);
     const [offersLoading, setOffersLoading] = useState(true);
 
@@ -195,10 +195,10 @@ export default function Profile() {
     const [receivedRequestOffers, setReceivedRequestOffers] = useState([]);
     const [receivedOffersLoading, setReceivedOffersLoading] = useState(true);
 
-// Offers you SENT to others (You are the Proposer)
+
     const [sentRequestOffers, setSentRequestOffers] = useState([]);
     const [sentOffersLoading, setSentOffersLoading] = useState(true);
-    // counteroffer modal state
+
     const [counterModal, setCounterModal] = useState({
         show: false,
         id: null,
@@ -211,7 +211,7 @@ export default function Profile() {
     });
 
 
-    // accept/decline modals
+
     const [acceptModal, setAcceptModal] = useState({ show: false, id: null });
     const [declineModal, setDeclineModal] = useState({ show: false, id: null });
 
@@ -228,7 +228,7 @@ export default function Profile() {
 
 
 
-    // accept/decline modals
+
     const [acceptOfferModal, setAcceptOfferModal] = useState({ show: false, id: null });
     const [declineOfferModal, setDeclineOfferModal] = useState({ show: false, id: null });
 
@@ -276,10 +276,10 @@ export default function Profile() {
             let endpoint = "";
 
             if (feedbackItem.pulse_title) {
-                // Pulse rental feedback
+
                 endpoint = `http://localhost:8000/accounts/pulse_rental_feedback/${feedbackItem.id}/`;
             } else if (feedbackItem.request_title) {
-                // Request rental feedback
+
                 endpoint = `http://localhost:8000/accounts/request_rental_feedback/${feedbackItem.id}/`;
             } else {
                 console.warn("Unknown feedback item type:", feedbackItem);
@@ -377,14 +377,14 @@ export default function Profile() {
             });
     }, []);
 
-    // fetch rental offers for pulses owned by the user
+
     useEffect(() => {
         const fetchData = async () => {
             setOffersLoading(true);
             setProposalsLoading(true);
 
             try {
-                // Fetch rental offers (as owner)
+
                 const offersRes = await fetch("http://localhost:8000/accounts/pulse_rentals/", {
                     method: "GET",
                     credentials: "include",
@@ -401,7 +401,7 @@ export default function Profile() {
                     console.warn("Failed to fetch rental offers:", offersRes.status);
                 }
 
-                // Fetch rental proposals (as renter)
+
                 const proposalsRes = await fetch("http://localhost:8000/accounts/pulse_own_proposals/", {
                     method: "GET",
                     credentials: "include",
@@ -431,7 +431,7 @@ export default function Profile() {
     useEffect(() => {
         const fetchOffers = async () => {
             try {
-                // Received Offers
+
                 const resReceived = await fetch("http://localhost:8000/accounts/request-offers/received/", {
                     method: "GET",
                     credentials: "include",
@@ -442,7 +442,7 @@ export default function Profile() {
                 const dataReceived = await resReceived.json();
                 setReceivedRequestOffers(dataReceived);
 
-                // Sent Offers
+
                 const resSent = await fetch("http://localhost:8000/accounts/own-request-offers/", {
                     method: "GET",
                     credentials: "include",
@@ -614,16 +614,16 @@ export default function Profile() {
         const files = Array.from(e.target.files);
         setNewImages((prev) => [...prev, ...files]);
 
-        // Create preview URLs
+
         const newPreviews = files.map((file) => URL.createObjectURL(file));
         setImagesPreview((prev) => [...prev, ...newPreviews]);
     }
 
-// Remove image at index
+
     function removePulseImageAt(idx) {
         const removed = imagesPreview[idx];
 
-        // If it's an existing backend image (URL)
+
         if (typeof removed === "string") {
             setRemovedImages((prev) => [...prev, removed]);
         }
@@ -635,16 +635,16 @@ export default function Profile() {
         const files = Array.from(e.target.files);
         setNewImages((prev) => [...prev, ...files]);
 
-        // Create preview URLs
+
         const newPreviews = files.map((file) => URL.createObjectURL(file));
         setImagesPreview((prev) => [...prev, ...newPreviews]);
     }
 
-// Remove image at index
+
     function removeRequestImageAt(idx) {
         const removed = imagesPreview[idx];
 
-        // If it's an existing backend image (URL)
+
         if (typeof removed === "string") {
             setRemovedImages((prev) => [...prev, removed]);
         }
@@ -668,9 +668,9 @@ export default function Profile() {
             phone_number: pulse.phone_number || "",
         });
         setImagesPreview(pulse.images || []);
-        setNewImages([]); // reset newly added
-        setEditLoading(false); // reset loading
-        setEditError(null);    // reset any previous error
+        setNewImages([]);
+        setEditLoading(false);
+        setEditError(null);
     }
 
     function handleEditRequest(request) {
@@ -683,9 +683,9 @@ export default function Profile() {
             description: request.description || "",
         });
         setImagesPreview(request.images || []);
-        setNewImages([]); // reset newly added
-        setEditLoading(false); // reset loading
-        setEditError(null);    // reset any previous error
+        setNewImages([]);
+        setEditLoading(false);
+        setEditError(null);
     }
 
     async function handleSaveEdit(e) {
@@ -702,7 +702,7 @@ export default function Profile() {
             });
 
             removedImages.forEach((img) => formData.append("removed_images", img));
-            // Only append new images
+
             newImages.forEach((file) => formData.append("images", file));
 
             const res = await fetch(
@@ -860,7 +860,7 @@ export default function Profile() {
     const handleAcceptOffer = async (id) => {
         // decide which endpoint to call based on whether id is in rentalProposals
         const isProposal = rentalProposals.some((p) => p.id === id);
-        const url = `http://localhost:8000/accounts/pulse_rentals/${id}/`;
+        const url = `http:
 
         try {
             const res = await fetch(url, {
@@ -892,7 +892,7 @@ export default function Profile() {
     };
 
     const handleDeclineOffer = async (id) => {
-        // decide which endpoint to call based on whether id is in rentalProposals
+        
         const isProposal = rentalProposals.some((p) => p.id === id);
         const url = `http://localhost:8000/accounts/pulse_rentals/${id}/`;
 
@@ -940,7 +940,7 @@ export default function Profile() {
                     body: JSON.stringify({
                         rental_id: selectedRental.id,
                         message: signalMessage
-                        // reported_by_owner is set automatically in backend
+
                     }),
                 }
             );
@@ -1005,7 +1005,7 @@ export default function Profile() {
             return;
         }
 
-        // decide whether this id belongs to a proposal (renter side) or an offer (owner side)
+
         const isProposal = rentalProposals.some((p) => p.id === id);
         try {
             const res = await fetch(`http://localhost:8000/accounts/pulse_rentals/${id}/`, {
@@ -1044,7 +1044,7 @@ export default function Profile() {
     };
 
 
-    // open/close accept/decline confirmation modals
+
     const openAcceptModal = (offer) => setAcceptModal({ show: true, id: offer.id });
     const closeAcceptModal = () => setAcceptModal({ show: false, id: null });
     const openAcceptOfferModal = (offer) => setAcceptOfferModal({ show: true, id: offer.id });
@@ -1061,7 +1061,7 @@ export default function Profile() {
     const closeDeleteOfferModal = () => {
         setDeleteOfferModal({ show: false, id: null });
     };
-    // --- end rental offers actions ---
+
 
     const openCounterOfferModal = (offer) => {
         setCounterOfferModal({
@@ -1089,7 +1089,7 @@ export default function Profile() {
 
     const handleAcceptRequestOffer = async (id) => {
         const isSentByMe = sentRequestOffers.some((o) => o.id === id);
-        // Use the new endpoint created in urls.py
+
         const url = `http://localhost:8000/accounts/request-offers/${id}/`;
 
         try {
@@ -1119,7 +1119,7 @@ export default function Profile() {
         }
     };
 
-// --- DECLINE OFFER ---
+
     const handleDeclineRequestOffer = async (id) => {
         const isSentByMe = sentRequestOffers.some((o) => o.id === id);
         const url = `http://localhost:8000/accounts/request-offers/${id}/`;
@@ -1149,7 +1149,7 @@ export default function Profile() {
         }
     };
 
-// --- SUBMIT COUNTEROFFER ---
+
     const handleSubmitRequestCounter = async () => {
         const { id, price } = counterOfferModal; // Reuses your existing counterModal state
         const parsed = parseFloat(price);
@@ -1186,7 +1186,7 @@ export default function Profile() {
                 }
                 closeCounterOfferModal();
             } else {
-                // This will catch the "Offer cannot exceed target budget" error from Django
+
                 alert(data.error || "Error sending counteroffer.");
             }
         } catch (err) {
@@ -1194,7 +1194,7 @@ export default function Profile() {
         }
     };
 
-// --- DELETE / CANCEL OFFER ---
+
     const handleDeleteRequestOffer = async (id) => {
         try {
             const response = await fetch(`http://localhost:8000/accounts/request-offers/${id}/`, {
@@ -1229,7 +1229,7 @@ export default function Profile() {
         return user?.requests || [];
     }, [user]);
 
-// 2. Slice the list to ONLY show the items for the current page
+
     const currentRequests = useMemo(() => {
         return filteredRequests.slice(reqIndex, reqIndex + itemsPerPage);
     }, [filteredRequests, reqIndex]);
@@ -1304,7 +1304,7 @@ export default function Profile() {
 
     const handleRentalFilterChange = (tab) => {
         setActiveRentalTab(tab);
-        setRentalCurrentIndex(0); // Resetăm la prima pagină când schimbăm tab-ul
+        setRentalCurrentIndex(0);
     };
 
     const currentRentalData = activeRentalTab === 'offers' ? rentalOffers : rentalProposals;
@@ -1330,7 +1330,7 @@ export default function Profile() {
 
     const handleRequestFilterChange = (tab) => {
         setActiveRequestTab(tab);
-        setRequestCurrentIndex(0); // Resetăm la prima pagină când schimbăm tab-ul
+        setRequestCurrentIndex(0);
     };
 
     const currentRequestData = activeRequestTab === 'received' ? receivedRequestOffers : sentRequestOffers;
@@ -1361,7 +1361,6 @@ export default function Profile() {
                 </div>
                 <div className={styles.container}>
 
-                    {/* HEADER CARD */}
                     <motion.div
                                 className={styles.headerCard}
                                 whileHover={{scale: 1.02}}
@@ -1370,7 +1369,6 @@ export default function Profile() {
                                 transition={{ duration: 0.4, ease: "easeOut" }}>
 
                         <div className={styles.headerLayout}>
-                            {/* Avatar & Trust Score */}
                             <div className={styles.avatarSection}>
                                 <div className={styles.avatarWrapper}>
                                     <div
@@ -1455,11 +1453,11 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            {/* Profile Info / Edit Form */}
+
                             <div className={styles.profileInfo}>
                                 {editMode ? (
                                     <div className={styles.editForm}>
-                                        {/* ...same edit form as before... */}
+
                                         <div className={styles.editGrid}>
                                             <div className={styles.inputGroup}>
                                                 <label className={styles.inputLabel}>First Name</label>
@@ -1566,7 +1564,7 @@ export default function Profile() {
                                         <div className={styles.inputGroup}>
                                             <div className={styles.controlsRow}>
 
-                                                {/* PARTEA STÂNGĂ: Range-ul tău existent */}
+
                                                 <div className={styles.rangeSection}>
                                                     <div className={styles.labelWrapper}>
                                                         <label htmlFor="visibility-range" className={styles.inputLabel}>
@@ -1630,7 +1628,7 @@ export default function Profile() {
                                                             <Marker position={[editForm.lat, editForm.lng]} />
                                                             <Circle
                                                                 center={[editForm.lat, editForm.lng]}
-                                                                radius={editForm.visibility_radius * 1000} // radius e în metri, editForm e în km
+                                                                radius={editForm.visibility_radius * 1000}
                                                                 pathOptions={{ color: 'blue', fillColor: 'blue', fillOpacity: 0.2 }}
                                                             />
                                                         </>
@@ -1685,7 +1683,7 @@ export default function Profile() {
                         </div>
                     </motion.div>
 
-                    {/* PULSES SECTION */}
+
                     <motion.div className={styles.contentArea}>
                         <motion.div
                             className={styles.card}
@@ -1976,7 +1974,7 @@ export default function Profile() {
                                             ))}
                                         </div>
 
-                                        {/* Pagination Controls */}
+
                                         {filteredRequests.length > itemsPerPage && (
                                             <div className={styles.carouselControls}>
                                                 <motion.button
@@ -2008,7 +2006,7 @@ export default function Profile() {
                             </div>
                         </motion.div>
 
-                        {/* — Place modal here, outside the card — */}
+
                         {editingPulse && (
                             <motion.div
                                         className={styles.modalOverlay}
@@ -2025,7 +2023,7 @@ export default function Profile() {
                                     <form onSubmit={handleSaveEdit} className={styles.alertForm}>
                                         <h2 className={styles.formTitle}>Edit listing</h2>
 
-                                        {/* TITLE */}
+
                                         <div className={styles.inputGroup}>
                                             <label>Title *</label>
                                             <input
@@ -2036,7 +2034,7 @@ export default function Profile() {
                                             />
                                         </div>
 
-                                        {/* CATEGORY */}
+
                                         <div className={styles.inputGroup}>
                                             <label>Category</label>
                                             <select
@@ -2050,11 +2048,11 @@ export default function Profile() {
                                             </select>
                                         </div>
 
-                                        {/* IMAGE GRID */}
+
                                         <div className={styles.imageUploadSection}>
                                             <label className={styles.labelHeader}>Images</label>
                                             <div className={styles.imageGrid}>
-                                                {/* Preview Images */}
+
                                                 {imagesPreview.map((img, idx) => (
                                                     <div
                                                         key={idx}
@@ -2071,7 +2069,7 @@ export default function Profile() {
                                                     </div>
                                                 ))}
 
-                                                {/* Add Images Button */}
+
                                                 {imagesPreview.length < 4 && (
                                                     <label className={styles.uploadBtnBox}>
                                                         <input
@@ -2100,7 +2098,6 @@ export default function Profile() {
                                             />
                                         </div>
 
-                                        {/* PHONE NUMBER */}
                                         <div className={styles.inputGroup}>
                                             <label>Phone Number</label>
                                             <input
@@ -2111,7 +2108,6 @@ export default function Profile() {
                                             />
                                         </div>
 
-                                        {/* PRICE */}
                                         <div className={styles.inputGroup}>
                                             <label>Price</label>
                                             <input
@@ -2123,7 +2119,6 @@ export default function Profile() {
                                             />
                                         </div>
 
-                                        {/* CURRENCY */}
                                         <div className={styles.inputGroup}>
                                             <label>Currency</label>
                                             <input
@@ -2133,14 +2128,12 @@ export default function Profile() {
                                             />
                                         </div>
 
-                                        {/* ERROR DISPLAY */}
                                         {editError && (
                                             <p className={styles.error}>
                                                 {Array.isArray(editError) ? JSON.stringify(editError) : editError}
                                             </p>
                                         )}
 
-                                        {/* ACTION BUTTONS */}
                                         <div className={styles.modalActions}>
                                             <motion.button {...btnMotion}
                                                 type="button"
@@ -2180,7 +2173,6 @@ export default function Profile() {
                                     <form onSubmit={handleSaveRequestEdit} className={styles.alertForm}>
                                         <h2 className={styles.formTitle}>Edit listing</h2>
 
-                                        {/* TITLE */}
                                         <div className={styles.inputGroup}>
                                             <label>Title *</label>
                                             <input
@@ -2191,7 +2183,6 @@ export default function Profile() {
                                             />
                                         </div>
 
-                                        {/* CATEGORY */}
                                         <div className={styles.inputGroup}>
                                             <label>Category</label>
                                             <select
@@ -2214,11 +2205,11 @@ export default function Profile() {
                                             </select>
                                         </div>
 
-                                        {/* IMAGE GRID */}
+
                                         <div className={styles.imageUploadSection}>
                                             <label className={styles.labelHeader}>Images</label>
                                             <div className={styles.imageGrid}>
-                                                {/* Preview Images */}
+
                                                 {imagesPreview.map((img, idx) => (
                                                     <div
                                                         key={idx}
@@ -2235,7 +2226,6 @@ export default function Profile() {
                                                     </div>
                                                 ))}
 
-                                                {/* Add Images Button */}
                                                 {imagesPreview.length < 4 && (
                                                     <label className={styles.uploadBtnBox}>
                                                         <input
@@ -2253,7 +2243,6 @@ export default function Profile() {
                                             </div>
                                         </div>
 
-                                        {/* DESCRIPTION */}
                                         <div className={styles.inputGroup}>
                                             <label>Description *</label>
                                             <textarea
@@ -2264,7 +2253,6 @@ export default function Profile() {
                                             />
                                         </div>
 
-                                        {/* PRICE */}
                                         <div className={styles.inputGroup}>
                                             <label>Max Price</label>
                                             <input
@@ -2276,7 +2264,7 @@ export default function Profile() {
                                             />
                                         </div>
 
-                                        {/* CURRENCY */}
+
                                         <div className={styles.inputGroup}>
                                             <label>Currency</label>
                                             <input
@@ -2286,14 +2274,14 @@ export default function Profile() {
                                             />
                                         </div>
 
-                                        {/* ERROR DISPLAY */}
+
                                         {editError && (
                                             <p className={styles.error}>
                                                 {Array.isArray(editError) ? JSON.stringify(editError) : editError}
                                             </p>
                                         )}
 
-                                        {/* ACTION BUTTONS */}
+
                                         <div className={styles.modalActions}>
                                             <motion.button {...btnMotion}
                                                            type="button"
@@ -2348,7 +2336,6 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            {/* LISTA PROPRIU-ZISĂ (GRID) */}
                             <div className={styles.offersList}>
                                 {currentRentalLoading && <p>Loading...</p>}
 
@@ -2526,7 +2513,6 @@ export default function Profile() {
                             whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
                             transition={{ duration: 0.2 }}
                         >
-                            {/* HEADER - Cu titlu și tab-uri identice ca la Rentals/Listings */}
                             <div className={styles.pulsesHeader}>
                                 <div className="flex flex-col">
                                     <h2 className={styles.sectionTitle}>Requests & Help</h2>
@@ -2551,7 +2537,7 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            {/* LISTA PROPRIU-ZISĂ */}
+
                             <div className={styles.offersList}>
                                 {currentRequestLoading && <p>Loading...</p>}
 
@@ -2660,7 +2646,7 @@ export default function Profile() {
                                 })}
                             </div>
 
-                            {/* CONTROALE CAROUSEL */}
+
                             {currentRequestData.length > requestItemsPerPage && (
                                 <div className={styles.carouselControls}>
                                     <motion.button {...btnMotion}
@@ -2688,7 +2674,7 @@ export default function Profile() {
                     </motion.div>
                 </div>
 
-                {/* Delete Profile Picture Modal */}
+
                 <AnimatePresence>
                 {showDeleteModal && (
                     <motion.div
@@ -2801,7 +2787,7 @@ export default function Profile() {
                 )}
                 </AnimatePresence>
 
-                {/* Accept Confirmation Modal */}
+
                 <AnimatePresence>
                 {acceptModal.show && (
                     <motion.div className={styles.modalOverlay}>
@@ -2904,7 +2890,7 @@ export default function Profile() {
                 </AnimatePresence>
 
                 <AnimatePresence>
-                {/* Delete Proposal Modal */}
+
                 {deleteProposalModal.show && (
                     <motion.div className={styles.modalOverlay}
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -2960,7 +2946,7 @@ export default function Profile() {
                 </AnimatePresence>
 
                 <AnimatePresence>
-                {/* Decline Confirmation Modal */}
+
                 {declineModal.show && (
                     <motion.div className={styles.modalOverlay}
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -3016,7 +3002,7 @@ export default function Profile() {
                 {verifiedModal && (
                     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                         <div className="bg-white rounded-xl shadow-lg p-6 w-80 max-w-sm relative">
-                            {/* Close button */}
+
                             <motion.button {...btnMotion}
                                 onClick={() => setVerifiedModal(false)}
                                 className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
@@ -3024,7 +3010,7 @@ export default function Profile() {
                                 ✕
                             </motion.button>
 
-                            {/* Modal content */}
+
                             <div className="flex flex-col items-center text-center">
                                 <span className="text-4xl mb-4">🎉</span>
                                 <h2 className="text-xl font-bold mb-2">Congratulations!</h2>
@@ -3069,7 +3055,7 @@ export default function Profile() {
                                     value={signalMessage}
                                     onChange={(e) => setSignalMessage(e.target.value)}
                                     placeholder="Enter the issue..."
-                                    className={styles.editInput} // reuse editInput style for textarea
+                                    className={styles.editInput}
                                     rows={4}
                                 />
                             </div>

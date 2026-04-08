@@ -34,9 +34,7 @@
     box-sizing: border-box;
 }
 
-/* =========================================
-   Typography & Form Layout
-   ========================================= */
+
 
 .alertForm {
     display: flex;
@@ -94,7 +92,7 @@
 .inputGroup select:focus,
 .inputGroup textarea:focus {
     background-color: #ffffff;
-    border-color: var(--color-border-focus); /* Accent color (Red) */
+    border-color: var(--color-border-focus);
     box-shadow: var(--shadow-md);
 }
 
@@ -103,9 +101,7 @@
     min-height: 120px;
 }
 
-/* =========================================
-   Custom Select Dropdown
-   ========================================= */
+
 
 .customSelect {
     position: relative;
@@ -186,9 +182,7 @@
     font-weight: 600;
 }
 
-/* =========================================
-   Image Upload Section
-   ========================================= */
+
 
 .imageUploadSection {
     margin-bottom: 1.5rem;
@@ -198,7 +192,7 @@
 
 .imageGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Adaptabil */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 12px;
     margin-top: 0.5rem;
 }
@@ -219,7 +213,7 @@
     transform: scale(1.02);
 }
 
-/* Efect de overlay întunecat la hover pentru a vedea X-ul mai bine */
+
 .imagePreviewBox::before {
     content: '';
     position: absolute;
@@ -249,7 +243,7 @@
     justify-content: center;
     cursor: pointer;
     opacity: 0;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efect de bounce */
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     box-shadow: 0 4px 6px rgba(239, 68, 68, 0.4);
 }
 
@@ -289,9 +283,7 @@
     color: var(--color-primary-dark);
 }
 
-/* =========================================
-   Submit Button
-   ========================================= */
+
 
 .submitBtn {
     width: 100%;
@@ -300,7 +292,7 @@
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    border-radius: 12px; /* Mai modern decât pastila complet rotundă, se potrivește cu input-urile */
+    border-radius: 12px;
     background-color: transparent;
     color: var(--color-primary);
     font-size: 1.1rem;
@@ -331,9 +323,7 @@
     background-color: #f1f5f9;
 }
 
-/* =========================================
-   Responsive
-   ========================================= */
+
 
 @media (max-width: 640px) {
     .container {
@@ -347,7 +337,7 @@
     }
 
     .imageGrid {
-        grid-template-columns: repeat(2, 1fr); /* 2 coloane pe mobile pentru a nu fi pozele prea mici */
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 

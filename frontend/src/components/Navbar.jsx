@@ -5,7 +5,7 @@ import { FaHeart, FaBell } from "react-icons/fa";
 import { clearUserIdCache } from "@/utils/cryptoUtils";
 import {IoNotificationsOutline} from "react-icons/io5";
 
-// Helper to get CSRF token for POST requests
+
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie) {
@@ -23,9 +23,9 @@ function Navbar() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [menuActive, setMenuActive] = useState(false);
     const [user, setUser] = useState(null);
-    const [unreadCount, setUnreadCount] = useState(0); // For DMs
+    const [unreadCount, setUnreadCount] = useState(0);
 
-    // --- Search & Notification States ---
+
     const [query, setQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [showSearchDropdown, setShowSearchDropdown] = useState(false);
@@ -40,7 +40,7 @@ function Navbar() {
 
     const unreadNotifCount = notifications.filter(n => !n.is_read).length;
 
-    // 1. Auth Logic: Check tokens on mount
+
     useEffect(() => {
         const token = localStorage.getItem('auth-token');
         const tokenExpiration = localStorage.getItem('token-expiration');
@@ -55,16 +55,16 @@ function Navbar() {
         }
     }, []);
 
-    // 2. Fetch User Data & Notifications
+
     const fetchData = async () => {
         if (!isAuthenticated) return;
         try {
-            // Fetch User
+
             const userRes = await fetch('http://localhost:8000/accounts/user/', { credentials: 'include' });
             const userData = await userRes.json();
             setUser(userData);
 
-            // Fetch Notifications from your Django model
+
             const notifRes = await fetch('http://localhost:8000/accounts/notifications/', { credentials: 'include' });
             const notifData = await notifRes.json();
             setNotifications(notifData.notifications || []);
@@ -75,7 +75,7 @@ function Navbar() {
 
     useEffect(() => {
         fetchData();
-        // Refresh notifications every 60 seconds
+
         const interval = setInterval(fetchData, 60000);
         return () => clearInterval(interval);
     }, [isAuthenticated]);
@@ -86,7 +86,7 @@ function Navbar() {
         return () => window.removeEventListener("pet_match_notification", handler);
     }, [isAuthenticated]);
 
-    // 3. Search Logic (Debounced)
+
     useEffect(() => {
         if (!query.trim()) {
             setSearchResults([]);
@@ -103,7 +103,7 @@ function Navbar() {
                 const data = await res.json();
                 setSearchResults(data.users || []);
                 setShowSearchDropdown(true);
-                setShowNotifDropdown(false); // Close notifs if searching
+                setShowNotifDropdown(false);
             } catch (err) {
                 console.error("Search error:", err);
             }
@@ -112,7 +112,7 @@ function Navbar() {
         return () => clearTimeout(timeout);
     }, [query]);
 
-    // 4. Click Outside to Close Menus
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -126,7 +126,7 @@ function Navbar() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // --- Action Handlers ---
+
 
     const handleLogout = async () => {
         await fetch('http://localhost:8000/accounts/logout/', { method: 'POST', credentials: 'include' });
@@ -142,7 +142,7 @@ function Navbar() {
         setShowNotifDropdown(nextState);
         setShowSearchDropdown(false);
 
-        // Mark as read when opening
+
         if (nextState && unreadNotifCount > 0) {
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
             try {
@@ -333,7 +333,7 @@ function Navbar() {
                                                     <button
                                                         className={styles.deleteNotifBtn}
                                                         onClick={(e) => {
-                                                            e.stopPropagation(); // prevents opening notification
+                                                            e.stopPropagation();
                                                             deleteNotification(n.id);
                                                         }}
                                                     >

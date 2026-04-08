@@ -158,7 +158,7 @@ export default function Index() {
 
     const pulseSocketRef = useRef(null);
     const requestSocketRef = useRef(null);
-    const [userRadius, setUserRadius] = useState(10); // you can tweak default radius
+    const [userRadius, setUserRadius] = useState(10);
     const mapRef = useRef(null);
     const [selectedPoint, setSelectedPoint] = useState(null);
 
@@ -186,7 +186,7 @@ export default function Index() {
                 })
                     .then(res => res.json())
                     .then(data => {
-                        // ✅ now you know if user is superuser
+
                         if (data.is_superuser) {
                             setIsSuperuser(true);
                         }
@@ -227,7 +227,7 @@ export default function Index() {
                     return;
                 }
 
-                // 🔥 Add to nearest pulses (used in UI)
+
                 setNearestPulses((prev) => {
                     if (!newPulse || !newPulse.id) return prev;
                     if (prev.find((p) => p.id === newPulse.id)) return prev;
@@ -256,7 +256,7 @@ export default function Index() {
 
 
     useEffect(() => {
-        // Initialize WebSocket
+
         requestSocketRef.current = new WebSocket("ws://localhost:8000/ws/requests/");
 
         requestSocketRef.current.onopen = () => {
@@ -267,13 +267,13 @@ export default function Index() {
             try {
                 const message = JSON.parse(event.data);
 
-                // Handle deleted requests
+
                 if (message.type === "request_deleted" && message.id) {
                     setUrgentRequests((prev) => prev.filter((p) => p.id !== message.id));
                     return;
                 }
 
-                // Handle new/updated requests — re-fetch so match_score is computed correctly
+
                 if (!message.id) return;
                 fetchUrgentRequests();
 
@@ -517,7 +517,7 @@ export default function Index() {
             })),
     }), [urgentRequests]);
 
-    // user location geojson
+
     const userLocationGeoJSON = userLocation
         ? {
             type: "FeatureCollection",
@@ -536,7 +536,7 @@ export default function Index() {
         }
         : null;
 
-    // map center (user fallback to Iași)
+
     const mapCenter = userLocation ? [userLocation.lng, userLocation.lat] : [27.6014, 47.1585];
 
 
@@ -883,17 +883,17 @@ export default function Index() {
                                                 }
                                             }}
                                         >
-                                            {/* Title / Name */}
+
                                             <p className="font-semibold">{selectedPoint.properties.title || selectedPoint.properties.name}</p>
 
-                                            {/* Type */}
+
                                             {selectedPoint.properties.type && (
                                                 <p style={{ fontSize: '0.8rem', color: '#666' }}>
                                                     🏷️ {selectedPoint.properties.type} - {selectedPoint.properties.pulseType}
                                                 </p>
                                             )}
 
-                                            {/* Pulse-specific fields */}
+
                                             {selectedPoint.properties.type === "Pulse" && (
                                                 <>
                                                     {selectedPoint.properties.user && <p>👤 @{selectedPoint.properties.user}</p>}
@@ -913,7 +913,7 @@ export default function Index() {
                                                 </>
                                             )}
 
-                                            {/* Request-specific fields */}
+
                                             {selectedPoint.properties.type === "Request" && (
                                                 <>
                                                     {selectedPoint.properties.user && <p>👤 @{selectedPoint.properties.user}</p>}

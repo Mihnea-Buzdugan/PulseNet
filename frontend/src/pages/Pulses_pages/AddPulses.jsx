@@ -49,8 +49,8 @@ function AddPulses() {
         COUNTRY_OPTIONS.find(c => c.value === 'RO') || COUNTRY_OPTIONS[0]
     );
     const [phoneError, setPhoneError] = useState("");
-    const [imagesPreview, setImagesPreview] = useState([]); // array of object URLs for preview
-    const [selectedFiles, setSelectedFiles] = useState([]); // array of File objects
+    const [imagesPreview, setImagesPreview] = useState([]);
+    const [selectedFiles, setSelectedFiles] = useState([]);
     const [isGettingLocation, setIsGettingLocation] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -115,7 +115,7 @@ function AddPulses() {
 
         if (selectedFiles.length + files.length > 7) {
             alert("Poți adăuga maxim 7 imagini.");
-            // reset input so user can reselect
+
             e.target.value = null;
             return;
         }
@@ -124,13 +124,13 @@ function AddPulses() {
         setImagesPreview((prev) => [...prev, ...newPreviews]);
         setSelectedFiles((prev) => [...prev, ...files]);
 
-        // clear file input value so the same file can be selected again if needed
+
         e.target.value = null;
     };
 
     const removeImageAt = (index) => {
         setImagesPreview((prev) => {
-            // revoke object URL to free memory
+
             try {
                 URL.revokeObjectURL(prev[index]);
             } catch (e) {}
@@ -160,16 +160,16 @@ function AddPulses() {
                     });
                 },
                 (error) => {
-                    // forward the error to the caller so they can decide what to do
+
                     reject(error);
                 },
-                { enableHighAccuracy: true, timeout: 10000 } // 10s timeout
+                { enableHighAccuracy: true, timeout: 10000 }
             );
         });
     };
 
     const addPulse = async () => {
-        // validate required fields
+
         if (!title.trim() || !description.trim() || !phone.trim()) {
             alert("Please fill in all required fields (*)");
             return;
@@ -188,12 +188,12 @@ function AddPulses() {
             console.error("Error getting location:", err);
             alert("Could not get your location. You must allow location access to publish the listing.");
             setIsGettingLocation(false);
-            return; // IMPORTANT: do not proceed with the API call if coords not fetched
+            return;
         } finally {
             setIsGettingLocation(false);
         }
 
-        // If we have reached here, coordinates were fetched successfully
+
         setIsSubmitting(true);
         try {
             const formData = new FormData();
@@ -209,7 +209,7 @@ function AddPulses() {
             formData.append("lat", location.lat);
             formData.append("lng", location.lng);
 
-            // append files from selectedFiles state
+
             selectedFiles.forEach((file) => {
                 formData.append("images", file);
             });
@@ -224,12 +224,12 @@ function AddPulses() {
             });
 
             if (response.ok) {
-                // success: reset form and previews
+
                 setTitle("");
                 setPrice("");
                 setDescription("");
                 setPhone("");
-                // revoke object URLs to avoid memory leak
+
                 imagesPreview.forEach((url) => {
                     try {
                         URL.revokeObjectURL(url);
@@ -241,7 +241,7 @@ function AddPulses() {
 
                 alert("Listing published successfully!");
             } else {
-                // try to parse error response
+
                 let errorData = null;
                 try {
                     errorData = await response.json();
@@ -270,7 +270,7 @@ function AddPulses() {
                 <Link to="/create-request" className="mb-5 text-[#3B82A6] underline hover:text-[#2F6B87]  cursor-pointer ">Have an urgent request?</Link>
                 </div>
 
-                {/* --- Secțiunea Detalii --- */}
+
                 <section className={styles["form-section"]}>
                     <h3 className={styles["section-title"]}>Add as many details as possible!</h3>
 
@@ -324,7 +324,6 @@ function AddPulses() {
                     </div>
                 </section>
 
-                {/* --- Secțiunea Imagini --- */}
                 <section className={styles["form-section"]}>
                     <h3 className={styles["section-title"]}>Images</h3>
                     <p className={styles["helper-text"]}>
@@ -347,7 +346,7 @@ function AddPulses() {
                             <span>Add images</span>
                         </label>
 
-                        {/* Imagini încărcate */}
+
                         {imagesPreview.map((img, idx) => (
                             <div
                                 key={idx}
@@ -368,7 +367,7 @@ function AddPulses() {
                             </div>
                         ))}
 
-                        {/* Sloturi goale placeholder */}
+
                         {[...Array(Math.max(0, 7 - imagesPreview.length))].map((_, i) => (
                             <div key={i} className={styles["image-slot"]}>
                 <span role="img" aria-label="camera">
@@ -379,7 +378,7 @@ function AddPulses() {
                     </div>
                 </section>
 
-                {/* --- Secțiunea Descriere --- */}
+
                 <section className={styles["form-section"]}>
                     <div className={styles["form-group"]}>
                         <label className={styles["label-text"]}>Description *</label>
@@ -397,7 +396,7 @@ function AddPulses() {
                     </div>
                 </section>
 
-                {/* --- Secțiunea Contact + Submit --- */}
+
                 <section className={styles["form-section"]}>
                     <h3 className={styles["section-title"]}>Contact details</h3>
                     <div

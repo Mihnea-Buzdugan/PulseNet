@@ -48,7 +48,7 @@ const SignUp = () => {
                 throw new Error('Failed to fetch CSRF token');
             })
             .then((data) => {
-                // Handle CSRF token data if needed
+
             })
             .catch((error) => console.error('Error fetching CSRF token:', error));
     }, []);
@@ -109,7 +109,7 @@ const SignUp = () => {
                 localStorage.setItem('auth-token', 'true');
                 localStorage.setItem('token-expiration', expirationTime.toString());
                 setTimeout(() => {
-                    window.location.href = '/'; // Redirect to home page
+                    window.location.href = '/';
                 }, 0);
             } else {
                 const errorData = await response.json();
@@ -122,7 +122,7 @@ const SignUp = () => {
     };
 
     const handleGoogleLogin = async (response) => {
-        const googleToken = response.credential; // Tokenul Google
+        const googleToken = response.credential;
 
         console.log("Google Token: ", googleToken);
         const csrfToken = getCookie('csrftoken');
@@ -138,14 +138,14 @@ const SignUp = () => {
                 'X-CSRFToken': csrfToken,
             },
             credentials: 'include',
-            body: JSON.stringify({ google_token: googleToken })  // Trimite tokenul Google către backend
+            body: JSON.stringify({ google_token: googleToken })
         });
         if (resp.ok) {
             const data = await resp.json();
             console.log(data);
             await initializeE2EE();
             setTimeout(() => {
-                window.location.href = '/'; // Redirect to home page
+                window.location.href = '/';
             }, 0);
             const exp = new Date();
             exp.setHours(exp.getHours() + 6);
@@ -272,7 +272,6 @@ const SignUp = () => {
                         </div>
                     </div>
 
-                    {/* Submit button */}
                     <div className={styles["sign-up"]}>
                         <button className={styles["buton-signup"]} onClick={handleSubmit}>
                             SIGN UP

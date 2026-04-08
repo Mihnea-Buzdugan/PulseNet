@@ -6,7 +6,7 @@ import FavoritePulses from "./pages/User_pages/FavoritePulses";
 import './App.css';
 import ScrollToTop from "@/components/ScrollToTop";
 
-// Lazy loaded pages
+
 const Index = React.lazy(() => import('./pages/Pulses_pages/Index'));
 const SignUp = React.lazy(() => import('./pages/Authentification/SignUp.jsx'));
 const Login = React.lazy(() => import('./pages/Authentification/Login.jsx'));
@@ -42,7 +42,7 @@ const NotificationHandler = ({ currentUser }) => {
         socket.onmessage = (e) => {
             const data = JSON.parse(e.data);
 
-            // --- CHAT NOTIFICATIONS ---
+
             if (data.type === "new_message") {
                 const currentChatPath = `/direct-chat/${data.sender_id}`;
 
@@ -127,7 +127,7 @@ const NotificationHandler = ({ currentUser }) => {
                 }
             }
 
-            // --- RENTAL PROPOSAL NOTIFICATIONS ---
+
             else if (data.type === "new_rental_proposal") {
                 toast.custom((t) => (
                     <div
@@ -144,7 +144,7 @@ const NotificationHandler = ({ currentUser }) => {
                             cursor: 'pointer',
                             overflow: 'hidden',
                             transition: 'all 0.3s ease',
-                            borderLeft: '6px solid #10b981', // green for rental
+                            borderLeft: '6px solid #10b981',
                             animation: t.visible ? 'enter 0.4s ease' : 'leave 0.4s ease',
                         }}
                     >
@@ -238,13 +238,13 @@ const NotificationHandler = ({ currentUser }) => {
                     </div>
                 ), { duration: 15000 });
             } else if (data.type === "signal_resolved") {
-                // Dispatch custom event for global state updates (e.g., updating a notification bell count)
+
                 window.dispatchEvent(new CustomEvent("signal_resolved", { detail: data }));
 
                 toast.custom((t) => (
                     <div
                         onClick={() => {
-                            // Navigate to the rental associated with the signal if available
+
                             if (data.metadata?.rental_id) {
                                 navigate(`/pulse/rental/${data.metadata.rental_id}`);
                             }
@@ -261,7 +261,7 @@ const NotificationHandler = ({ currentUser }) => {
                             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                             cursor: 'pointer',
                             overflow: 'hidden',
-                            borderLeft: '6px solid #10b981', // Success Green
+                            borderLeft: '6px solid #10b981',
                             animation: t.visible ? 'enter 0.4s ease' : 'leave 0.4s ease',
                         }}
                     >
@@ -352,7 +352,7 @@ function App() {
         return user?.is_superuser ? children : <Navigate to="/" />;
     };
 
-    // --- NEW: Check if user is banned ---
+
     if (user && user.is_banned) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center px-4">
@@ -362,11 +362,10 @@ function App() {
                         Your access to this application has been temporarily restricted due to a violation of our terms.
                     </p>
 
-                    {/* If your backend sends the date, format and display it */}
                     {user.banned_until && (() => {
                         const date = new Date(user.banned_until);
                         const day = String(date.getDate()).padStart(2, "0");
-                        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+                        const month = String(date.getMonth() + 1).padStart(2, "0");
                         const year = date.getFullYear();
                         const hours = String(date.getHours()).padStart(2, "0");
                         const minutes = String(date.getMinutes()).padStart(2, "0");
@@ -381,8 +380,8 @@ function App() {
                     <button
                         type="button"
                         onClick={() => {
-                            setUser(null);        // Clear user first
-                            navigate('/login');   // Then navigate
+                            setUser(null);
+                            navigate('/login');
                         }}
                         className="text-blue-600 hover:underline"
                     >
@@ -392,7 +391,7 @@ function App() {
             </div>
         );
     }
-    // ------------------------------------
+
 
     return (
         <div className="min-h-screen bg-white">

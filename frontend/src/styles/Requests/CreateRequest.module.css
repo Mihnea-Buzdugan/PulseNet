@@ -1,4 +1,4 @@
-/* --- Tailwind Utility Classes --- */
+
 
 * {
     margin: 0;
@@ -47,7 +47,7 @@
 .categoryGrid { @apply flex flex-wrap gap-3; }
 .categoryBtnBase { @apply flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 ease-in-out border border-transparent; }
 
-/* Category Button States */
+
 .catDefault { @apply bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]; }
 .catSelected { @apply bg-[var(--color-surface-alt)] text-[var(--color-text-solid)] ring-2 ring-[var(--color-primary)] shadow-sm; }
 .catInactive { @apply bg-slate-100 text-slate-400 opacity-60 hover:opacity-80; }
@@ -59,9 +59,7 @@
 }
 
 
-/* =========================================
-   Image Upload Section Styles
-   ========================================= */
+
 .imageUploadSection {
     display: flex;
     flex-direction: column;
@@ -153,7 +151,7 @@
 }
 
 .uploadBtnBox:hover {
-    border-color: var(--color-border-focus); /* Changed hover to purple to match theme instead of red */
+    border-color: var(--color-border-focus); 
     background-color: var(--color-surface);
     color: var(--color-primary);
 }
@@ -165,9 +163,7 @@
 }
 
 
-/* =========================================
-   React Datepicker Overrides
-   ========================================= */
+
 :global(.react-datepicker-wrapper),
 :global(.react-datepicker__input-container) {
     display: block !important;

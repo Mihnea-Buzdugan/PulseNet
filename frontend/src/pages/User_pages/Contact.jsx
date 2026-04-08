@@ -43,7 +43,7 @@ const ContactPage = () => {
         complaint_message: ''
     });
 
-    // Default pe Statele Unite sau România, cum preferi
+
     const [selectedCountry, setSelectedCountry] = useState(
         COUNTRY_OPTIONS.find(c => c.value === 'RO') || COUNTRY_OPTIONS[0]
     );
@@ -90,7 +90,7 @@ const ContactPage = () => {
         setIsSubmitting(true);
         setStatus({ type: '', message: '' });
 
-        // Validare număr de telefon
+
         if (formData.phone_number) {
             if (!isValidPhoneNumber(formData.phone_number, selectedCountry.value)) {
                 setStatus({ type: 'error', message: `The phone number entered is not valid for ${selectedCountry.value}.` });
@@ -141,7 +141,7 @@ const ContactPage = () => {
         }
     };
 
-    // Stilizare custom pentru react-select ca să se potrivească cu designul tău
+
     const customSelectStyles = {
         control: (provided) => ({
             ...provided,
@@ -187,7 +187,7 @@ const ContactPage = () => {
             </div>
             <div className={styles.pageContainer}>
                 <div className={styles.card}>
-                    {/* Left Side: Form */}
+
                     <div className={styles.leftPanel}>
                         <div className={styles.header}>
                             <h1>Chat to our team</h1>
@@ -296,19 +296,16 @@ const ContactPage = () => {
                         </form>
                     </div>
 
-                    {/* Right Side: Image Placeholder & Testimonial */}
                     <div className={styles.rightPanel}>
                         <div className={styles.imageOverlay}>
 
-                            {/* Logo at the top */}
                             <div className={styles.logoTop}>
                                 <span>✻ PulseNet</span>
                             </div>
 
-                            {/* Testimonial / About section */}
                             <div className={styles.testimonialWrapper}>
 
-                                {/* Authors info */}
+
                                 <div className={styles.testimonialAuthor}>
                                     <div className={styles.authorDetails}>
                                         <strong>Buzdugan Mihnea-Andrei & Covaliuc Lucian</strong>
@@ -322,7 +319,7 @@ const ContactPage = () => {
 
                         </div>
 
-                        {/* Background image */}
+
                         <img
                             src="./logo.png"
                             alt="PulseNet placeholder"

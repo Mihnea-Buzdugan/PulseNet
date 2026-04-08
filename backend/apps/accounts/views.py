@@ -149,7 +149,7 @@ def google_login(request):
         google_token = data.get('google_token')
         if google_token:
             try:
-                # Verify the Google token
+
                 id_info = id_token.verify_oauth2_token(google_token, Request(), GOOGLE_CLIENT_ID)
                 google_email = id_info.get('email')
                 full_given = id_info.get('given_name', '').strip()
@@ -158,31 +158,31 @@ def google_login(request):
                 hashed_password = make_password(raw_password)
                 User = get_user_model()
                 if parts:
-                    # first word → last_name
+
                     last_name = parts[0]
-                    # the rest → first_name
+
                     first_name = ' '.join(parts[1:]) if len(parts) > 1 else ''
                 else:
-                    # fallback if nothing in given_name
+
                     last_name = ''
                     first_name = ''
 
                 if google_email:
-                    # Find or create a user
+
                     user = User.objects.filter(email=google_email).first()
                     if not user:
-                        # Create a new user if not found
+
                         user = User.objects.create_user(
                             username=google_email,
                             email=google_email,
                             first_name=first_name,
                             last_name=last_name,
-                            password=hashed_password,  # Random password
+                            password=hashed_password,
                             is_private = False,
                         )
 
-                    # Use the dotted path to the backend
-                    user.backend = 'django.contrib.auth.backends.ModelBackend'  # Corrected line
+
+                    user.backend = 'django.contrib.auth.backends.ModelBackend'
                     if user.is_superuser == False or user.is_superuser == True:
 
                         django_login(request, user)
@@ -230,7 +230,7 @@ def user(request):
             'lastName': user.last_name,
             'is_superuser': user.is_superuser,
             'profile_picture': user.profile_picture.url if user.profile_picture else None,
-            "is_banned": user.is_banned,  # Calls your @property helper
+            "is_banned": user.is_banned,
             "banned_until": user.banned_until.isoformat() if user.banned_until else None,
         }}, status=200)
     else:
@@ -242,7 +242,7 @@ def profile(request):
     if request.method == "GET":
         user = request.user
 
-        # --- Pulses ---
+
         pulses = Pulse.objects.filter(user=user).prefetch_related('images')
         pulses_data = []
         for p in pulses:
@@ -275,7 +275,7 @@ def profile(request):
                 "timestamp": req.created_at.strftime("%Y-%m-%d %H:%M"),
             })
 
-        # --- Count total posts ---
+
         total_posts = (
             pulses.count() +
             Alert.objects.filter(user=user).count() +
@@ -301,7 +301,7 @@ def profile(request):
             "is_private": user.is_private,
             "skills": user.skills if isinstance(user.skills, list) else [],
             "date_joined": user.date_joined,
-            "totalPosts": total_posts,  # ← here you return the total number of posts
+            "totalPosts": total_posts,
             "pulses": pulses_data,
             "requests": requests_data,
         }
@@ -317,28 +317,26 @@ def become_verified(request):
     try:
         user = request.user
 
-        # Calculate account age
         account_age = timezone.now() - user.date_joined
 
-        # Calculate total posts (example using Pulses, Alerts, UrgentRequests)
         total_posts = (
                 Pulse.objects.filter(user=user).count() +
                 Alert.objects.filter(user=user).count() +
                 UrgentRequest.objects.filter(user=user).count()
         )
 
-        # Check eligibility
+
         if total_posts <= 15:
             return JsonResponse({"success": False, "error": "Not enough posts to become verified."}, status=400)
 
         if user.trust_score < 200:
             return JsonResponse({"success": False, "error": "Trust level not high enough."}, status=400)
 
-        # Account age: either older than 3 months or older than 3 hours
+
         if not (account_age >= timedelta(days=90)):
             return JsonResponse({"success": False, "error": "Account is too new to become verified."}, status=400)
 
-        # Mark user as verified
+
         user.is_verified = True
         user.save(update_fields=["is_verified"])
 
@@ -353,7 +351,7 @@ def become_verified(request):
 @require_http_methods(["PUT"])
 def update_profile(request):
     try:
-        # 1. Parse JSON data from the request body
+
         data = json.loads(request.body)
         user = request.user
 
@@ -370,14 +368,12 @@ def update_profile(request):
         user.visibility_radius = data.get('visibility_radius', user.visibility_radius)
         user.is_private = data.get('is_private', user.is_private)
         user.skills = data.get('skills', [])
-        # 3. Validate and save
+
         user.save()
 
         if old_skills != user.skills:
             update_user_embedding.delay(user.id)
 
-        # 2. Re-aducem pulsurile pentru a sincroniza complet frontend-ul
-        # Folosim aceiași logică ca în view-ul de profile
         pulses = Pulse.objects.filter(user=user).prefetch_related('images')
         pulses_data = [
             {
@@ -436,21 +432,21 @@ def upload_profile_picture(request):
 
     file = request.FILES["profile_picture"]
 
-    # Basic validation
+
     if not file.content_type.startswith("image/"):
         return JsonResponse(
             {"error": "File must be an image."},
             status=400
         )
 
-    max_size = 20 * 1024 * 1024  # 5MB
+    max_size = 20 * 1024 * 1024
     if file.size > max_size:
         return JsonResponse(
             {"error": "Image must be smaller than 20MB."},
             status=400
         )
 
-    # Optional: delete old image file (avoids orphan files)
+
     if user.profile_picture:
         user.profile_picture.delete(save=False)
 
@@ -494,17 +490,14 @@ def upload_profile_picture(request):
 def delete_profile_picture(request):
     user = request.user
 
-    # If no picture exists
     if not user.profile_picture:
         return JsonResponse(
             {"error": "No profile picture to delete."},
             status=400
         )
 
-    # Delete file from storage (filesystem / S3 / etc.)
     user.profile_picture.delete(save=False)
 
-    # Remove reference from database
     user.profile_picture = None
     user.save()
 
@@ -567,7 +560,6 @@ def add_pulse(request):
         first_image = pulse.images.first()
         image_url = request.build_absolute_uri(first_image.image.url) if first_image else None
 
-        # Broadcast payload with GeoJSON location
         broadcast_payload = {
             "id": pulse.id,
             "type": pulse.pulse_type,
@@ -580,7 +572,7 @@ def add_pulse(request):
             "total_reviews": pulse.total_reviews if hasattr(pulse, 'total_reviews') else 0,
             "currency": pulse.currencyType,
             "timestamp": pulse.created_at.isoformat(),
-            "distance": None,  # Calculated in consumer
+            "distance": None,
             "location": json.loads(pulse.location.geojson) if pulse.location else None,
             "image": image_url,
         }
@@ -607,7 +599,6 @@ def add_pulse(request):
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
-#adauga obiect in profile page
 
 
 @login_required
@@ -618,12 +609,10 @@ def update_pulse(request, pulse_id):
         if pulse.user != request.user:
             return JsonResponse({"error": "Permission denied"}, status=403)
 
-        # Determine if JSON or FormData
         if request.content_type.startswith("application/json"):
             data = json.loads(request.body or "{}")
         else:
             data = request.POST
-        # --- Update fields if present ---
         pulse.title = data.get("title", pulse.title)
         pulse.pulse_type = data.get("category", pulse.pulse_type)
         pulse.price = data.get("price", pulse.price)
@@ -643,7 +632,7 @@ def update_pulse(request, pulse_id):
         elif loc is None and "location" in data:
             if pulse.location is not None:
                 pulse.location = None
-                pulse.address = "Global / Online"  # Nu mai e nevoie de Celery pt asta
+                pulse.address = "Global / Online"
                 location_changed = False
 
         pulse.full_clean()
@@ -654,19 +643,16 @@ def update_pulse(request, pulse_id):
             reverse_geocode_location.delay("Pulse", pulse.id)
             address_status = "Changing the address..."
 
-        # --- Handle uploaded images ---
         removed_images = request.POST.getlist("removed_images")
         if removed_images:
             for url in removed_images:
                 filename = url.split("/")[-1]
                 pulse.images.filter(image__icontains=filename).delete()
 
-        # Add new uploaded images
         uploaded_files = request.FILES.getlist("images")
         for img in uploaded_files:
             pulse.images.create(image=img)
 
-        # Prepare response data
         pulse_data = {
             "id": pulse.id,
             "title": pulse.title,
@@ -705,7 +691,6 @@ def remove_pulse(request, pulse_id):
     except Pulse.DoesNotExist:
         return JsonResponse({"success": False, "error": "Pulsul nu a fost găsit"}, status=404)
     except Exception as e:
-        # If this triggers, check your console to see the specific error
         return JsonResponse(
             {"success": False, "error": str(e)},
             status=400
@@ -769,7 +754,6 @@ def list_all_pulses(request):
         .order_by("-created_at")
     )
 
-    # 🔍 SEARCH (title + description)
     if search:
         qs = qs.filter(
             Q(title__icontains=search) |
@@ -834,7 +818,6 @@ def list_all_pulses(request):
     })
 
 
-#fixed
 @csrf_protect
 @login_required
 @require_http_methods(["GET"])
@@ -995,28 +978,25 @@ def get_favorite_pulses(request):
     sort = request.GET.get("sort", "recent")
 
     try:
-        # Get IDs of pulses favorited by the user
         favorite_pulse_ids = FavoritePulse.objects.filter(
             user=request.user
         ).values_list("pulse_id", flat=True)
 
         pulses = Pulse.objects.filter(id__in=favorite_pulse_ids).select_related("user").prefetch_related("images")
 
-        # Server-side filtering
+
         if search:
             pulses = pulses.filter(title__icontains=search)
         if pulse_type != "all":
             pulses = pulses.filter(pulse_type=pulse_type)
 
-        # Server-side sorting
         if sort == "price_asc":
             pulses = pulses.order_by("price")
         elif sort == "price_desc":
             pulses = pulses.order_by("-price")
-        else:  # recent
+        else:
             pulses = pulses.order_by("-created_at")
 
-        # Pagination
         paginator = Paginator(pulses, per_page)
         page_obj = paginator.get_page(page_number)
 
@@ -1034,7 +1014,7 @@ def get_favorite_pulses(request):
                 "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
                 "image": request.build_absolute_uri(p.images.first().image.url)
                 if p.images.exists() else None,
-                "is_favorite": True  # ✅ Always true here
+                "is_favorite": True
             })
 
         return JsonResponse({
@@ -1089,10 +1069,9 @@ def get_pulse_by_id(request, pulse_id):
         avg_rating = PulseRating.objects.filter(pulse=pulse).aggregate(avg=Avg("rating"))["avg"]
 
         if avg_rating is not None:
-            avg_rating = round(avg_rating, 1)  # optional rounding
+            avg_rating = round(avg_rating, 1)
         else:
             avg_rating = "N/A"
-        # New field: does the current user have enough trust to view/interact with this pulse?
         has_trust_access = request.user.is_verified and request.user.trust_score > 200
 
         data = {
@@ -1115,7 +1094,7 @@ def get_pulse_by_id(request, pulse_id):
             "user_rating": user_rating,
             "reserved_periods": unavailable_ranges,
             "unavailable_ranges": unavailable_ranges,
-            "has_trust_access": has_trust_access,  # <-- new field
+            "has_trust_access": has_trust_access,
             "rating": avg_rating,
         }
 
@@ -1196,7 +1175,6 @@ def get_pulse_comments(request, pulse_id):
             }
         })
     elif request.method == "DELETE":
-        # get comment_id from query params or body
 
         comment_id = pulse_id
         if not comment_id:
@@ -1237,14 +1215,12 @@ def add_pulse_rating(request, pulse_id):
     except Pulse.DoesNotExist:
         return JsonResponse({"success": False, "error": "Pulse not found"}, status=404)
 
-    # Check if user has already rated
     rating_obj, created = PulseRating.objects.update_or_create(
         pulse=pulse,
         user=request.user,
         defaults={"rating": rating_value}
     )
 
-    # Update pulse popularity score and total reviews
     all_ratings = PulseRating.objects.filter(pulse=pulse)
     total_reviews = all_ratings.count()
     popularity_score = all_ratings.aggregate(avg=models.Avg('rating'))['avg'] or 0
@@ -1328,7 +1304,6 @@ def create_pulse_rental(request):
         status="pending",
     )
 
-    # -------- CREATE DATABASE NOTIFICATION --------
 
     notification = Notification.objects.create(
         user=pulse.user,
@@ -1343,7 +1318,6 @@ def create_pulse_rental(request):
         }
     )
 
-    # -------- SEND WEBSOCKET NOTIFICATION --------
 
     channel_layer = get_channel_layer()
 
@@ -1367,15 +1341,11 @@ def create_pulse_rental(request):
         "total_price": proposed_total
     })
 
-    # -------------------------------------------------
-    # Send realtime WebSocket notification
-    # -------------------------------------------------
-
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         f"user_notifications_{pulse.user.id}",
         {
-            "type": "send_rental_notification",  # note the new handler
+            "type": "send_rental_notification",
             "title": "New Rental Proposal",
             "message": f"{request.user.username} proposed {proposed_total} for {pulse.title}",
             "pulse_id": pulse.id,
@@ -1432,31 +1402,27 @@ def modify_rental_status(request, rental_id):
 
         try:
             data = json.loads(request.body)
-            status = data.get("status")            # accept / decline
-            new_total_price = data.get("total_price")  # counteroffer price
+            status = data.get("status")
+            new_total_price = data.get("total_price")
 
             notify_other_user = False
 
-            # --- handle status update ---
             if status:
                 rental.status = status
-                rental.last_offer_by = None  # reset last_offer_by if accepted/declined
+                rental.last_offer_by = None
 
-            # --- handle counteroffer ---
             if new_total_price is not None:
                 rental.total_price = float(new_total_price)
-                rental.status = "pending"  # counteroffers set status back to pending
-                rental.last_offer_by = user  # track who made the last offer
-                notify_other_user = True     # flag to send notification
+                rental.status = "pending"
+                rental.last_offer_by = user
+                notify_other_user = True
 
-            # calculate duration
             duration = (rental.end_date - rental.start_date).days
             if duration <= 0:
                 duration = 1
 
             rental.save()
 
-            # --- send notification if counteroffer was made ---
             if notify_other_user:
                 other_user = rental.pulse.user if is_renter else rental.renter
 
@@ -1471,7 +1437,6 @@ def modify_rental_status(request, rental_id):
                     metadata={"new_total_price": rental.total_price}
                 )
 
-                # send via WebSocket
                 channel_layer = get_channel_layer()
                 async_to_sync(channel_layer.group_send)(
                     f"user_notifications_{other_user.id}",
@@ -1499,7 +1464,6 @@ def modify_rental_status(request, rental_id):
             return JsonResponse({"error": str(e)}, status=400)
 
     elif request.method == "DELETE":
-        # only renter can cancel their proposal
         if not is_renter:
             return JsonResponse({"error": "Only the renter can delete this proposal"}, status=403)
 
@@ -1527,8 +1491,7 @@ def signal_pulse_rental(request):
 
         rental = get_object_or_404(PulseRental, id=rental_id)
 
-        # Only the owner of the pulse or the renter can report a problem
-        is_owner = rental.pulse.user == request.user   # change `user` if your Pulse owner field has another name
+        is_owner = rental.pulse.user == request.user
         is_renter = rental.renter == request.user
 
         if not is_owner and not is_renter:
@@ -1559,7 +1522,6 @@ def signal_pulse_rental(request):
 @login_required
 @require_POST
 def pulse_rental_feedback(request, rental_id):
-    # Fetch the rental
     rental = get_object_or_404(PulseRental, id=rental_id)
 
     try:
@@ -1569,21 +1531,16 @@ def pulse_rental_feedback(request, rental_id):
     except json.JSONDecodeError:
         return JsonResponse({"detail": "Invalid JSON payload."}, status=400)
 
-        # 2. Validation
     try:
-        # This will now correctly see the number 7 from your JSON
         rating = int(rating)
     except (TypeError, ValueError):
         return JsonResponse({"detail": "Rating must be an integer."}, status=400)
 
-    # Validate rating falls within the 1-10 range
     if rating < 1 or rating > 10:
         return JsonResponse({"detail": "Rating must be between 1 and 10."}, status=400)
 
-    # The owner of the pulse
     pulse_owner = rental.pulse.user
 
-    # 1. Create or update the detailed PulseFeedback
     feedback, feedback_created = PulseFeedback.objects.update_or_create(
         pulse=rental.pulse,
         reviewer=request.user,
@@ -1594,7 +1551,6 @@ def pulse_rental_feedback(request, rental_id):
         }
     )
 
-    # 2. Create or update the simplified PulseRating
     if request.user != rental.pulse.user:
         pulse_rating, rating_created = PulseRating.objects.update_or_create(
             pulse=rental.pulse,
@@ -1604,7 +1560,6 @@ def pulse_rental_feedback(request, rental_id):
             }
         )
 
-    # Return the response
     return JsonResponse({
         "feedback_id": feedback.id,
         "pulse_id": rental.pulse.id,
@@ -1620,7 +1575,6 @@ def pulse_rental_feedback(request, rental_id):
 @login_required
 @require_POST
 def request_rental_feedback(request, rental_id):
-    # Fetch the UrgentRequest (the 'rental' context here)
     urgent_request = get_object_or_404(UrgentRequestOffer, id=rental_id)
 
     try:
@@ -1630,9 +1584,7 @@ def request_rental_feedback(request, rental_id):
     except json.JSONDecodeError:
         return JsonResponse({"detail": "Invalid JSON payload."}, status=400)
 
-        # 2. Validation
     try:
-        # This will now correctly see the number 7 from your JSON
         rating_val = int(rating_val)
     except (TypeError, ValueError):
         return JsonResponse({"detail": "Rating must be an integer."}, status=400)
@@ -1640,10 +1592,8 @@ def request_rental_feedback(request, rental_id):
     if rating_val < 1 or rating_val > 10:
         return JsonResponse({"detail": "Rating must be between 1 and 10."}, status=400)
 
-    # The owner of the request is the person who created the UrgentRequest
     request_owner = urgent_request.request.user
 
-    # 1. Create or update UrgentRequestFeedback
     feedback, feedback_created = UrgentRequestFeedback.objects.update_or_create(
         request=urgent_request.request,
         reviewer=request.user,
@@ -1654,8 +1604,6 @@ def request_rental_feedback(request, rental_id):
         }
     )
 
-
-    # Return response
     return JsonResponse({
         "feedback_id": feedback.id,
         "request_id": urgent_request.id,
@@ -1822,8 +1770,6 @@ def search_users(request):
     results = []
 
     for user in users:
-
-        # Friendship check (sorted IDs like your model)
         is_friend = Friendship.objects.filter(
             user1_id=min(request.user.id, user.id),
             user2_id=max(request.user.id, user.id),
@@ -1947,14 +1893,12 @@ def follow_user(request, user_id):
 
     target = User.objects.get(id=user_id)
 
-    #  If already following → ignore
     if Follow.objects.filter(
         follower=request.user,
         following=target
     ).exists():
         return JsonResponse({"already_following": True})
 
-    #  If target is private → create pending request
     if target.private_account:
         PendingFollow.objects.get_or_create(
             requester=request.user,
@@ -1963,7 +1907,6 @@ def follow_user(request, user_id):
 
         return JsonResponse({"status": "pending_request_created"})
 
-    #  Public account → create follow directly
     Follow.objects.get_or_create(
         follower=request.user,
         following=target
@@ -1978,24 +1921,20 @@ def unfollow_user(request, user_id):
 
     target = User.objects.get(id=user_id)
 
-    # Try to get friendship safely
     friendship = Friendship.objects.filter(
         user1_id=min(request.user.id, target.id),
         user2_id=max(request.user.id, target.id),
     ).first()
 
     if friendship:
-        # If friendship exists → delete it
         friendship.delete()
 
-        # Optional: recreate follow from target → user
         Follow.objects.get_or_create(
             follower=target,
             following=request.user
         )
 
     else:
-        # No friendship → just remove follow
         Follow.objects.filter(
             follower=request.user,
             following=target
@@ -2021,13 +1960,11 @@ def accept_follow_request(request, request_id):
 
     requester = pending.requester
 
-    # Create real follow
     Follow.objects.get_or_create(
         follower=requester,
         following=request.user
     )
 
-    # Delete pending request
     pending.delete()
 
     return JsonResponse({"status": "accepted"})
@@ -2075,17 +2012,15 @@ from django.db.models import Q
 from .models import User, DirectConversation, Friendship, DirectMessage, Group_Message
 
 
-# --- SYNC HELPERS ---
 
 def handle_create_conversation_sync(request, user2_id):
     try:
         if not request.user.is_authenticated:
             return {"error": "Authentication required", "status": 401}
 
-        # Parse JSON body
         try:
             body = json.loads(request.body)
-            from_pulse = body.get("fromPulse", False)  # default to False
+            from_pulse = body.get("fromPulse", False)
         except json.JSONDecodeError:
             from_pulse = False
 
@@ -2098,7 +2033,6 @@ def handle_create_conversation_sync(request, user2_id):
         if user1.id == user2.id:
             return {"error": "Cannot chat with yourself", "status": 400}
 
-        # Order users by ID for the unique_together constraint
         u_first, u_second = (user1, user2) if user1.id < user2.id else (user2, user1)
 
         is_friend = Friendship.objects.filter(user1_id=u_first.id, user2_id=u_second.id).exists()
@@ -2143,13 +2077,11 @@ def fetch_messages_sync(request, chat_type, conversation_id):
     return {"history": history, "status": 200}
 
 
-# --- ASYNC VIEWS ---
 
 async def create_direct_conversation(request, user2_id):
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
 
-    # VITAL: We pass 'request' itself, NOT 'request.user'
     result = await sync_to_async(handle_create_conversation_sync, thread_sensitive=True)(
         request, user2_id
     )
@@ -2235,7 +2167,6 @@ def my_conversations(request):
     user = request.user
     results = []
 
-    # 1️⃣ Direct Conversations
     direct_convos = DirectConversation.objects.filter(
         Q(user1=user) | Q(user2=user)
     )
@@ -2258,7 +2189,6 @@ def my_conversations(request):
                                      .count()
         })
 
-    # 2️⃣ Group Conversations
     group_convos = user.conversations.all()
 
     for convo in group_convos:
@@ -2275,7 +2205,6 @@ def my_conversations(request):
                                      .count()
         })
 
-    # 3️⃣ Sort by most recent
     results.sort(key=lambda x: x["timestamp"], reverse=True)
 
     return JsonResponse(results, safe=False)
@@ -2286,7 +2215,6 @@ def my_conversations(request):
 def list_alerts(request):
     """Return all active alerts with their images"""
 
-    # Get alerts, include user in one join, and prefetch images
     qs = Alert.objects.filter(is_active=True)\
         .select_related("user")\
         .prefetch_related("images")\
@@ -2353,7 +2281,6 @@ def create_alert(request):
         if not title or not description:
             return JsonResponse({"success": False, "error": "Title and description are required."}, status=400)
 
-        # 1. Create the Alert
         alert = Alert.objects.create(
             user=request.user,
             title=title,
@@ -2371,7 +2298,6 @@ def create_alert(request):
             reverse_geocode_location.delay("Alert", alert.id)
             address_status = "Searching address..."
 
-        # 2. Save the images
         images_files = request.FILES.getlist("images")
         saved_images = []
         for img_file in images_files:
@@ -2402,7 +2328,7 @@ def create_alert(request):
             "is_admin_alert": request.user.is_staff,
         }
 
-        # 4. Broadcast to Channels
+
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             "alerts_feed",
@@ -2430,7 +2356,7 @@ from django.shortcuts import get_object_or_404
 def alert_details(request, alert_id):
     alert = get_object_or_404(Alert, id=alert_id)
 
-    # 1. Determine if the current user has confirmed this alert
+
     is_confirmed = False
     if request.user.is_authenticated:
         is_confirmed = AlertConfirm.objects.filter(
@@ -2438,20 +2364,20 @@ def alert_details(request, alert_id):
             alert=alert
         ).exists()
 
-    # 2. Check if ANY admin (superuser) confirmed this alert
+
     admin_confirm = AlertConfirm.objects.filter(
         alert=alert,
         user__is_superuser=True
     ).exists()
 
-    # 3. Update view count logic
+
     if request.user.is_authenticated and request.user != alert.user:
         if request.user.id not in alert.viewed_users:
             alert.views_count += 1
             alert.viewed_users.append(request.user.id)
             alert.save()
 
-    # 4. Fetch absolute URLs for images
+
     image_urls = [
         request.build_absolute_uri(img.image.url)
         for img in alert.images.all()
@@ -2491,7 +2417,7 @@ def confirm_alert(request, alert_id):
         AlertConfirm.objects.create(alert=alert, user=request.user)
         return JsonResponse({"success": True, "message": "Alert confirmed.", "confirm_count": alert.confirm_count + 1})
     except IntegrityError:
-        # User already confirmed
+
         return JsonResponse({"success": False, "message": "You have already confirmed this alert."})
 
 
@@ -2521,7 +2447,7 @@ def report_alert(request, alert_id):
         if not reason:
             return JsonResponse({"success": False, "error": "Reason is required"}, status=400)
 
-        # Create the report
+
         report = AlertReport.objects.create(
             alert=alert,
             user=request.user,
@@ -2529,11 +2455,11 @@ def report_alert(request, alert_id):
             description=description
         )
 
-        # Increase toxicity_score by 3, capped at 100
+
         alert.toxicity_score = min(alert.toxicity_score + 3, 100)
         alert.report_count = alert.report_count + 1
 
-        # Flag the alert if toxicity_score reaches 40 or more
+
         if alert.toxicity_score >= 40:
             alert.is_flagged = True
 
@@ -2549,7 +2475,7 @@ def report_alert(request, alert_id):
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
-@csrf_exempt  # Only if calling from React fetch without CSRF token
+@csrf_exempt
 def delete_report(request, report_id):
     """
     Deletes a single AlertReport by ID and returns JSON responses.
@@ -2569,7 +2495,7 @@ def delete_report(request, report_id):
         )
 
     except AlertReport.DoesNotExist:
-        # This should not occur because get_object_or_404 raises 404 automatically
+
         return JsonResponse(
             {"success": False, "message": "Report not found."},
             status=404
@@ -2641,7 +2567,7 @@ def get_alert_comments(request, alert_id):
             }
         })
     elif request.method == "DELETE":
-        # get comment_id from query params or body
+
 
         comment_id = alert_id
         if not comment_id:
@@ -2672,20 +2598,20 @@ def get_current_weather(request):
         return JsonResponse({"error": "Latitude and longitude are required."}, status=400)
 
     try:
-        # Round the exact coordinates to match the Celery cluster format
+
         lat_rounded = round(float(lat_str), 1)
         lon_rounded = round(float(lon_str), 1)
     except ValueError:
         return JsonResponse({"error": "Invalid coordinates format."}, status=400)
 
-    # 1. Try fetching from cache first
+
     cache_key = f"weather_cluster_{lat_rounded}_{lon_rounded}"
     cached_weather = cache.get(cache_key)
 
     if cached_weather:
         return JsonResponse(cached_weather)
 
-    # 2. Fallback: If cache is empty (new cluster), fetch manually
+
     key = os.getenv("openweather_api_key")
     url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat_rounded}&lon={lon_rounded}&exclude=minutely,daily&appid={key}&units=metric"
 
@@ -2713,7 +2639,7 @@ def get_current_weather(request):
             "upcoming": hourly_forecast
         }
 
-        # Save to cache for the next user
+
         cache.set(cache_key, weather_payload, timeout=1800)
 
         return JsonResponse(weather_payload)
@@ -2792,7 +2718,7 @@ def urgent_requests_list(request):
         .prefetch_related("images")
         .annotate(dist=GisDistance("location", user.location))
     )
-    # Show requests where the viewer is within the poster's visibility_radius
+
     active_requests = [r for r in candidates if r.dist.m <= r.user.visibility_radius * 1000]
     data = []
 
@@ -2813,7 +2739,7 @@ def urgent_requests_list(request):
 
         image_url = image_urls[0] if image_urls else None
 
-        # We append all results regardless of their score
+
         data.append({
             "id": obj.id,
             "user_id": obj.user.id,
@@ -2831,7 +2757,7 @@ def urgent_requests_list(request):
             "image": image_url,
         })
 
-    # Sorts the entire list by match_score from highest to lowest
+
     data.sort(key=lambda x: x["match_score"], reverse=True)
 
     return JsonResponse({"success": True, "urgent_requests": data})
@@ -3103,12 +3029,12 @@ def update_request(request, request_id):
         if request.user != request.user:
             return JsonResponse({"error": "Permission denied"}, status=403)
 
-        # Determine if JSON or FormData
+
         if request.content_type.startswith("application/json"):
             data = json.loads(request.body or "{}")
         else:
             data = request.POST
-        # --- Update fields if present ---
+
         urgent_request.title = data.get("title", urgent_request.title)
         urgent_request.category = data.get("category", urgent_request.category)
         urgent_request.max_price = data.get("price", urgent_request.max_price)
@@ -3127,7 +3053,7 @@ def update_request(request, request_id):
         elif loc is None and "location" in data:
             if urgent_request.location is not None:
                 urgent_request.location = None
-                urgent_request.address = "Global / Online"  # Nu mai e nevoie de Celery pt asta
+                urgent_request.address = "Global / Online"
                 location_changed = False
 
         urgent_request.full_clean()
@@ -3138,19 +3064,19 @@ def update_request(request, request_id):
             reverse_geocode_location.delay("UrgentRequest", request.id)
             address_status = "Changing the address..."
 
-        # --- Handle uploaded images ---
+
         removed_images = request.POST.getlist("removed_images")
         if removed_images:
             for url in removed_images:
                 filename = url.split("/")[-1]
                 urgent_request.images.filter(image__icontains=filename).delete()
 
-        # Add new uploaded images
+
         uploaded_files = request.FILES.getlist("images")
         for img in uploaded_files:
             urgent_request.images.create(image=img)
 
-        # Prepare response data
+
         request_data = {
             "id": urgent_request.id,
             "title": urgent_request.title,
@@ -3189,7 +3115,7 @@ def remove_request(request, request_id):
     except UrgentRequest.DoesNotExist:
         return JsonResponse({"success": False, "error": "Pulsul nu a fost găsit"}, status=404)
     except Exception as e:
-        # If this triggers, check your console to see the specific error
+
         return JsonResponse(
             {"success": False, "error": str(e)},
             status=400
@@ -3255,7 +3181,7 @@ def get_request_comments(request, request_id):
             }
         })
     elif request.method == "DELETE":
-        # get comment_id from query params or body
+
 
         comment_id = request_id
         if not comment_id:
@@ -3386,8 +3312,8 @@ def create_request_offer(request):
 def get_user_request_offers(request):
     """Gets all offers made ON the current user's UrgentRequests."""
     if request.method == "GET":
-        # Assuming UrgentRequest has a 'user' or 'owner' field.
-        # Update 'request__user' if your related name is different.
+
+
         offers = UrgentRequestOffer.objects.filter(request__user=request.user)
 
         data = []
@@ -3424,54 +3350,54 @@ def modify_offer_status(request, offer_id):
 
         try:
             data = json.loads(request.body)
-            status = data.get("status")                # accept / decline
-            new_total_price = data.get("total_price")  # counteroffer price
+            status = data.get("status")
+            new_total_price = data.get("total_price")
 
             notify_other_user = False
 
-            # --- handle status update ---
+
             if status:
                 offer.status = status
-                offer.last_offer_by = None  # reset last_offer_by if accepted/declined
+                offer.last_offer_by = None
 
-            # --- handle counteroffer ---
+
             if new_total_price is not None:
-                # Backend validation: prevent counteroffers from exceeding the requester's budget
-                # Assuming UrgentRequest has a 'budget' field
+
+
                 if hasattr(offer.request, 'budget') and offer.request.max_price is not None:
                     if float(new_total_price) > float(offer.request.budget):
                         return JsonResponse({"error": f"Offer cannot exceed the target budget of {offer.request.budget}."}, status=400)
 
                 offer.total_price = float(new_total_price)
-                offer.status = "pending"  # counteroffers set status back to pending
-                offer.last_offer_by = user  # track who made the last offer
-                notify_other_user = True    # flag to send notification
+                offer.status = "pending"
+                offer.last_offer_by = user
+                notify_other_user = True
 
             offer.save()
 
-            # --- send notification if counteroffer was made ---
+
             if notify_other_user:
                 other_user = offer.request.user if is_proposer else offer.proposer
 
-                # Ensure your Notification model supports these fields
+
                 notification = Notification.objects.create(
                     user=other_user,
                     sender=user,
                     type="rental_proposal",
                     title="Offer Counteroffer",
                     message=f"{user.username} updated the offer price for {offer.request.title} to {offer.total_price}",
-                    # You might need to adjust these kwargs based on your Notification model:
+
                     pulse_id=offer.request.id,
                     rental_id=offer.id,
                     metadata={"new_total_price": str(offer.total_price)}
                 )
 
-                # send via WebSocket
+
                 channel_layer = get_channel_layer()
                 async_to_sync(channel_layer.group_send)(
                     f"user_notifications_{other_user.id}",
                     {
-                        "type": "send_rental_notification", # Ensure you handle this type in your consumer
+                        "type": "send_rental_notification",
                         "title": notification.title,
                         "message": notification.message,
                         "pulse_id": offer.request.id,
@@ -3494,7 +3420,7 @@ def modify_offer_status(request, offer_id):
             return JsonResponse({"error": str(e)}, status=400)
 
     elif request.method == "DELETE":
-        # only the proposer can cancel their offer
+
         if not is_proposer:
             return JsonResponse({"error": "Only the proposer can delete this offer"}, status=403)
 
@@ -3600,7 +3526,7 @@ def admin_feedbacks(request):
         return JsonResponse({"error": "Unauthorized"}, status=403)
 
     try:
-        # 🔹 Rental Signals (unchanged)
+
         rental_signals = []
         for signal in PulseRentalSignal.objects.select_related("reporter", "rental__pulse"):
             rental_signals.append({
@@ -3620,14 +3546,14 @@ def admin_feedbacks(request):
                 "description": signal.message,
             })
 
-        # 🔹 MERGED Feedbacks (Pulse + Rental)
+
         rental_feedbacks = []
 
-        # Pulse Feedbacks
+
         for feedback in PulseFeedback.objects.select_related("reviewer", "pulse", "owner"):
             rental_feedbacks.append({
                 "id": feedback.id,
-                "type": "pulse",  # 👈 category
+                "type": "pulse",
                 "rating": feedback.rating,
                 "comment": feedback.comment,
                 "created_at": feedback.created_at.isoformat(),
@@ -3647,11 +3573,11 @@ def admin_feedbacks(request):
                 "description": feedback.comment,
             })
 
-        # Rental Feedbacks (if you have a separate model)
+
         for feedback in UrgentRequestFeedback.objects.select_related("reviewer", "request", "owner"):
             rental_feedbacks.append({
                 "id": feedback.id,
-                "type": "rental",  # 👈 category
+                "type": "rental",
                 "rating": feedback.rating,
                 "comment": feedback.comment,
                 "created_at": feedback.created_at.isoformat(),
@@ -3670,7 +3596,7 @@ def admin_feedbacks(request):
                 "description": feedback.comment,
             })
 
-        # 🔹 Contacts (NEW MODEL)
+
         user_contacts = []
         for contact in Contact.objects.select_related("user"):
             user_contacts.append({
@@ -3692,8 +3618,8 @@ def admin_feedbacks(request):
             "success": True,
             "feedbacks": {
                 "rental_signals": rental_signals,
-                "rental_feedbacks": rental_feedbacks,  # merged
-                "user_contacts": user_contacts,        # from Contact model
+                "rental_feedbacks": rental_feedbacks,
+                "user_contacts": user_contacts,
             }
         })
 
@@ -3725,7 +3651,7 @@ def ban_user(request, user_id):
     if ban_until is None:
         return JsonResponse({"error": "Invalid ban_until datetime."}, status=400)
 
-    # IMPORTANT: use the real model field name
+
     user_to_ban.banned_until = ban_until
     user_to_ban.save(update_fields=["banned_until"])
 
@@ -3788,7 +3714,7 @@ def delete_pulse(request, id):
         return JsonResponse({"error": "Pulse not found"}, status=404)
 
 
-# 🔴 DELETE ALERT
+
 @login_required
 @require_http_methods(["DELETE"])
 def delete_alert(request, id):
@@ -3803,7 +3729,7 @@ def delete_alert(request, id):
         return JsonResponse({"error": "Alert not found"}, status=404)
 
 
-# 🔴 DELETE URGENT REQUEST
+
 @login_required
 @require_http_methods(["DELETE"])
 def delete_urgent_request(request, id):
@@ -3831,7 +3757,7 @@ def delete_rental_signal(request, id):
 @require_http_methods(["DELETE"])
 @login_required
 def delete_rental_feedback(request, id):
-    feedback_type = request.GET.get("type")  # ?type=pulse or ?type=rental
+    feedback_type = request.GET.get("type")
 
     try:
         if feedback_type == "pulse":
@@ -3863,19 +3789,19 @@ def delete_user_contact(request, id):
 @login_required
 def resolve_rental_signal(request, id):
     try:
-        # 1. Fetch the signal
+
         signal = PulseRentalSignal.objects.get(id=id)
         reporter = signal.reporter
 
-        # 2. Parse the resolution message
+
         data = json.loads(request.body)
         resolution_note = data.get('message', 'No additional details provided.')
 
-        # 3. Create the Database Notification
-        # We use 'rental_proposal' or a custom type if you update the model choices
+
+
         notification = Notification.objects.create(
             user=reporter,
-            sender=request.user,  # The admin/owner resolving the signal
+            sender=request.user,
             type="signal_resolved",
             title="Signal Resolved",
             message=f"Your report has been resolved. Note: {resolution_note}",
@@ -3886,7 +3812,7 @@ def resolve_rental_signal(request, id):
             }
         )
 
-        # 4. Trigger Real-time WebSocket Notification
+
         channel_layer = get_channel_layer()
         notification_group = f"user_notifications_{reporter.id}"
 
@@ -3902,7 +3828,7 @@ def resolve_rental_signal(request, id):
             }
         )
 
-        # 5. Delete the signal
+
         signal.delete()
 
         return JsonResponse({
