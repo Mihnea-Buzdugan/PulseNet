@@ -46,7 +46,7 @@ export default function UrgentRequests() {
 
     const socketRef = useRef(null);
     useEffect(() => {
-        // Initialize WebSocket
+
         socketRef.current = new WebSocket("ws://localhost:8000/ws/requests/");
 
         socketRef.current.onopen = () => {
@@ -57,7 +57,7 @@ export default function UrgentRequests() {
             try {
                 const message = JSON.parse(event.data);
 
-                // Handle deleted requests
+
                 if (message.type === "request_deleted" && message.id) {
                     setRequests((prev) => prev.filter((p) => p.id !== message.id));
                     return;
@@ -72,10 +72,10 @@ export default function UrgentRequests() {
                     return;
                 }
 
-                // Handle new/updated requests
+
                 if (!message.id) return;
 
-                // Calculate lat/lng from GeoJSON location for frontend
+
                 let lat, lng;
                 if (message.location && message.location.coordinates) {
                     [lng, lat] = message.location.coordinates;
@@ -83,7 +83,7 @@ export default function UrgentRequests() {
 
                 const newRequest = { ...message, lat, lng };
 
-                // Add to state if not already present
+
                 setRequests((prev) => {
                     if (prev.find((p) => p.id === newRequest.id)) return prev;
                     return [newRequest, ...prev];

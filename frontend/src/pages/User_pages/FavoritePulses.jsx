@@ -20,30 +20,30 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// Map backend types to user-friendly UI labels
+
 const typeLabels = {
     servicii: "Services",
     obiecte: "Objects",
 };
 
 export default function FavoritePulses() {
-    // Original Data State
+
     const [pulses, setPulses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [hasNext, setHasNext] = useState(false);
 
-    // Frontend Filter State (these now trigger backend queries)
+
     const [search, setSearch] = useState("");
     const [typeFilter, setTypeFilter] = useState("all");
     const [sortFilter, setSortFilter] = useState("recent");
 
-    // Carousel state
+
     const [carouselOpen, setCarouselOpen] = useState(false);
     const [carouselIndex, setCarouselIndex] = useState(0);
 
     const navigate = useNavigate();
-    const PER_PAGE = 15; // keep in sync with backend per_page
+    const PER_PAGE = 15;
 
     const buildQuery = (params) => {
         const esc = encodeURIComponent;
@@ -60,7 +60,7 @@ export default function FavoritePulses() {
                 setLoading(true);
                 const csrfToken = getCookie("csrftoken");
 
-                // Map frontend sort to backend params if needed — using same names here
+
                 const params = {
                     page: pageNumber,
                     per_page: PER_PAGE,
@@ -90,7 +90,7 @@ export default function FavoritePulses() {
                     setPulses(data.pulses || []);
                     setHasNext(!!data.has_next);
                     setPage(pageNumber);
-                    // close carousel (so index doesn't point to stale item)
+
                     setCarouselOpen(false);
                     setCarouselIndex(0);
                 } else {
@@ -105,15 +105,15 @@ export default function FavoritePulses() {
         []
     );
 
-    // initial load
+
     useEffect(() => {
         fetchFavorites(1, search, typeFilter, sortFilter);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // run once on mount
 
-    // Debounce filter changes (search/type/sort) and fetch page 1
+    }, []);
+
+
     useEffect(() => {
-        // reset to first page when filters change
+
         const newPage = 1;
         const timer = setTimeout(() => {
             fetchFavorites(newPage, search, typeFilter, sortFilter);
@@ -138,10 +138,10 @@ export default function FavoritePulses() {
         }
     };
 
-    // processedPulses now comes directly from backend results (no client-side filtering)
+
     const processedPulses = pulses;
 
-    // Carousel controls (walk within processedPulses — i.e. the currently displayed server results)
+
     const openCarousel = (index) => {
         setCarouselIndex(index);
         setCarouselOpen(true);
@@ -161,7 +161,7 @@ export default function FavoritePulses() {
         if (carouselIndex < processedPulses.length - 1) {
             setCarouselIndex((i) => i + 1);
         } else if (carouselIndex === processedPulses.length - 1 && hasNext) {
-            // fetch next page, append? for simplicity replace pulses with next page and open first item
+
             const nextPage = page + 1;
             fetchFavorites(nextPage, search, typeFilter, sortFilter).then(() => {
                 setCarouselIndex(0);
@@ -169,7 +169,7 @@ export default function FavoritePulses() {
         }
     };
 
-    // keyboard navigation for the carousel
+
     useEffect(() => {
         const onKey = (e) => {
             if (!carouselOpen) return;
@@ -179,7 +179,7 @@ export default function FavoritePulses() {
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [carouselOpen, carouselIndex, processedPulses.length, hasNext, page]);
 
     return (
@@ -187,7 +187,7 @@ export default function FavoritePulses() {
             <div className={styles.firstContainer}>
                 <Navbar />
                 <div className={styles.mainContainer}>
-                    {/* Hero Header */}
+
                     <div className={styles.heroSection}>
                         <h1 className={styles.title}>
                             <span className={styles.gradientText}>Your Collection</span>
@@ -197,7 +197,6 @@ export default function FavoritePulses() {
                         </p>
                     </div>
 
-                    {/* Glassmorphism Filter Bar */}
                     <div className={styles.filterContainer}>
                         <div className={styles.searchBox}>
                             <span className={styles.icon}>🔍</span>
@@ -217,7 +216,7 @@ export default function FavoritePulses() {
                                 onChange={(e) => setTypeFilter(e.target.value)}
                             >
                                 <option value="all">All Types</option>
-                                {/* Hardcoded fixed filter values */}
+
                                 <option value="servicii">Services</option>
                                 <option value="obiecte">Objects</option>
                             </select>
@@ -234,7 +233,6 @@ export default function FavoritePulses() {
                         </div>
                     </div>
 
-                    {/* Content Grid */}
                     {loading && pulses.length === 0 ? (
                         <Loading />
                     ) : (
@@ -269,7 +267,7 @@ export default function FavoritePulses() {
                                             </div>
 
                                             <div className={styles.cardBody}>
-                                                {/* Use label mapping for the visual tag */}
+
                                                 <span className={styles.typeTag}>
                                                     {typeLabels[pulse.type] || pulse.type}
                                                 </span>
@@ -292,7 +290,6 @@ export default function FavoritePulses() {
                                 </div>
                             )}
 
-                            {/* Page navigation (server-side paging) */}
                             <div className={styles.paginationBar}>
                                 <button
                                     className={styles.pageBtn}
@@ -315,7 +312,7 @@ export default function FavoritePulses() {
                                 </button>
                             </div>
 
-                            {/* Load Next Page (optional) */}
+
                             {hasNext && (
                                 <div className={styles.loadMoreWrapper}>
                                     <button
@@ -331,12 +328,12 @@ export default function FavoritePulses() {
                     )}
                 </div>
 
-                {/* Carousel Modal */}
+
                 {carouselOpen && (
                     <div className={styles.carouselOverlay} onClick={closeCarousel}>
                         <div
                             className={styles.carouselContent}
-                            onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+                            onClick={(e) => e.stopPropagation()}
                         >
                             <button
                                 className={`${styles.carouselNav} ${carouselIndex === 0 ? styles.disabled : ""}`}
@@ -347,7 +344,6 @@ export default function FavoritePulses() {
                             </button>
 
                             <div className={styles.carouselCard}>
-                                {/* display the currently selected pulse from processedPulses */}
                                 {processedPulses[carouselIndex] ? (
                                     <>
                                         <div className={styles.carouselImageWrapper}>
@@ -365,7 +361,7 @@ export default function FavoritePulses() {
                                         <div className={styles.carouselBody}>
                                             <h2>{processedPulses[carouselIndex].name}</h2>
                                             <p className={styles.carouselMeta}>
-                                                {/* Use label mapping for carousel type output */}
+
                                                 <strong>Type:</strong> {typeLabels[processedPulses[carouselIndex].type] || processedPulses[carouselIndex].type} •{" "}
                                                 <strong>Price:</strong> {processedPulses[carouselIndex].price}{" "}
                                                 {processedPulses[carouselIndex].currency}
@@ -384,7 +380,7 @@ export default function FavoritePulses() {
                                             <div className={styles.carouselActions}>
                                                 <button
                                                     className={styles.detailsBtn}
-                                                    // Note: Kept original type for backend routing requirements
+
                                                     onClick={() =>
                                                         navigate(
                                                             `/pulse/${processedPulses[carouselIndex].type}/${processedPulses[carouselIndex].id}`

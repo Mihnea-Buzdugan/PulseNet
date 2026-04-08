@@ -115,7 +115,7 @@ const Messages = ({ currentUser }) => {
                             const receiverData = await receiverRes.json();
                             const myData = await myRes.json();
 
-                            // ← AICI pui verificările
+
                             if (!receiverData.public_key) {
                                 return;
                             }
@@ -256,7 +256,6 @@ const Messages = ({ currentUser }) => {
             <div className={styles.mainContainer}>
                 <Navbar />
 
-                {/* Overlay (click to close) */}
                 <div
                     className={`${styles.mobileOverlay} ${
                         sidebarOpen ? styles.mobileOverlayOpen : ""
@@ -267,7 +266,6 @@ const Messages = ({ currentUser }) => {
 
                 <div className={styles.pageWrapper}>
                     <div className={styles.inboxContainer}>
-                        {/* ================= SIDEBAR ================= */}
                         <aside
                             className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ""}`}
                             style={{ transform: sidebarOpen ? "translateX(0)" : undefined }}
@@ -332,9 +330,7 @@ const Messages = ({ currentUser }) => {
                             </div>
                         </aside>
 
-                        {/* ================= CHAT AREA ================= */}
                         <main className={styles.chatArea}>
-                            {/* Always-visible mobile menu button */}
                             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 12 }}>
                                 <button
                                     className={styles.menuButton}
@@ -346,7 +342,6 @@ const Messages = ({ currentUser }) => {
                                     ☰
                                 </button>
 
-                                {/* Optional top title when no convo is selected */}
                                 {!selectedConvo && (
                                     <div style={{ fontWeight: 700, fontSize: 16 }}>{currentUser?.username || "Messages"}</div>
                                 )}
@@ -355,7 +350,6 @@ const Messages = ({ currentUser }) => {
                             {selectedConvo ? (
                                 <div className={styles.activeChat}>
                                     <div className={styles.chatHeader}>
-                                        {/* Back button (visible when a convo is open) */}
                                         <button
                                             className={styles.backButton}
                                             onClick={() => setSelectedConvo(null)}
@@ -374,7 +368,7 @@ const Messages = ({ currentUser }) => {
 
                                     <div className={styles.messageWindow}>
                                         {messages.map((msg) => {
-                                            // ✅ Compare sender username with selected conversation username
+
                                             const isMe =
                                                 selectedConvo?.username &&
                                                 msg.sender_username !== selectedConvo.username;
@@ -391,7 +385,6 @@ const Messages = ({ currentUser }) => {
                                                             isMe ? styles.myBubble : styles.theirBubble
                                                         }`}
                                                     >
-                                                        {/* Group chat — show sender name */}
                                                         {!isMe && selectedConvo?.type === "group" && (
                                                             <span className={styles.senderName}>
                             {msg.sender_username}

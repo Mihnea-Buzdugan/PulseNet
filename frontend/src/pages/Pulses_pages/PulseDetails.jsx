@@ -45,16 +45,16 @@ function getMapInstance(candidate) {
     return typeof candidate.resize === "function" ? candidate : null;
 }
 
-// Convert a backend UTC timestamp (ISO) into a local YYYY-MM-DD string
-// so FullCalendar treats it as an all-day event in the user's timezone.
+
+
 function utcIsoToLocalDateString(isoOrDate) {
     const d = new Date(isoOrDate);
-    // Shift by timezone offset to get the equivalent local date
+
     const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
     return local.toISOString().split("T")[0];
 }
 
-// Convert ISO timestamp to local human-readable string (for UI timestamps)
+
 const isoToLocalString = (isoString) => {
     if (!isoString) return "N/A";
     const date = new Date(isoString);
@@ -79,16 +79,16 @@ export default function PulseDetails() {
     const [favAnim, setFavAnim] = useState(false);
     const mapRef = useRef(null);
 
-    // rating states
-    const [userRating, setUserRating] = useState(0); // will be initialized from backend when available
+
+    const [userRating, setUserRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [isSubmittingRating, setIsSubmittingRating] = useState(false);
 
-    // comments/reviews
+
     const [commentText, setCommentText] = useState("");
     const [calendarEvents, setCalendarEvents] = useState([]);
 
-    // ---------- Comments (lazy) ----------
+
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState([]);
     const [commentsLoading, setCommentsLoading] = useState(false);
@@ -138,7 +138,7 @@ export default function PulseDetails() {
         loadComments(commentsPage + 1, true);
     };
 
-    // POST a new comment to backend and prepend it
+
     const handlePostComment = async (e) => {
         e.preventDefault();
         const text = (e?.target?.elements?.comment?.value ?? commentText).trim();
@@ -202,9 +202,9 @@ export default function PulseDetails() {
             alert(err.message || "Could not delete comment");
         }
     };
-    // ---------- end comments ----------
 
-    // ---------- Rating: submit handler (separate, not inline) ----------
+
+
     const handleSubmitRating = async () => {
         if (!userRating || userRating < 1 || userRating > 10) {
             alert("Please select a rating between 1 and 10.");
@@ -229,7 +229,7 @@ export default function PulseDetails() {
                 throw new Error(message);
             }
 
-            // update local pulse info if backend returned rating
+
             if (data.rating !== undefined) {
                 setPulse(prev => prev ? ({ ...prev, my_rating: data.rating }) : prev);
             }
@@ -241,7 +241,7 @@ export default function PulseDetails() {
             setIsSubmittingRating(false);
         }
     };
-    // ---------- end rating ----------
+
 
     useEffect(() => {
         let mounted = true;
@@ -259,7 +259,7 @@ export default function PulseDetails() {
                     setPulse(data.pulse);
                     setIndex(0);
 
-                    // initialize userRating from backend even if it's 0
+
                     const backendRating = (data.pulse?.user_rating ?? data.pulse?.my_rating);
                     if (backendRating !== undefined && backendRating !== null) {
                         setUserRating(backendRating);
@@ -274,7 +274,7 @@ export default function PulseDetails() {
         return () => (mounted = false);
     }, [id]);
 
-    // === TIMEZONE-FIXED: convert backend UTC ranges to local all-day events ===
+
     useEffect(() => {
         if (!pulse) {
             setCalendarEvents([]);
@@ -289,18 +289,18 @@ export default function PulseDetails() {
                 const endRaw = r.end ?? r.end_date;
                 if (!startRaw || !endRaw) return null;
 
-                // Convert backend UTC ISO -> local YYYY-MM-DD
+
                 const startLocalDate = utcIsoToLocalDateString(startRaw);
 
-                // Convert end to local, then add 1 day
+
                 const endDate = new Date(endRaw);
-                endDate.setDate(endDate.getDate() + 1); // add 1 day
+                endDate.setDate(endDate.getDate() + 1);
                 const endLocalDate = utcIsoToLocalDateString(endDate.toISOString());
 
                 return {
                     id: `unav-${i}`,
                     start: startLocalDate,
-                    end: endLocalDate, // FullCalendar end is exclusive
+                    end: endLocalDate,
                     allDay: true,
                     display: "background",
                     backgroundColor: "rgba(255,70,70,0.35)",
@@ -394,7 +394,7 @@ export default function PulseDetails() {
                 ) : null}
                 <div className={styles.page}>
                     <div className={styles.container}>
-                        {/* LEFT SIDE */}
+
                         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className={styles.left}>
                             <div className={styles.header}>
                                 {pulse.user_avatar ? (
@@ -416,7 +416,7 @@ export default function PulseDetails() {
                                 <div className={styles.priceBadge}>{pulse.price} {pulse.currency}</div>
                             </div>
 
-                            {/* IMAGE CAROUSEL */}
+
                             <div className={styles.carousel}>
                                 {images.length > 0 ? (
                                     <>
@@ -433,14 +433,14 @@ export default function PulseDetails() {
                                 ) : <div className={styles.noImage}>No preview</div>}
                             </div>
 
-                            {/* INFO GRID */}
+
                             <div className={styles.infoGrid}>
                                 <div><span>Posted</span><strong>{isoToLocalString(pulse.timestamp)}</strong></div>
                                 <div><span>Location</span><strong>{pulse.address || "Address not available"}</strong></div>
                                 <div><span>Rating</span><strong>{pulse.rating || "N/A"}/10</strong></div>
                             </div>
 
-                            {/* --- RATING & COMMENT SECTION (1-10 Scale) --- */}
+
                             <div style={{ marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
                                 <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                     <span>Recenzii și Rating</span>
@@ -449,7 +449,7 @@ export default function PulseDetails() {
                                     </button>
                                 </h3>
 
-                                {/* 1-10 Star Picker + Submit Rating */}
+
                                 <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
                                     <p style={{ marginBottom: '10px', fontSize: '14px', fontWeight: '600' }}>
                                         Acordă o notă (1-10): {userRating > 0 ? userRating : ''}
@@ -510,7 +510,7 @@ export default function PulseDetails() {
                                     </div>
                                 </div>
 
-                                {/* ------- Comments (lazy-loaded from backend) ------- */}
+
                                 {showComments && (
                                     <div className={styles.commentsSection}>
                                         {commentsLoading && (
@@ -567,11 +567,11 @@ export default function PulseDetails() {
                                         )}
                                     </div>
                                 )}
-                                {/* ------- end comments ------- */}
+
                             </div>
                         </motion.div>
 
-                        {/* RIGHT COLUMN */}
+
                         <div className={styles.rightColumn}>
                             <motion.aside initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} className={styles.sidebar}>
                                 <div className={styles.sellerCard}>
@@ -606,7 +606,7 @@ export default function PulseDetails() {
                                 </div>
                             </motion.aside>
 
-                            {/* MAP */}
+
                             <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className={styles.mapContainer}>
                                 <div className={styles.mapWrapper} style={{ minHeight: 280, height: 320 }}>
                                     <Map key={`${coords[0]}-${coords[1]}-${pulse.id}`} ref={mapRef} center={coords} zoom={16}>
@@ -617,7 +617,6 @@ export default function PulseDetails() {
                                 </div>
                             </motion.div>
 
-                            {/* CALENDAR */}
                             <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className={styles.calendarContainer} style={{ marginTop: 18 }}>
                                 <h4 style={{ margin: "8px 0" }}>Availability</h4>
                                 <FullCalendar

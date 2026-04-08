@@ -1,4 +1,4 @@
-/* DirectChat.module.css */
+
 :root {
     --primary-blue: #007aff;
     --bg-light: #f2f2f7;
@@ -83,7 +83,7 @@
     flex-direction: column;
     gap: 0.8rem;
     background-color: #ffffff;
-    /* Custom Scrollbar */
+
     scrollbar-width: none;
 }
 

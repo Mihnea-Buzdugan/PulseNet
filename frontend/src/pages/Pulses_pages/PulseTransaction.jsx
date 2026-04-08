@@ -13,7 +13,7 @@ import Footer from "@/components/Footer";
 import Loading from "@/components/Loading";
 
 function getLocationCoords(location) {
-    // default coords (lon, lat)
+
     const defaultCoords = [27.5766, 47.1585];
 
     if (!location) return defaultCoords;
@@ -25,27 +25,27 @@ function getLocationCoords(location) {
 function getMapInstance(candidate) {
     if (!candidate) return null;
 
-    // wrapper exposes getMap()
+
     if (typeof candidate.getMap === "function") {
         try {
             return candidate.getMap();
         } catch (e) {
-            // ignore
+
         }
     }
 
-    // wrapper might expose a property with the instance
+
     if (candidate.mapInstance) return candidate.mapInstance;
     if (candidate.map) return candidate.map;
-    // maybe the ref is already the actual instance
+
     return typeof candidate.resize === "function" ? candidate : null;
 }
 
-// Format a Date to an ISO-like string that includes the local timezone offset
-// Example output: 2026-03-24T22:00:00+02:00
+
+
 function formatDateToLocalIso(d) {
     if (!(d instanceof Date)) d = new Date(d);
-    const tzOffset = -d.getTimezoneOffset(); // minutes offset from UTC (positive east)
+    const tzOffset = -d.getTimezoneOffset();
     const sign = tzOffset >= 0 ? '+' : '-';
     const absOffset = Math.abs(tzOffset);
     const hoursOffset = Math.floor(absOffset / 60);
@@ -70,7 +70,7 @@ export default function PulseTransaction() {
     const [statusMsg, setStatusMsg] = useState("");
     const [index, setIndex] = useState(0);
 
-    // Rental period
+
     const [selectedStart, setSelectedStart] = useState(null);
     const [selectedEnd, setSelectedEnd] = useState(null);
 
@@ -83,7 +83,7 @@ export default function PulseTransaction() {
 
     const mapRef = useRef(null);
 
-    // Fetch pulse
+
     useEffect(() => {
         let mounted = true;
         const fetchPulse = async () => {
@@ -96,16 +96,16 @@ export default function PulseTransaction() {
                 if (mounted && data.success) {
                     setPulse(data.pulse);
 
-                    // initialize proposed price with the pulse price once we have it
+
                     setProposedPrice(String(data.pulse?.price ?? ""));
 
                     const ranges = data.pulse.unavailable_ranges ?? data.pulse.reserved_periods ?? [];
                     const events = ranges
                         .map((r, i) => {
-                            const startUtc = new Date(r.start ?? r.start_date); // backend UTC
+                            const startUtc = new Date(r.start ?? r.start_date);
                             const endUtc   = new Date(r.end ?? r.end_date);
 
-                            // Convert to local ISO string so FullCalendar interprets correctly
+
                             const startLocal = new Date(startUtc.getTime() + startUtc.getTimezoneOffset()*60000 * -1);
                             const endLocal   = new Date(endUtc.getTime() + endUtc.getTimezoneOffset()*60000 * -1);
 
@@ -140,12 +140,12 @@ export default function PulseTransaction() {
         return () => (mounted = false);
     }, [pulseId]);
 
-    // Fetch current user (so we can tell if the current user is the owner)
+
     useEffect(() => {
         let mounted = true;
         const fetchUser = async () => {
             try {
-                // Adjust this endpoint to your backend's current-user endpoint if different.
+
                 const res = await fetch("http://localhost:8000/accounts/user/", {
                     method: "GET",
                     credentials: "include",
@@ -175,14 +175,14 @@ export default function PulseTransaction() {
         let mounted = true;
 
         const ensureMapReady = async () => {
-            // Small initial delay to allow DOM/CSS layout
+
             await new Promise((r) => setTimeout(r, 250));
 
             let mapInst = getMapInstance(mapRef.current);
 
-            // Poll for the instance (some wrappers initialize it slightly later)
+
             const start = Date.now();
-            const timeout = 2000; // ms
+            const timeout = 2000;
             while (!mapInst && Date.now() - start < timeout && mounted) {
                 await new Promise((r) => setTimeout(r, 150));
                 mapInst = getMapInstance(mapRef.current);
@@ -192,7 +192,7 @@ export default function PulseTransaction() {
 
             if (mapInst) {
                 try {
-                    // Resize and recenter/redraw the map
+
                     if (typeof mapInst.resize === "function") mapInst.resize();
                     if (typeof mapInst.setCenter === "function")
                         mapInst.setCenter([coords[0], coords[1]]);
@@ -201,11 +201,11 @@ export default function PulseTransaction() {
 
                     if (typeof mapInst.setZoom === "function") mapInst.setZoom(16);
                 } catch (err) {
-                    // final fallback
+
                     window.dispatchEvent(new Event("resize"));
                 }
             } else {
-                // If we couldn't detect an instance, force a resize event
+
                 window.dispatchEvent(new Event("resize"));
             }
         };
@@ -227,21 +227,21 @@ export default function PulseTransaction() {
     const next = () => images.length && setIndex(i => (i + 1) % images.length);
     const prev = () => images.length && setIndex(i => (i - 1 + images.length) % images.length);
 
-    // Calendar date select handler
+
     const handleDateSelect = (selectInfo) => {
         const { start, end } = selectInfo;
         setSelectedStart(start);
-        // FullCalendar 'end' is exclusive. Subtract 1 day so our local state is inclusive for math.
+
         setSelectedEnd(new Date(end.getTime() - 86400000));
     };
 
-    // Prevent selecting over already booked/unavailable dates
+
     const handleSelectAllow = (selectInfo) => {
         const { start, end } = selectInfo;
         for (const ev of calendarEvents) {
             const evStart = new Date(ev.start);
             const evEnd = new Date(ev.end);
-            // If the selected range intersects with an unavailable event, block the selection
+
             if (start < evEnd && end > evStart) {
                 return false;
             }
@@ -249,7 +249,7 @@ export default function PulseTransaction() {
         return true;
     };
 
-    // Combine unavailable events with the currently selected range for visual feedback
+
     const displayEvents = useMemo(() => {
         const events = [...calendarEvents];
         if (selectedStart && selectedEnd) {
@@ -259,7 +259,7 @@ export default function PulseTransaction() {
                 end: new Date(selectedEnd.getTime() + 86400000),
                 display: "block",
                 title: "Selected Period",
-                backgroundColor: "#10b981", // Emerald green
+                backgroundColor: "#10b981",
                 borderColor: "#10b981",
             });
         }
@@ -287,7 +287,7 @@ export default function PulseTransaction() {
         return totalDays * priceNum;
     };
 
-    // Whether current user is the owner of this pulse
+
     const isOwner = !!(currentUser && pulse && Number(currentUser.id) === Number(pulse.user_id));
 
     const validatePrice = () => {
@@ -305,7 +305,7 @@ export default function PulseTransaction() {
     };
 
     const handleCreateRental = async () => {
-        // Basic validations
+
         if (!selectedStart || !selectedEnd) {
             setStatusMsg("❌ Please select a rental period on the calendar.");
             return;
@@ -333,8 +333,6 @@ export default function PulseTransaction() {
 
             const payload = {
                 pulse_id: pulse.id,
-                // IMPORTANT: send local-time ISO with timezone offset so backend that expects local times
-                // will receive the correct hour (avoid the 2-hour shift you were seeing).
                 start_date: formatDateToLocalIso(selectedStart),
                 end_date: formatDateToLocalIso(selectedEnd),
                 proposed_price: Number(proposedPrice),
@@ -353,7 +351,7 @@ export default function PulseTransaction() {
             const data = await res.json();
             if (res.ok && data.success) {
                 setStatusMsg("✅ Rental proposal created successfully!");
-                // Optionally navigate away or show the created proposal details
+
                 setTimeout(() => navigate("/"), 1600);
             } else {
                 setStatusMsg(`❌ ${data.error || "Failed to create rental proposal."}`);
@@ -369,7 +367,7 @@ export default function PulseTransaction() {
     const handleEventClick = (info) => {
         if (info.event.extendedProps.type === "unavailable") {
             setStatusMsg("ℹ️ This period is already reserved by another user.");
-            // Optional: clear message after 3 seconds
+
             setTimeout(() => setStatusMsg(""), 3000);
         }
     };
@@ -393,7 +391,7 @@ export default function PulseTransaction() {
                 </div>
 
                 <div className={styles.pageGrid}>
-                    {/* LEFT COLUMN: Carousel + Form */}
+
                     <div className={styles.leftCard}>
                         <div className={styles.carousel}>
                             <button className={styles.carouselBtn} onClick={prev}><ArrowLeft size={20} /></button>
@@ -486,7 +484,7 @@ export default function PulseTransaction() {
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN: Calendar + Map */}
+
                     <div className={styles.sidebar}>
                         <div className={styles.card}>
                             <h3 className={styles.sectionTitle}><Calendar size={18}/> Select Dates</h3>
@@ -500,14 +498,14 @@ export default function PulseTransaction() {
                                     validRange={{ start: todayStr }}
                                     select={handleDateSelect}
                                     events={displayEvents}
-                                    eventClick={handleEventClick} // Handle the label click
+                                    eventClick={handleEventClick}
                                     height={400}
                                     headerToolbar={{
                                         left: "prev",
                                         center: "title",
                                         right: "next"
                                     }}
-                                    // Custom styling for the event labels
+
                                     eventContent={(eventInfo) => (
                                         <div className={styles.calendarEventLabel}>
                                             <b>{eventInfo.event.title}</b>

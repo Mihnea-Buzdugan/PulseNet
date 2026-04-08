@@ -51,7 +51,7 @@ export default function AlertPage() {
     const [alert, setAlert] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Comments only (persisted in localStorage per-alert)
+
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState([]);
     const [commentsLoading, setCommentsLoading] = useState(false);
@@ -118,7 +118,7 @@ export default function AlertPage() {
             const data = await res.json();
             const addr = data.address || {};
 
-            // Try to build a clean short address first
+
             const street = addr.road || addr.pedestrian || addr.path || "";
             const number = addr.house_number || "";
             const city = addr.city || addr.town || addr.village || addr.suburb || "";
@@ -129,13 +129,13 @@ export default function AlertPage() {
                 .filter(Boolean)
                 .join(", ");
 
-            // 🧠 Smart fallback chain
+
             if (shortAddress) return shortAddress;
             if (city) return city;
             if (county) return county;
             if (country) return country;
 
-            // 🔥 LAST fallback (always works)
+
             if (data.display_name) {
                 return data.display_name.split(",").slice(0, 3).join(", ");
             }
@@ -158,7 +158,7 @@ export default function AlertPage() {
         loadComments(commentsPage + 1, true);
     };
 
-    // POST a new comment to backend and prepend it
+
     const handlePostComment = async (e) => {
         e.preventDefault();
         const text = (e?.target?.elements?.comment?.value ?? commentText).trim();
@@ -275,7 +275,7 @@ export default function AlertPage() {
 
     const images = alert.images && alert.images.length ? alert.images : ["/default-alert.jpg"];
 
-    // Toggle confirm/unconfirm using the new API endpoints.
+
     const handleConfirm = async () => {
         if (confirmLoading) return;
         setConfirmLoading(true);
@@ -316,7 +316,7 @@ export default function AlertPage() {
 
     const handleReportOpen = () => setReportModalOpen(true);
 
-    // use the server report endpoint
+
     const submitReport = async () => {
         if (!reportReason) return setToast({ type: "error", text: "Choose a reason first." });
 
@@ -335,7 +335,7 @@ export default function AlertPage() {
 
             const data = await res.json().catch(() => null);
 
-            // Optimistically update count
+
 
 
             if (res.ok && data && data.success) {
@@ -353,7 +353,7 @@ export default function AlertPage() {
             }
         } catch (e) {
             console.error("Network error reporting:", e);
-            // still increment locally so the user sees change
+
             setAlert(prev => ({ ...prev, report_count: (prev.report_count ?? 0) + 1 }));
             setToast({ type: "error", text: "Network error reporting alert." });
         } finally {

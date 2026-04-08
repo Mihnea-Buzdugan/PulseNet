@@ -214,7 +214,7 @@ const DirectChat = ({ currentUser }) => {
 
                     const rawCurrentUserId = currentUser?.id || currentUser?.pk;
 
-                    // 3. Stringify and compare
+
                     const msgSenderId = String(rawSenderId || "");
                     const currentUserId = String(rawCurrentUserId || "");
 

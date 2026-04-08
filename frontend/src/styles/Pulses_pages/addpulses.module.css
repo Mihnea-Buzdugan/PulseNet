@@ -26,7 +26,7 @@
 
 
 .anunt-container {
-    max-width: 1000px; /* Am făcut containerul mai lat */
+    max-width: 1000px; 
     margin: auto;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     padding: 20px;
@@ -58,10 +58,10 @@
     margin-bottom: 24px;
 }
 
-/* Aliniere Categorie și Preț */
+
 .row-group {
     display: flex;
-    gap: 40px; /* Spațiu între coloane */
+    gap: 40px; 
     margin-bottom: 24px;
 }
 
@@ -75,7 +75,7 @@
 }
 
 .currency-select {
-    width: 110px; /* Suficient de lat pentru RON/EUR fără să taie textul */
+    width: 110px; 
     padding: 12px;
     border: 2px solid #f2f4f5;
     border-radius: 4px;
@@ -118,7 +118,7 @@
 
 .image-upload-grid {
     display: grid;
-    /* Forțează exact 4 coloane egale */
+    
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
     margin: 20px 0;
@@ -153,7 +153,7 @@
     transform: scale(1.02);
 }
 
-/* Efect de overlay întunecat la hover pentru a vedea X-ul mai bine */
+
 .imagePreviewBox::before {
     content: '';
     position: absolute;
@@ -183,7 +183,7 @@
     justify-content: center;
     cursor: pointer;
     opacity: 0;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efect de bounce */
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
     box-shadow: 0 4px 6px rgba(239, 68, 68, 0.4);
 }
 

@@ -59,7 +59,6 @@ class User(AbstractUser):
 
     public_key = models.TextField(blank=True, null=True)
 
-    # Add this helper property near your is_quiet_now function
     @property
     def is_banned(self):
         return bool(self.banned_until and timezone.now() < self.banned_until)
@@ -85,14 +84,12 @@ class User(AbstractUser):
         else:
             return "Legend"
 
-    #transform JSON list in an embedded vector
     def get_skills_text(self):
         if not self.skills:
             return ""
         return ", ".join([str(s).strip() for s in self.skills])
 
 
-    #helper function pentru quiet hours
     def is_quiet_now(self):
         from django.utils import timezone
         if not self.quiet_hours_start or not self.quiet_hours_end:
@@ -208,7 +205,7 @@ class PulseRentalSignal(models.Model):
         related_name="rental_signals"
     )
     message = models.TextField(help_text="Describe the problem")
-    reported_by_owner = models.BooleanField(default=False)  # <-- new field
+    reported_by_owner = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     resolved = models.BooleanField(default=False)
     resolved_at = models.DateTimeField(null=True, blank=True)
@@ -217,8 +214,7 @@ class PulseRentalSignal(models.Model):
         ordering = ["-created_at"]
 
     def save(self, *args, **kwargs):
-        # Set reported_by_owner automatically if not already set
-        if not self.pk:  # only when creating
+        if not self.pk:
             self.reported_by_owner = self.reporter == self.rental.pulse.user
         super().save(*args, **kwargs)
 
@@ -240,7 +236,6 @@ class PulseFeedback(models.Model):
         related_name="given_feedbacks"
     )
 
-    # Optional: who owns the Pulse (denormalized for faster queries)
     owner = models.ForeignKey(
         "User",
         on_delete=models.CASCADE,
@@ -261,7 +256,6 @@ class PulseFeedback(models.Model):
     class Meta:
         ordering = ["-created_at"]
         unique_together = ("pulse", "reviewer")
-        # prevents same user from reviewing same Pulse multiple times
 
     def __str__(self):
         return f"{self.reviewer} rated {self.pulse.title} ({self.rating}/10)"
@@ -422,13 +416,11 @@ class Group_Message(models.Model):
 
 
 class DirectConversation(models.Model):
-    # Ensure only 2 users can be in a direct chat
     user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="direct_chats_as_user1")
     user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="direct_chats_as_user2")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Prevent duplicate conversations between the same two users
         unique_together = ('user1', 'user2')
 
     def __str__(self):
@@ -491,7 +483,7 @@ class Alert(models.Model):
     report_count = models.PositiveIntegerField(default=0)
     views_count = models.PositiveIntegerField(default=0)
     viewed_users = ArrayField(
-        models.IntegerField(),  # store user IDs
+        models.IntegerField(),
         default=list,
         blank=True
     )
@@ -657,7 +649,6 @@ class Notification(models.Model):
     rental_id = models.IntegerField(null=True, blank=True)
     conversation_id = models.IntegerField(null=True, blank=True)
 
-    # For hero alerts / future flexible data
     metadata = models.JSONField(null=True, blank=True)
 
     is_read = models.BooleanField(default=False)
@@ -680,7 +671,7 @@ class UrgentRequest(models.Model):
         on_delete=models.CASCADE,
         related_name="urgent_requests"
     )
-    title = models.CharField(max_length=200)  # optional description of request
+    title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 
     is_approved = models.BooleanField(default=True)
@@ -763,7 +754,6 @@ class UrgentRequestFeedback(models.Model):
         related_name="given_urgent_feedbacks"
     )
 
-    # Owner of the request (denormalized for performance)
     owner = models.ForeignKey(
         "User",
         on_delete=models.CASCADE,
@@ -784,7 +774,6 @@ class UrgentRequestFeedback(models.Model):
     class Meta:
         ordering = ["-created_at"]
         unique_together = ("request", "reviewer")
-        # prevent multiple reviews from same user for same request
 
     def __str__(self):
         return f"{self.reviewer} rated request #{self.request.id} ({self.rating}/10)"
@@ -825,7 +814,7 @@ class RequestComment(models.Model):
 
 class Contact(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,  # Mai sigur decât string-ul "User"
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="contacts"
     )

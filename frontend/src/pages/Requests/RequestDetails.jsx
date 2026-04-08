@@ -69,10 +69,10 @@ export default function RequestDetails() {
     const [index, setIndex] = useState(0);
     const mapRef = useRef(null);
 
-    // comments/reviews
+
     const [commentText, setCommentText] = useState("");
 
-    // ---------- Comments (lazy) ----------
+
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState([]);
     const [commentsLoading, setCommentsLoading] = useState(false);
@@ -81,7 +81,7 @@ export default function RequestDetails() {
     const [commentsHasMore, setCommentsHasMore] = useState(false);
     const [isPosting, setIsPosting] = useState(false);
 
-    // local reviews state (for immediate UI preview)
+
 
     const COMMENTS_PAGE_SIZE = 10;
 
@@ -124,7 +124,7 @@ export default function RequestDetails() {
         loadComments(commentsPage + 1, true);
     };
 
-    // POST a new comment to backend and prepend it
+
     const handlePostComment = async (e) => {
         e.preventDefault();
         const text = (e?.target?.elements?.comment?.value ?? commentText).trim();
@@ -188,11 +188,11 @@ export default function RequestDetails() {
             alert(err.message || "Could not delete comment");
         }
     };
-    // ---------- end comments ----------
 
-    // ---------- Rating: submit handler (separate, not inline) ----------
 
-    // ---------- end rating ----------
+
+
+
 
 
     useEffect(() => {
@@ -252,7 +252,7 @@ export default function RequestDetails() {
         <div className={styles.body}>
             <div className={styles.mainContainer}>
                 <Navbar />
-                {/* Warning banner */}
+
                 {request.trustLevel === "Dangerous" || request.trustLevel === "Scary" ? (
                     <div className="bg-red-600 text-white px-4 py-2 rounded-md mb-4 flex items-center gap-2 shadow-md">
                         <span>⚠️</span>
@@ -264,7 +264,7 @@ export default function RequestDetails() {
                 ) : null}
                 <div className={styles.page}>
                     <div className={styles.container}>
-                        {/* LEFT SIDE */}
+
                         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className={styles.left}>
                             <div className={styles.header}>
                                 {request.user_avatar ? (
@@ -287,7 +287,7 @@ export default function RequestDetails() {
                                 </div>
                             </div>
 
-                            {/* IMAGE CAROUSEL */}
+
                             <div className={styles.carousel}>
                                 {images.length > 0 ? (
                                     <>
@@ -304,14 +304,14 @@ export default function RequestDetails() {
                                 ) : <div className={styles.noImage}>No preview</div>}
                             </div>
 
-                            {/* INFO GRID */}
+
                             <div className={styles.infoGrid}>
                                 <div><span>Posted</span><strong>{isoToLocalString(request.timestamp)}</strong></div>
                                 <div><span>Location</span><strong>{request.address}</strong></div>
                                 <div><span>Available until</span><strong>{isoToLocalString(request.expires_at)}</strong></div>
                             </div>
 
-                            {/* --- RATING & COMMENT SECTION (1-10 Scale) --- */}
+
                             <div style={{ marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
                                 <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                     <span>Recenzii</span>
@@ -320,7 +320,7 @@ export default function RequestDetails() {
                                     </button>
                                 </h3>
 
-                                {/* 1-10 Star Picker + Submit Rating */}
+
                                 <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
 
                                     <form onSubmit={handlePostComment} style={{ display: 'flex', gap: '10px', flex: 1 }}>
@@ -343,7 +343,7 @@ export default function RequestDetails() {
                                     </form>
                                 </div>
 
-                                {/* ------- Comments (lazy-loaded from backend) ------- */}
+
                                 {showComments && (
                                     <div className={styles.commentsSection}>
                                         {commentsLoading && (
@@ -400,11 +400,10 @@ export default function RequestDetails() {
                                         )}
                                     </div>
                                 )}
-                                {/* ------- end comments ------- */}
+
                             </div>
                         </motion.div>
 
-                        {/* RIGHT COLUMN */}
                         <div className={styles.rightColumn}>
                             <motion.aside initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} className={styles.sidebar}>
                                 <div className={styles.sellerCard}>
@@ -434,7 +433,7 @@ export default function RequestDetails() {
                                 </div>
                             </motion.aside>
 
-                            {/* MAP */}
+
                             <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className={styles.mapContainer}>
                                 <div className={styles.mapWrapper} style={{ minHeight: 280, height: 320 }}>
                                     <Map key={`${coords[0]}-${coords[1]}-${request.id}`} ref={mapRef} center={coords} zoom={16}>

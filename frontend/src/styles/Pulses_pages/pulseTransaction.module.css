@@ -5,7 +5,7 @@
     font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Background */
+
 .body {
     background: var(--color-bg);
     color: black;
@@ -14,7 +14,7 @@
     min-height: 100vh;
 }
 
-/* Main container */
+
 .mainContainer {
     max-width: 1300px;
     margin: 0 auto;
@@ -251,7 +251,7 @@
 }
 
 .calendarWrapper {
-    /* Scopes the FullCalendar to not overlap its container */
+    
     overflow: hidden;
 }
 
@@ -293,7 +293,7 @@
     box-shadow: var(--shadow-md);
 }
 
-/* Info alert for owner warning */
+
 .infoAlert {
     background: #e0f2fe;
     color: var(--color-secondary);
@@ -304,7 +304,7 @@
     border: 1px solid #bae6fd;
 }
 
-/* Calendar event labels styling (optional tweak for visibility) */
+
 .calendarEventLabel b {
     font-weight: 600;
 }

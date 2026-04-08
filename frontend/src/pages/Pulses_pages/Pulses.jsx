@@ -32,7 +32,7 @@ export default function Pulses() {
             try {
                 const message = JSON.parse(event.data);
 
-                // Handle deleted pulses
+
                 if (message.type === "pulse_deleted" && message.id) {
                     setPulses((prev) => prev.filter((p) => p.id !== message.id));
                     return;
@@ -103,7 +103,7 @@ export default function Pulses() {
 
             const data = await res.json();
 
-            // Acum adresa vine direct din backend (pulse.address)
+
             const pulsesWithAddress = data.results.map(pulse => ({
                 ...pulse,
                 address: pulse.address || (pulse.location ? "Se caută adresa..." : "Global / Online")

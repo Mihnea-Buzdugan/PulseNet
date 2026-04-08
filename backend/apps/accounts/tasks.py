@@ -17,13 +17,12 @@ from sentence_transformers import SentenceTransformer
 from .models import Alert, UrgentRequest, User, Notification, Pulse, UrgentRequestOffer, PulseRental
 from .utils import find_heroes_for_urgent_requests, process_pet_image_and_find_matches, calculate_trust_score
 from django.apps import apps
-# Lazy loader for the model to keep worker memory clean
+
 _model = None
 
 def get_model():
     global _model
     if _model is None:
-        # Note: loading this inside the task is usually safer for worker stability
         _model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
     return _model
 
@@ -118,8 +117,6 @@ def process_pet_match_task(alert_id):
             msg = ""
             target_id = None
 
-            # CAZUL A: Cineva a postat un animal GĂSIT
-            # Vrem să anunțăm stăpânii care au animale PIERDUTE (Lost)
             if alert.category == "found_pet" and match.category == "lost_pet":
                 recipient = match.user
                 target_id = alert.id
@@ -192,7 +189,6 @@ def fetch_severe_weather_alerts():
     if not user_locations:
         return "No users with locations found."
 
-    # 1. Cluster users into ~11km grids to save API calls
     unique_cluster_locations = set()
     for loc in user_locations:
         lat_rounded = round(loc.y, 1)
@@ -211,7 +207,6 @@ def fetch_severe_weather_alerts():
             data = response.json()
             alert_location = Point(lon, lat, srid=4326)
 
-            # --- A. CACHE THE WEATHER FOR THE FRONTEND VIEW ---
             current = data.get("current", {})
             hourly_forecast = []
             for hour in data.get("hourly", [])[:4]:
@@ -219,7 +214,7 @@ def fetch_severe_weather_alerts():
                     "time": hour.get("dt"),
                     "temp": hour.get("temp"),
                     "description": hour.get("weather", [{}])[0].get("description", ""),
-                    "pop": hour.get("pop", 0)  # Probability of precipitation
+                    "pop": hour.get("pop", 0)
                 })
 
             cache_key = f"weather_cluster_{lat}_{lon}"
@@ -231,9 +226,8 @@ def fetch_severe_weather_alerts():
                     "icon": current.get("weather", [{}])[0].get("icon", ""),
                 },
                 "upcoming": hourly_forecast
-            }, timeout=1800)  # Cache for 30 minutes
+            }, timeout=1800)
 
-            # --- B. HANDLE OFFICIAL SEVERE WEATHER (Safety Check-in) ---
             if "alerts" in data:
                 for weather_alert in data["alerts"]:
                     event_name = _parse_event_name(weather_alert.get("event", "Severe Weather"))
@@ -257,7 +251,7 @@ def fetch_severe_weather_alerts():
                         )
                         alerts_created += 1
 
-                        # Broadcast HIGH priority WebSocket message
+
                         async_to_sync(channel_layer.group_send)(
                             "alerts_feed",
                             {
@@ -267,7 +261,7 @@ def fetch_severe_weather_alerts():
                             }
                         )
 
-            # --- C. HANDLE PREEMPTIVE WARNINGS (Upcoming bad weather) ---
+
             elif "hourly" in data:
                 for hour_data in data["hourly"][:3]:
                     weather_code = hour_data.get("weather", [{}])[0].get("id", 800)

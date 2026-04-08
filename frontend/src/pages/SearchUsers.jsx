@@ -39,7 +39,7 @@ export default function SearchUsers() {
         }
     };
 
-    // 🔎 Search automatically when typing
+
     useEffect(() => {
         const timeout = setTimeout(() => {
             fetchUsers();
@@ -57,7 +57,7 @@ export default function SearchUsers() {
             headers: { "X-CSRFToken": csrf },
         });
 
-        // Update UI optimistically
+
         setUsers((prev) =>
             prev.map((u) =>
                 u.id === userId
@@ -128,7 +128,7 @@ export default function SearchUsers() {
                             borderRadius: 8,
                         }}
                     >
-                        {/* USER INFO */}
+
                         <div>
                             <strong>
                                 {user.first_name} {user.last_name}
@@ -137,7 +137,7 @@ export default function SearchUsers() {
                                 @{user.username}
                             </p>
 
-                            {/* Status Labels */}
+
                             {user.is_friend && (
                                 <span
                                     style={{
@@ -166,7 +166,6 @@ export default function SearchUsers() {
                             )}
                         </div>
 
-                        {/* ACTION BUTTONS */}
                         <div>
                             {user.is_friend ? (
                                 <button

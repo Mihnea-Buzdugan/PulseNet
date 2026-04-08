@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../styles/Components/Loading.module.css'; // Custom CSS for styling
+import styles from '../styles/Components/Loading.module.css';
 
 const Loading = () => (
     <div className={styles.loadingContainer}>

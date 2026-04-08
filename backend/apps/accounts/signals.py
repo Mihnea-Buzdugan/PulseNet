@@ -13,7 +13,7 @@ def broadcast_pulse_deletion(sender, instance, **kwargs):
     async_to_sync(channel_layer.group_send)(
         "pulses_feed",
         {
-            "type": "pulse.deleted",  # matches PulseConsumer.pulse_deleted method
+            "type": "pulse.deleted",
             "id": instance.id
         }
     )
@@ -28,7 +28,7 @@ def broadcast_request_deletion(sender, instance, **kwargs):
     async_to_sync(channel_layer.group_send)(
         "requests_feed",
         {
-            "type": "request.deleted",  # matches RequestConsumer.pulse_deleted method
+            "type": "request.deleted",
             "id": instance.id
         }
     )
@@ -42,7 +42,7 @@ def broadcast_request_deletion(sender, instance, **kwargs):
     async_to_sync(channel_layer.group_send)(
         "alerts_feed",
         {
-            "type": "alert.deleted",  # matches RequestConsumer.pulse_deleted method
+            "type": "alert.deleted",
             "id": instance.id
         }
     )

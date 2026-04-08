@@ -1,4 +1,4 @@
-/* ContactPage.module.css */
+
 * {
     margin: 0;
     padding: 0;
@@ -162,7 +162,7 @@
 }
 
 .submitBtn {
-    background-color: var(--color-primary); /* The vivid blue from the image */
+    background-color: var(--color-primary);
     color: white;
     border: none;
     padding: 0.875rem;

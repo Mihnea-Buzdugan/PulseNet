@@ -27,7 +27,7 @@
 }
 
 .container {
-    max-width: 680px; /* Tighter width for list items improves readability */
+    max-width: 680px;
     margin: 0 auto;
     width: 100%;
 }
@@ -104,7 +104,7 @@
     font-family: inherit;
     font-size: 14px;
     padding: 8px 16px;
-    border-radius: 8px; /* Modern subtle rounding */
+    border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -113,7 +113,7 @@
 /* Primary Action */
 .acceptBtn {
     border: none;
-    background-color: var(--color-primary); /* Emerald green */
+    background-color: var(--color-primary);
     color: white;
 }
 
@@ -130,7 +130,7 @@
 
 .rejectBtn:hover {
     background-color: #f1f5f9;
-    color: #ef4444; /* Turns red only on hover */
+    color: #ef4444;
     border-color: #fca5a5;
 }
 
@@ -156,7 +156,7 @@
     .actions {
         width: 100%;
         display: grid;
-        grid-template-columns: 1fr 1fr; /* Buttons split 50/50 on mobile */
+        grid-template-columns: 1fr 1fr;
     }
 
     .acceptBtn, .rejectBtn {
