@@ -471,6 +471,8 @@ class Alert(models.Model):
 
     embedding = VectorField(dimensions=512, null=True, blank=True)
 
+    duplicate_check_embedding = VectorField(dimensions=512, null=True, blank=True)
+
     is_approved = models.BooleanField(default=True)
     is_flagged = models.BooleanField(default=False)
     toxicity_score = models.FloatField(default=0.0)

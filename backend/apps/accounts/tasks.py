@@ -1,7 +1,6 @@
 import os
 import pickle
 
-from allauth.decorators import rate_limit
 from asgiref.sync import async_to_sync
 from celery import shared_task
 import requests
@@ -10,11 +9,11 @@ from django.contrib.gis.geos import Point
 from django.utils import timezone
 from datetime import timedelta
 from django.core.cache import cache
-from kombu.transport.sqlalchemy import metadata
+from pgvector.django import CosineDistance
 from sentence_transformers import SentenceTransformer
-
+from django.contrib.gis.measure import D
 # Import your models and logic
-from .models import Alert, UrgentRequest, User, Notification, Pulse, UrgentRequestOffer, PulseRental
+from .models import Alert, UrgentRequest, User, Notification, Pulse, UrgentRequestOffer, PulseRental, AlertConfirm
 from .utils import find_heroes_for_urgent_requests, process_pet_image_and_find_matches, calculate_trust_score
 from django.apps import apps
 
@@ -371,3 +370,97 @@ def reverse_geocode_location(model_name, instance_id, app_label="accounts"):
 
     except Exception as e:
         print(f"Eroare geocodare pentru {model_name} ID {instance_id}: {e}")
+
+
+@shared_task
+def process_alert_text_embedding(alert_id):
+    try:
+        alert = Alert.objects.get(id=alert_id)
+
+        model = get_model()
+        text_to_embed = f"{alert.title}. {alert.description}"
+        embedding_vector = model.encode(text_to_embed).tolist()
+
+        if len(embedding_vector) < 512:
+            embedding_vector += [0.0] * (512 - len(embedding_vector))
+
+        duplicate = None
+
+        if alert.location:
+            duplicate = Alert.objects.filter(
+                category=alert.category,
+                location__distance_lte=(alert.location, D(m=100)),
+                is_active=True
+            ).exclude(
+                id=alert.id
+            ).annotate(
+                distance=CosineDistance('duplicate_check_embedding', embedding_vector)
+            ).filter(
+                distance__lt=0.45
+            ).order_by('created_at').first()
+
+        channel_layer = get_channel_layer()
+
+        if duplicate:
+
+            AlertConfirm.objects.get_or_create(alert=duplicate, user=alert.user)
+
+            alert.delete()
+
+            async_to_sync(channel_layer.group_send)(
+                f"user_notifications_{alert.user.id}",
+                {
+                    "type": "alert_merged",
+                    "original_alert_id": duplicate.id,
+                    "message": "There is already an alert which describes your issue! Your alert was send as an upvote."
+                }
+            )
+
+            async_to_sync(channel_layer.group_send)(
+                "alerts_feed",
+                {
+                    "type": "alert_updated_confirm_count",
+                    "id": duplicate.id,
+                    "confirm_count": duplicate.confirms.count()
+                }
+            )
+
+        else:
+            alert.duplicate_check_embedding = embedding_vector
+            alert.is_active = True
+            alert.save()
+
+            if alert.location:
+                reverse_geocode_location.delay("Alert", alert.id)
+
+            images = [img.image.url for img in alert.images.all()]
+            user_avatar = alert.user.profile_picture.url if hasattr(alert.user,
+                                                                    'profile_picture') and alert.user.profile_picture else None
+
+            broadcast_data = {
+                "id": alert.id,
+                "title": alert.title,
+                "description": alert.description,
+                "category": alert.category,
+                "category_display": alert.get_category_display(),
+                "user_name": alert.user.username,
+                "user_avatar": user_avatar,
+                "created_at": alert.created_at.isoformat(),
+                "lat": alert.location.y if alert.location else None,
+                "lng": alert.location.x if alert.location else None,
+                "address": "Searching address...",
+                "images": images,
+                "image": images[0] if images else None,
+                "is_admin_alert": alert.user.is_staff,
+            }
+
+            async_to_sync(channel_layer.group_send)(
+                "alerts_feed",
+                {
+                    "type": "alert.message",
+                    "data": broadcast_data,
+                }
+            )
+
+    except Exception as e:
+        print(f"Error in Celery Task process_alert_text_embedding: {e}")

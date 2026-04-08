@@ -860,7 +860,7 @@ export default function Profile() {
     const handleAcceptOffer = async (id) => {
         // decide which endpoint to call based on whether id is in rentalProposals
         const isProposal = rentalProposals.some((p) => p.id === id);
-        const url = `http:
+        const url = `http://localhost:8000/accounts/pulse_rentals/${id}/`;
 
         try {
             const res = await fetch(url, {

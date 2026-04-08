@@ -265,6 +265,13 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    async def alert_merged(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "alert_merged",
+            "original_alert_id": event["original_alert_id"],
+            "message": event["message"],
+        }))
+
 class PulseConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_group_name = "pulses_feed"
@@ -490,4 +497,19 @@ class AlertConsumer(AsyncWebsocketConsumer):
             "message": message,
             "priority": priority,
             "category": "weather"
+        }))
+
+    async def alert_updated_confirm_count(self, event):
+
+        await self.send(text_data=json.dumps({
+            "type": "alert_updated",
+            "id": event["id"],
+            "confirm_count": event["confirm_count"]
+        }))
+
+    async def alert_merged(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "alert_merged",
+            "original_alert_id": event["original_alert_id"],
+            "message": event["message"]
         }))

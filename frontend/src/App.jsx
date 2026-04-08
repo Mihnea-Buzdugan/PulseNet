@@ -305,6 +305,76 @@ const NotificationHandler = ({ currentUser }) => {
                     </div>
                 ), { duration: 8000 });
             }
+
+            else if (data.type === "alert_merged") {
+                toast.custom((t) => (
+                    <div
+                        onClick={() => toast.dismiss(t.id)}
+                        style={{
+                            display: 'flex',
+                            width: '384px',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            borderRadius: '16px',
+                            border: '1px solid rgba(0, 0, 0, 0.05)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                            cursor: 'pointer',
+                            overflow: 'hidden',
+                            transition: 'all 0.3s ease',
+                            borderLeft: '6px solid #8b5cf6',
+                            animation: t.visible ? 'enter 0.4s ease' : 'leave 0.4s ease',
+                        }}
+                    >
+                        <div style={{ flex: 1, padding: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <div style={{
+                                    height: '48px',
+                                    width: '48px',
+                                    borderRadius: '50%',
+                                    background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    fontWeight: 'bold',
+                                    fontSize: '22px',
+                                    flexShrink: 0,
+                                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                }}>
+                                    💡
+                                </div>
+                                <div style={{ marginLeft: '12px', flex: 1 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '14px', fontWeight: '800', color: '#111827' }}>
+                                            Duplicate Detected
+                                        </span>
+                                        <span style={{ fontSize: '10px', color: '#6d28d9', fontWeight: 'bold', background: '#ede9fe', padding: '2px 8px', borderRadius: '10px' }}>
+                                            SYSTEM
+                                        </span>
+                                    </div>
+                                    <p style={{
+                                        margin: '4px 0 0',
+                                        fontSize: '13px',
+                                        color: '#4b5563',
+                                        lineHeight: '1.4',
+                                    }}>
+                                        {data.message}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{ borderLeft: '1px solid rgba(0,0,0,0.05)', display: 'flex' }}>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); toast.dismiss(t.id); }}
+                                style={{ background: 'transparent', border: 'none', padding: '0 16px', cursor: 'pointer', color: '#9ca3af', fontSize: '18px' }}
+                            >
+                                ×
+                            </button>
+                        </div>
+                    </div>
+                ), { duration: 10000 });
+            }
         };
 
         return () => socket.close();

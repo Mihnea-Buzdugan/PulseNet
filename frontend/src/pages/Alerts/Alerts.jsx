@@ -115,9 +115,9 @@ const AlertCard = ({ a, formatDate, navigate }) => {
             <AlertCarousel images={a.images || []} />
 
             <div className={styles.cardFooter}>
-                {hasLocation && (
+                {a.address && (
                     <span className={styles.metaTag}>
-            <MapPin size={14} /> {Number(a.lat).toFixed(4)}, {Number(a.lng).toFixed(4)}
+            <MapPin size={14} /> {a.address}
           </span>
                 )}
                 <span className={styles.metaTag}>
@@ -158,6 +158,14 @@ export default function Alerts() {
 
             if (message.type === "alert_deleted" && message.id) {
                 setAlerts((prev) => prev.filter((p) => p.id !== message.id));
+            }
+
+            if (message.type === "address_updated" && message.id) {
+                setAlerts((prev) =>
+                    prev.map((a) =>
+                        a.id === message.id ? { ...a, address: message.address } : a
+                    )
+                );
             }
         };
 

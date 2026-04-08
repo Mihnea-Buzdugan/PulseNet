@@ -157,13 +157,13 @@ export default function AddAlerts() {
             });
 
             if (response.ok) {
-                alert("Alerta a fost postată!");
+                alert("The alert was posted!");
                 setFormData({ title: '', description: '', category: 'other' });
                 setImagesPreview([]);
                 setSelectedFiles([]);
             } else {
                 const err = await response.json().catch(() => null);
-                alert(err?.error || "Eroare la salvare.");
+                alert(err?.error || "Saving error.");
             }
         } catch (error) {
             console.error(error);
@@ -215,9 +215,8 @@ export default function AddAlerts() {
                         </div>
                     </div>
 
-                    {/* SECTIUNE IMAGINI (Grid similar cu AddPulses) */}
                     <div className={styles.imageUploadSection}>
-                        <label className={styles.labelHeader}>Imagini</label>
+                        <label className={styles.labelHeader}>Images</label>
                         <div className={styles.imageGrid}>
                             {imagesPreview.map((img, idx) => (
                                 <div key={idx} className={styles.imagePreviewBox} style={{ backgroundImage: `url(${img})` }}>
@@ -231,7 +230,7 @@ export default function AddAlerts() {
                                 <label className={styles.uploadBtnBox}>
                                     <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageChange} hidden />
                                     <Plus size={24} />
-                                    <span>Adaugă</span>
+                                    <span>Add</span>
                                 </label>
                             )}
                         </div>

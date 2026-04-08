@@ -9,11 +9,9 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie, csrf_p
 import os
 from datetime import datetime
 from django.views.decorators.csrf import csrf_protect
-from django.http import JsonResponse
 from django.contrib.auth import get_user_model, login as django_login,logout as django_logout
 from django.core.exceptions import ValidationError
 import json
-from django.db.models import F
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import get_user_model
@@ -32,11 +30,10 @@ import string
 from django.contrib.auth.hashers import make_password
 from django.db import models
 from decimal import Decimal, InvalidOperation
-from django.shortcuts import get_object_or_404
 from django.contrib.gis.db.models.functions import Distance as GisDistance
 from django.core.cache import cache
 import requests
-from .tasks import update_user_embedding, find_heroes_for_urgent_requests, get_model as _get_st_model, \
+from .tasks import update_user_embedding, process_alert_text_embedding, get_model as _get_st_model, \
     run_hero_search_task, process_pet_match_task, update_user_trust_score_task, reverse_geocode_location
 from sentence_transformers import util as st_util
 def generate_password(length=12):
@@ -2240,6 +2237,7 @@ def list_alerts(request):
             "created_at": alert.created_at.isoformat(),
             "lat": float(alert.location.y) if alert.location else None,
             "lng": float(alert.location.x) if alert.location else None,
+            "address": alert.address,
             "images": [request.build_absolute_uri(img.image.url) for img in alert.images.all()],
 
             "is_verified": (
@@ -2291,12 +2289,8 @@ def create_alert(request):
             is_flagged = should_flag,
             is_approved = not should_flag,
             toxicity_score = ai_score,
+            is_active=False,
         )
-
-        address_status = "Global / Online"
-        if alert.location:
-            reverse_geocode_location.delay("Alert", alert.id)
-            address_status = "Searching address..."
 
         images_files = request.FILES.getlist("images")
         saved_images = []
@@ -2304,51 +2298,66 @@ def create_alert(request):
             img_obj = AlertImage.objects.create(alert=alert, image=img_file)
             saved_images.append(request.build_absolute_uri(img_obj.image.url))
 
-        if alert.category in ["lost_pet", "found_pet"] and not should_flag:
-            process_pet_match_task.delay(alert.id)
+        if alert.category in ["lost_pet", "found_pet"]:
 
-        user_avatar = None
-        if hasattr(request.user, 'profile_picture') and request.user.profile_picture:
-            user_avatar = request.build_absolute_uri(request.user.profile_picture.url)
+            alert.is_active = True
+            alert.save()
 
-        broadcast_data = {
-            "id": alert.id,
-            "title": alert.title,
-            "description": alert.description,
-            "category": alert.category,
-            "category_display": alert.get_category_display(),
-            "user_name": request.user.username,
-            "user_avatar": user_avatar,
-            "created_at": alert.created_at.isoformat(),
-            "lat": location.y if location else None,
-            "lng": location.x if location else None,
-            "address": address_status,
-            "images": saved_images,
-            "image": saved_images[0] if saved_images else None,
-            "is_admin_alert": request.user.is_staff,
-        }
+            if not should_flag:
+                process_pet_match_task.delay(alert.id)
 
+            if alert.location:
+                reverse_geocode_location.delay("Alert", alert.id)
+                address_status = "Searching address..."
 
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            "alerts_feed",
-            {
-                "type": "alert.message",
-                "data": broadcast_data,
+            # Broadcast imediat prin WebSocket
+            images = [request.build_absolute_uri(img.image.url) for img in alert.images.all()]
+            user_avatar = request.build_absolute_uri(request.user.profile_picture.url) if hasattr(request.user,
+                                                                                                  'profile_picture') and request.user.profile_picture else None
+
+            broadcast_data = {
+                "id": alert.id,
+                "title": alert.title,
+                "description": alert.description,
+                "category": alert.category,
+                "category_display": alert.get_category_display(),
+                "user_name": request.user.username,
+                "user_avatar": user_avatar,
+                "created_at": alert.created_at.isoformat(),
+                "lat": alert.location.y if alert.location else None,
+                "lng": alert.location.x if alert.location else None,
+                "address": "Searching address...",
+                "images": images,
+                "image": images[0] if images else None,
+                "is_admin_alert": request.user.is_staff,
             }
-        )
 
-        update_user_trust_score_task.delay(request.user.id)
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "alerts_feed",
+                {
+                    "type": "alert.message",
+                    "data": broadcast_data,
+                }
+            )
 
-        return JsonResponse({
-            "success": True,
-            "alert_id": alert.id,
-            "category_display": alert.get_category_display()
-        })
+            return JsonResponse({
+                "success": True,
+                "status": "published",
+                "message": "Alerta a fost publicată cu succes!"
+            })
+
+        else:
+            process_alert_text_embedding.delay(alert.id)
+
+            return JsonResponse({
+                "success": True,
+                "status": "processing",
+                "message": "The alert is proccesing..."
+            })
 
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
-
 
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
