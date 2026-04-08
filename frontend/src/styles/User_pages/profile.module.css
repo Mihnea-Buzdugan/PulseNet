@@ -766,7 +766,8 @@
 .offerLeft { @apply flex flex-col gap-2 min-w-0 flex-1; }
 
 .offerPulseTitle {
-    @apply text-base font-bold truncate mb-1;
+    /* Removed 'truncate'. Added 'break-words' just in case you have very long strings */
+    @apply text-base font-bold mb-1 break-words;
     color: var(--color-text-strong);
 }
 
@@ -791,11 +792,11 @@
 .offerActions {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 8px; /* This handles all spacing perfectly, no margins needed */
     flex-shrink: 0;
-    width: 120px;
+    width: auto; /* Removed hardcoded 120px so text fits */
+    min-width: 150px; /* Gives a nice uniform width to the column */
     align-self: center;
-    margin-right: 16px;
 }
 
 
@@ -1470,28 +1471,34 @@
 }
 
 @media (max-width: 768px) {
+    .offerCard {
+        /* Forces the card contents to stack vertically on small screens */
+        flex-direction: column;
+        align-items: stretch;
+    }
+
     .offerActions {
         flex-direction: row;
         flex-wrap: wrap;
         width: 100%;
         margin-right: 0;
-        margin-top: 12px;
-        justify-content: flex-start;
-        align-self: flex-start;
+        margin-top: 16px; /* Pushes actions down away from text */
+        justify-content: stretch;
+        align-self: stretch;
     }
 
     .acceptBtn,
     .rejectBtn,
     .counterBtn,
-    .signalBtn{
+    .signalBtn,
+    .feedbackBtn {
+        /* Forces buttons to share available width equally and wrap if necessary */
+        flex: 1 1 calc(50% - 8px);
         width: auto;
-        flex: 1;
-        min-width: fit-content;
+        min-width: 130px;
         font-size: 14px;
-        padding: 6px 10px;
-    }
-
-    .rejectBtn {
-        min-width: auto;
+        padding: 8px 12px; /* Better touch targets for mobile */
+        justify-content: center; /* Centers text and icons in the button */
+        margin: 0 !important; /* Failsafe in case any inline margins were left behind */
     }
 }

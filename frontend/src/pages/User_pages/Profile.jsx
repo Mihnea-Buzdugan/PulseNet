@@ -2454,18 +2454,19 @@ export default function Profile() {
 
                                                 {(item.status === "confirmed" || item.status === "declined" || item.status === "completed") && (
                                                     item.status === "confirmed" && !isInProgress ? (
-                                                        <div className={styles.confirmedActions}>
-
-                                                            <div className={styles.rightActions}>
-                                                                <motion.button
-                                                                    {...btnMotion}
-                                                                    onClick={() => openFeedbackModal(item)}
-                                                                    className={styles.feedbackBtn}
-                                                                >
-                                                                    Give feedback
-                                                                </motion.button>
+                                                        new Date() >= new Date(item.start_date) ? (
+                                                            <div className={styles.confirmedActions}>
+                                                                <div className={styles.rightActions}>
+                                                                    <motion.button
+                                                                        {...btnMotion}
+                                                                        onClick={() => openFeedbackModal(item)}
+                                                                        className={styles.feedbackBtn}
+                                                                    >
+                                                                        Give feedback
+                                                                    </motion.button>
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        ) : null
                                                     ) : (
                                                         <div className={styles.smallNote}>
                                                             {item.status === "declined" && (isOfferTab ? "Offer rejected" : "The offer has been declined.")}
@@ -2522,18 +2523,19 @@ export default function Profile() {
                                 </div>
 
                                 <div className={styles.filterButtonsRow}>
-                                    <motion.button {...btnMotion}
-                                                   className={`${styles.filterBtn} ${activeRequestTab === "received" ? styles.activeFilter : ""}`}
-                                                   onClick={() => handleRequestFilterChange("received")}
+                                    <button
+                                        className={`${styles.filterBtn} ${activeRequestTab === "received" ? styles.activeFilter : ""}`}
+                                        onClick={() => handleRequestFilterChange("received")}
                                     >
                                         Offers for requests
-                                    </motion.button>
-                                    <motion.button {...btnMotion}
-                                                   className={`${styles.filterBtn} ${activeRequestTab === "sent" ? styles.activeFilter : ""}`}
-                                                   onClick={() => handleRequestFilterChange("sent")}
+                                    </button>
+
+                                    <button
+                                        className={`${styles.filterBtn} ${activeRequestTab === "sent" ? styles.activeFilter : ""}`}
+                                        onClick={() => handleRequestFilterChange("sent")}
                                     >
                                         My offers to help
-                                    </motion.button>
+                                    </button>
                                 </div>
                             </div>
 
@@ -2628,10 +2630,10 @@ export default function Profile() {
 
                                                         {item.status === "pending" && item.total_price !== item.initial_price && item.last_offer_by !== user.id && (
                                                             <>
-                                                                <motion.button {...btnMotion} onClick={() => openAcceptOfferModal(item)} className={styles.acceptBtn} style={{ marginLeft: "8px" }}>
+                                                                <motion.button {...btnMotion} onClick={() => openAcceptOfferModal(item)} className={styles.acceptBtn}>
                                                                     <Handshake className='mr-1' />Accept new price
                                                                 </motion.button>
-                                                                <motion.button {...btnMotion} onClick={() => openCounterOfferModal(item)} className={styles.counterBtn} style={{ marginLeft: "8px" }}>
+                                                                <motion.button {...btnMotion} onClick={() => openCounterOfferModal(item)} className={styles.counterBtn}>
                                                                     <Repeat className='mr-1' />Negotiate
                                                                 </motion.button>
                                                             </>

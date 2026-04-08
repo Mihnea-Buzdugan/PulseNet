@@ -3,6 +3,7 @@ import styles from "../../styles/User_pages/followRequests.module.css";
 import Navbar from "../../components/Navbar";
 import {useNavigate} from "react-router-dom";
 import Footer from "@/components/Footer";
+import Loading from "@/components/Loading";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -90,7 +91,7 @@ export default function FollowRequests() {
     };
 
     if (loading) {
-        return <div className={styles.loader}>Loading follow requests...</div>;
+        return <Loading />;
     }
 
     return (
