@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import {Map, MapClusterLayer, MapControls, MapPopup} from "@/components/ui/map";
 import Footer from "@/components/Footer";
 import Loading from "@/components/Loading";
-import { ImageOff } from "lucide-react";
+import {AlarmClock, HandCoins, ImageOff, MapPin, Tags, User} from "lucide-react";
 
 const initialFilters = {
     Pulses: {
@@ -888,18 +888,18 @@ export default function Index() {
 
 
                                             {selectedPoint.properties.type && (
-                                                <p style={{ fontSize: '0.8rem', color: '#666' }}>
-                                                    🏷️ {selectedPoint.properties.type} - {selectedPoint.properties.pulseType}
+                                                <p style={{ fontSize: '0.8rem', color: '#666', display: 'flex' }}>
+                                                    <Tags size={20} color="yellow" className="mr-1"/> {selectedPoint.properties.type} - {selectedPoint.properties.pulseType}
                                                 </p>
                                             )}
 
 
                                             {selectedPoint.properties.type === "Pulse" && (
                                                 <>
-                                                    {selectedPoint.properties.user && <p>👤 @{selectedPoint.properties.user}</p>}
+                                                    {selectedPoint.properties.user && <p className="flex"><User size={20} className="mr-1" color="black"/>@{selectedPoint.properties.user}</p>}
                                                     {selectedPoint.properties.price !== undefined &&
                                                         selectedPoint.properties.price !== "" && (
-                                                            <p>💰 {selectedPoint.properties.price} {selectedPoint.properties.currency}</p>
+                                                            <p className="flex"> <HandCoins size={20} className="mr-1"/> {selectedPoint.properties.price} {selectedPoint.properties.currency}</p>
                                                         )}
                                                     {selectedPoint.properties.popularity_score !== undefined && (
                                                         <p style={{ fontSize: '0.85rem' }}>
@@ -908,7 +908,7 @@ export default function Index() {
                                                     )}
                                                     {selectedPoint.properties.distance !== undefined &&
                                                         selectedPoint.properties.distance !== "" && (
-                                                            <p>📍 {selectedPoint.properties.distance} km away</p>
+                                                            <p className="flex"><MapPin color="blue" size={20} className="mr-1"/> {selectedPoint.properties.distance} km away</p>
                                                         )}
                                                 </>
                                             )}
@@ -916,16 +916,16 @@ export default function Index() {
 
                                             {selectedPoint.properties.type === "Request" && (
                                                 <>
-                                                    {selectedPoint.properties.user && <p>👤 @{selectedPoint.properties.user}</p>}
+                                                    {selectedPoint.properties.user && <p className="flex"><User color="black" className="mr-1"/> @{selectedPoint.properties.user}</p>}
                                                     {selectedPoint.properties.price !== undefined && (
-                                                        <p>💰 Max Price: {selectedPoint.properties.price} RON</p>
+                                                        <p className="flex"> <HandCoins size={20} className="mr-1"/> Max Price: {selectedPoint.properties.price} RON</p>
                                                     )}
                                                     {selectedPoint.properties.distance !== undefined &&
                                                         selectedPoint.properties.distance !== "" && (
-                                                            <p>📍 {selectedPoint.properties.distance} km away</p>
+                                                            <p className="flex"><MapPin color="blue" size={20} className="mr-1"/> {selectedPoint.properties.distance} km away</p>
                                                         )}
                                                     {selectedPoint.properties.expires_at && (
-                                                        <p>⏰ Expires: {new Date(selectedPoint.properties.expires_at).toLocaleDateString()}</p>
+                                                        <p className="flex"><AlarmClock color="Red" className="mr-1" size={20}/> Expires: {new Date(selectedPoint.properties.expires_at).toLocaleDateString()}</p>
                                                     )}
                                                 </>
                                             )}

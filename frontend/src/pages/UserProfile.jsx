@@ -485,20 +485,20 @@ export default function Profile() {
                             {requests.length > itemsPerPage && (
                                 <div className={styles.carouselControls}>
                                     <motion.button {...btnMotion}
-                                                   onClick={handlePrev}
-                                                   disabled={currentIndex === 0}
+                                                   onClick={handleRequestsPrev}
+                                                   disabled={requestsCurrentIndex === 0}
                                                    className={styles.carouselBtn}
                                     >
                                         &larr; Prev
                                     </motion.button>
 
                                     <span className={styles.carouselIndicator}>
-                    {Math.floor(currentIndex / itemsPerPage) + 1} / {Math.ceil(requests.length / itemsPerPage)}
-                </span>
+                                        {Math.floor(requestsCurrentIndex / itemsPerPage) + 1} / {Math.ceil(requests.length / itemsPerPage)}
+                                    </span>
 
                                     <motion.button {...btnMotion}
-                                                   onClick={handleNext}
-                                                   disabled={currentIndex + itemsPerPage >= requests.length}
+                                                   onClick={handleRequestsNext}
+                                                   disabled={requestsCurrentIndex + itemsPerPage >= requests.length}
                                                    className={styles.carouselBtn}
                                     >
                                         Next &rarr;
