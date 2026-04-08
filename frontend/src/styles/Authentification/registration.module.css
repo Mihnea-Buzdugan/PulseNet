@@ -334,6 +334,17 @@ input:checked + .slider:before {
         margin-bottom: 20px;
     }
 
+    .ionut {
+        color: black !important;
+        border: 2px solid black !important;
+        background: transparent !important;
+        margin-bottom: 20px;
+    }
+
+    .ionut:hover {
+        background: black !important;
+        color: white !important;
+    }
     
     .main-container,
     .harta,

@@ -38,7 +38,7 @@ class CustomUserAdmin(UserAdmin):
             'fields': (
                 'profile_picture', 'biography', 'lat', 'lng', 'trust_score',
                 'visibility_radius', 'quiet_hours_start', 'quiet_hours_end',
-                'online_status', 'private_account',
+                'online_status',
                 'banned_until', 'public_key','is_verified', 'is_private',
             )
         }),
