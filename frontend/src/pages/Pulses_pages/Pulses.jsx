@@ -5,6 +5,37 @@ import {useNavigate} from "react-router-dom";
 import Loading from "@/components/Loading";
 import Footer from "@/components/Footer";
 import {MapPin} from "lucide-react"
+import Select from "react-select";
+
+const PULSE_TYPE_OPTIONS = [
+    { value: "", label: "All Types" },
+    { value: "servicii", label: "Services" },
+    { value: "obiecte", label: "Objects" },
+];
+
+const filterSelectStyles = {
+    control: (base) => ({
+        ...base,
+        border: "1px solid #e2e2e2",
+        borderRadius: "12px",
+        background: "#fafafa",
+        minHeight: "unset",
+        padding: "0.35rem 0.15rem",
+        fontSize: "0.95rem",
+        boxShadow: "none",
+        cursor: "pointer",
+        "&:hover": { borderColor: "#aaa" },
+    }),
+    menu: (base) => ({ ...base, borderRadius: "12px", zIndex: 9999 }),
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+    option: (base, state) => ({
+        ...base,
+        backgroundColor: state.isSelected ? "var(--color-primary-dark)" : state.isFocused ? "#f0f0f0" : "white",
+        color: state.isSelected ? "white" : "#222",
+        cursor: "pointer",
+    }),
+    indicatorSeparator: () => ({ display: "none" }),
+};
 
 export default function Pulses() {
     const [pulses, setPulses] = useState([]);
@@ -155,11 +186,15 @@ export default function Pulses() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
 
-                    <select value={pulseType} onChange={(e) => setPulseType(e.target.value)}>
-                        <option value="">All Types</option>
-                        <option value="servicii">Services</option>
-                        <option value="obiecte">Objects</option>
-                    </select>
+                    <Select
+                        options={PULSE_TYPE_OPTIONS}
+                        value={PULSE_TYPE_OPTIONS.find(o => o.value === pulseType)}
+                        onChange={(opt) => setPulseType(opt ? opt.value : "")}
+                        menuPortalTarget={document.body}
+                        menuPosition="fixed"
+                        classNamePrefix="filterSelect"
+                        styles={filterSelectStyles}
+                    />
 
                     <input
                         type="number"

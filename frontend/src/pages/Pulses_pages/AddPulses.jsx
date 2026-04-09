@@ -399,10 +399,7 @@ function AddPulses() {
 
                 <section className={styles["form-section"]}>
                     <h3 className={styles["section-title"]}>Contact details</h3>
-                    <div
-                        className={styles["contact-submit-row"]}
-                        style={{ display: "flex", alignItems: "flex-end", gap: "20px" }}
-                    >
+                    <div className={styles["contact-submit-row"]}>
                         <div className={styles["form-group"]} style={{ flex: 1, marginBottom: 0, position: 'relative' }}>
                             <label className={styles["label-text"]}>Phone number *</label>
                             <div className={`${styles["phoneInput"]} ${phoneError ? styles["phoneInputError"] : ''}`}>
@@ -446,14 +443,8 @@ function AddPulses() {
                             onClick={addPulse}
                             disabled={isGettingLocation || isSubmitting}
                             style={{
-                                padding: "12px 30px",
                                 backgroundColor: isGettingLocation || isSubmitting ? "#4CAF6A" : "#3E8F57",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "8px",
-                                fontWeight: "bold",
                                 cursor: isGettingLocation || isSubmitting ? "not-allowed" : "pointer",
-                                height: "46px",
                             }}
                         >
                             {isGettingLocation ? "Processing..." : isSubmitting ? "Submitting..." : "Publish listing"}
