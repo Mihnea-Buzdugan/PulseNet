@@ -283,9 +283,23 @@ function Navbar() {
                                             <button className={styles.msgBtn} onClick={(e) => openChat(e, u.id)}>DM</button>
                                         )}
                                         {u.is_following ? (
-                                            <button className={styles.unfollowBtn} onClick={(e) => handleUserAction(e, u, 'unfollow')}>Unfollow</button>
+                                            <button
+                                                className={styles.unfollowBtn}
+                                                onClick={(e) => handleUserAction(e, u, 'unfollow')}
+                                            >
+                                                Unfollow
+                                            </button>
+                                        ) : u.pending_follow ? (
+                                            <button className={styles.pendingBtn} onClick={(e) => handleUserAction(e, u, 'unfollow')}>
+                                                Pending
+                                            </button>
                                         ) : (
-                                            <button className={styles.followBtn} onClick={(e) => handleUserAction(e, u, 'follow')}>Follow</button>
+                                            <button
+                                                className={styles.followBtn}
+                                                onClick={(e) => handleUserAction(e, u, 'follow')}
+                                            >
+                                                Follow
+                                            </button>
                                         )}
                                     </div>
                                 </div>

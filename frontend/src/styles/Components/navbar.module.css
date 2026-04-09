@@ -196,7 +196,7 @@
 .followBtn { background-color: var(--color-secondary); color: white; }
 .unfollowBtn { background-color: var(--color-danger); color: white; }
 .msgBtn { background-color: var(--color-primary);; color: white; }
-
+.pendingBtn { background-color: #0056b3; color: white; }
 /* --- RIGHT SECTION: DESKTOP NAV LINKS --- */
 .navLinks {
     display: flex;

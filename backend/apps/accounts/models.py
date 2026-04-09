@@ -339,6 +339,9 @@ class Follow(models.Model):
     class Meta:
         unique_together = ("follower", "following")
 
+    def __str__(self):
+        return f"{self.follower} → {self.following} (pending)"
+
 
 class PendingFollow(models.Model):
     requester = models.ForeignKey(
