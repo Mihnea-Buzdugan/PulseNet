@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from "react";
+import Select from "react-select";
 import styles from '../../styles/Requests/UrgentRequests.module.css';
 import Navbar from "@/components/Navbar";
 import {useNavigate} from "react-router-dom";
@@ -17,6 +18,30 @@ import {
     Zap
 } from "lucide-react";
 import Footer from "@/components/Footer";
+
+const filterSelectStyles = {
+    control: (base) => ({
+        ...base,
+        border: "1px solid #e2e2e2",
+        borderRadius: "12px",
+        background: "#fafafa",
+        minHeight: "unset",
+        padding: "0.35rem 0.15rem",
+        fontSize: "0.95rem",
+        boxShadow: "none",
+        cursor: "pointer",
+        "&:hover": { borderColor: "#aaa" },
+    }),
+    menu: (base) => ({ ...base, borderRadius: "12px", zIndex: 9999 }),
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+    option: (base, state) => ({
+        ...base,
+        backgroundColor: state.isSelected ? "var(--color-primary-dark)" : state.isFocused ? "#f0f0f0" : "white",
+        color: state.isSelected ? "white" : "#222",
+        cursor: "pointer",
+    }),
+    indicatorSeparator: () => ({ display: "none" }),
+};
 
 const CATEGORIES = [
     { id: 'transport', label: 'Transport', icon: Truck },
@@ -176,15 +201,14 @@ export default function UrgentRequests() {
                     onChange={(e) => setSearch(e.target.value)}
                 />
 
-                <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                    <option value="">All Categories</option>
-
-                    {CATEGORIES.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                            {cat.label}
-                        </option>
-                    ))}
-                </select>
+                <Select
+                    options={[{ value: "", label: "All Categories" }, ...CATEGORIES.map(c => ({ value: c.id, label: c.label }))]}
+                    value={{ value: category, label: category === "" ? "All Categories" : CATEGORIES.find(c => c.id === category)?.label }}
+                    onChange={(opt) => setCategory(opt ? opt.value : "")}
+                    menuPortalTarget={document.body}
+                    menuPosition="fixed"
+                    styles={filterSelectStyles}
+                />
 
                 <input
                     type="number"
