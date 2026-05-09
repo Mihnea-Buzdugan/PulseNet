@@ -1,6 +1,7 @@
 from channels.layers import get_channel_layer
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import authenticate
+from django.contrib.gis.db.models import Collect
 from django.core.paginator import Paginator
 from django.db.models import Avg
 from django.middleware.csrf import get_token
@@ -19,19 +20,19 @@ from django.views.decorators.http import require_http_methods, require_POST, req
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from math import ceil
 from .decorators import api_login_required, check_hate_speech
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
     PulseComment, PulseRating, Notification, UrgentRequest, UrgentRequestImage, AlertConfirm, AlertReport, \
     RequestComment, UrgentRequestOffer, AlertComment, PulseRentalSignal, PulseFeedback, UrgentRequestFeedback, Contact, \
-    IncidentType, SpecialIncident, SpecialIncidentImage
+    IncidentType, SpecialIncident, SpecialIncidentImage, IncidentCluster, CrisisEvent
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
 from django.db import models
 from decimal import Decimal, InvalidOperation
-from django.contrib.gis.db.models.functions import Distance as GisDistance
+from django.contrib.gis.db.models.functions import Distance as GisDistance, Centroid, Distance
 from django.core.cache import cache
 import requests
 from .tasks import update_user_embedding, process_alert_text_embedding, get_model as _get_st_model, \
@@ -2801,12 +2802,31 @@ def create_special_incident(request):
     except Exception as e:
         return JsonResponse({"error": f"A apărut o eroare: {str(e)}"}, status=500)
 
+
 @login_required
 @require_http_methods(["GET"])
 def get_special_incidents(request):
-    incidents = SpecialIncident.objects.all().order_by('-created_at').select_related(
-        'user', 'incident_type'
-    ).prefetch_related('images')
+    lat = request.GET.get("lat")
+    lng = request.GET.get("lng")
+
+    if lat and lng:
+        ref_location = Point(float(lng), float(lat), srid=4326)
+    else:
+        ref_location = request.user.location
+
+    if not ref_location:
+        return JsonResponse({"success": False, "error": "Location required"}, status=400)
+
+    radius_km = request.user.visibility_radius
+
+    incidents = (
+        SpecialIncident.objects
+        .filter(location__dwithin=(ref_location, radius_km / 111.32))
+        .select_related('user', 'incident_type')
+        .prefetch_related('images')
+        .annotate(distance=GisDistance("location", ref_location))
+        .order_by("distance")
+    )
 
     data = []
     for incident in incidents:
@@ -2823,6 +2843,7 @@ def get_special_incidents(request):
                 "lat": incident.location.y if incident.location else None,
                 "lng": incident.location.x if incident.location else None,
             },
+            "distance": round(incident.distance.km, 2) if hasattr(incident, 'distance') else None,
             "user": {
                 "id": incident.user.id,
                 "username": incident.user.username,
@@ -2875,6 +2896,111 @@ def get_special_incident_detail(request, incident_id):
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
+CRISIS_THRESHOLD = 1
+BASE_RADIUS_M    = 1000
+
+def _maybe_trigger_crisis(cluster):
+    if len(cluster.unique_users) < CRISIS_THRESHOLD:
+        return
+
+    already_exists = CrisisEvent.objects.filter(cluster=cluster).exists()
+    if already_exists:
+        return
+
+    CrisisEvent.objects.create(
+        cluster = cluster,
+        incident_type = cluster.incident_type,
+        center = cluster.center,
+        radius_m = cluster.radius_m,
+    )
+
+from django.contrib.gis.measure import D
+def assign_incident_to_cluster(incident: SpecialIncident):
+    if not incident.location or not incident.incident_type:
+        return None
+
+    new_point = incident.location
+
+    candidates = (
+        IncidentCluster.objects
+        .filter(incident_type=incident.incident_type)
+        .annotate(dist=Distance("center", new_point))
+        .filter(dist__lte=D(m=BASE_RADIUS_M + 200))
+        .order_by("dist")
+    )
+
+    best_cluster = None
+    best_dist_m  = None
+
+    for cluster in candidates:
+        dist_m = cluster.dist.m
+        if dist_m <= cluster.radius_m + 200:
+            best_cluster = cluster
+            best_dist_m  = dist_m
+            break
+
+    if best_cluster:
+        cluster = best_cluster
+
+        if best_dist_m > cluster.radius_m:
+            cluster.radius_m = best_dist_m + 50
+
+        if incident.id not in cluster.incident_ids:
+            cluster.incident_ids.append(incident.id)
+        if incident.user_id not in cluster.unique_users:
+            cluster.unique_users.append(incident.user_id)
+
+        cluster.report_count = len(cluster.incident_ids)
+
+        centroid = (
+            SpecialIncident.objects
+            .filter(id__in=cluster.incident_ids, location__isnull=False)
+            .aggregate(centroid=Centroid(Collect("location")))
+        )
+        if centroid["centroid"]:
+            cluster.center = centroid["centroid"]
+
+        cluster.save()
+        _maybe_trigger_crisis(cluster)
+        return cluster
+
+    cluster = IncidentCluster.objects.create(
+        incident_type = incident.incident_type,
+        center        = new_point,
+        radius_m      = BASE_RADIUS_M,
+        report_count  = 1,
+        unique_users  = [incident.user_id],
+        incident_ids  = [incident.id],
+    )
+    _maybe_trigger_crisis(cluster)
+    return cluster
+
+@login_required
+@require_http_methods(["GET"])
+def get_crisis_events(request):
+    events = (
+        CrisisEvent.objects
+        .filter(is_active=True)
+        .select_related("cluster", "incident_type")
+    )
+    data = [
+        {
+            "id": e.id,
+            "incident_type": {
+                "label": e.incident_type.name  if e.incident_type else None,
+                "value": e.incident_type.slug  if e.incident_type else None,
+            },
+            "center_lat":   e.cluster.center.y,
+            "center_lng":   e.cluster.center.x,
+            "radius_m":     e.cluster.radius_m,
+            "report_count": e.cluster.report_count,
+            "unique_users": len(e.cluster.unique_users),
+            "triggered_at": e.triggered_at.isoformat(),
+        }
+        for e in events
+    ]
+    return JsonResponse(data, safe=False)
+
 @login_required
 def get_notifications(request):
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')[:20]
@@ -2897,6 +3023,29 @@ def get_notifications(request):
 
     return JsonResponse({"notifications": data}, safe=False)
 
+
+@login_required
+@require_http_methods(["GET"])
+def get_incident_clusters(request):
+    clusters = IncidentCluster.objects.select_related("incident_type").all()
+    data = [
+        {
+            "id":            c.id,
+            "incident_type": {
+                "label": c.incident_type.name,
+                "value": c.incident_type.slug,
+            },
+            "center_lat":    c.center.y,   # Point.y = latitude
+            "center_lng":    c.center.x,   # Point.x = longitude
+            "radius_m":      c.radius_m,
+            "report_count":  c.report_count,
+            "unique_users":  len(c.unique_users),
+            "crisis_mode":   c.crisis_mode,
+            "crisis_triggered_at": c.crisis_triggered_at.isoformat() if c.crisis_triggered_at else None,
+        }
+        for c in clusters
+    ]
+    return JsonResponse(data, safe=False)
 
 @login_required
 def mark_notifications_read(request):
@@ -4067,3 +4216,4 @@ def resolve_rental_signal(request, id):
         return JsonResponse({"error": "Rental Signal not found."}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+

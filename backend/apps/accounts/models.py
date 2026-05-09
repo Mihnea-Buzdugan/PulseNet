@@ -739,6 +739,53 @@ class SpecialIncidentImage(models.Model):
     image = models.ImageField(upload_to="special_incidents_images/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+class IncidentCluster(models.Model):
+    incident_type       = models.ForeignKey("IncidentType", on_delete=models.CASCADE)
+    center              = models.PointField(srid=4326, geography=True)
+    radius_m            = models.FloatField(default=1000)
+    report_count        = models.PositiveIntegerField(default=0)
+    unique_users        = ArrayField(models.IntegerField(), default=list)
+    incident_ids        = ArrayField(models.IntegerField(), default=list)
+    updated_at          = models.DateTimeField(auto_now=True)
+    created_at          = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["center"]),  # spatial index
+        ]
+
+class CrisisEvent(models.Model):
+    cluster       = models.OneToOneField(
+        IncidentCluster,
+        on_delete=models.CASCADE,
+        related_name="crisis_event"
+    )
+    incident_type = models.ForeignKey(
+        IncidentType,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="crisis_events"
+    )
+    triggered_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    center = models.PointField(srid=4326, geography=True)
+    radius = models.FloatField()
+    is_active = models.BooleanField(default=True)
+    notes         = models.TextField(blank=True)  # admin can add context
+    class Meta:
+        ordering = ["-triggered_at"]
+
+    def __str__(self):
+        return f"Crisis: {self.incident_type} @ cluster {self.cluster_id}"
+
+    def resolve(self, notes=""):
+        from django.utils import timezone
+        self.is_active   = False
+        self.resolved_at = timezone.now()
+        if notes:
+            self.notes = notes
+        self.save()
+
 class Notification(models.Model):
     NOTIFICATION_TYPES = (
         ("rental_proposal", "Rental Proposal"),

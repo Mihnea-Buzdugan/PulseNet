@@ -1,8 +1,10 @@
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from .models import Pulse, UrgentRequest, Alert
+from .models import Pulse, UrgentRequest, Alert, SpecialIncident
+from .views import assign_incident_to_cluster
+
 
 @receiver(post_delete, sender=Pulse)
 def broadcast_pulse_deletion(sender, instance, **kwargs):
@@ -46,3 +48,8 @@ def broadcast_request_deletion(sender, instance, **kwargs):
             "id": instance.id
         }
     )
+
+@receiver(post_save, sender=SpecialIncident)
+def on_incident_saved(sender, instance, created, **kwargs):
+    if created:
+        assign_incident_to_cluster(instance)
