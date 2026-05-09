@@ -6,8 +6,11 @@ import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
 import {GoogleLogin} from "@react-oauth/google";
 import {initializeE2EE} from "@/utils/cryptoUtils";
 
-function getCookie(name) {
+let csrfTokenCache = null;
+
+async function getCookie(name) {
     let cookieValue = null;
+
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
         for (let cookie of cookies) {
@@ -18,7 +21,27 @@ function getCookie(name) {
             }
         }
     }
-    return cookieValue;
+
+    if (cookieValue) return cookieValue;
+
+    if (name === 'csrftoken') {
+        if (csrfTokenCache) return csrfTokenCache;
+
+        const response = await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
+            method: 'GET',
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch CSRF token');
+        }
+
+        const data = await response.json();
+        csrfTokenCache = data.csrf_token;
+        return csrfTokenCache;
+    }
+
+    return null;
 }
 
 const Login = () => {
@@ -60,7 +83,7 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const csrfToken = getCookie('csrftoken');
+        const csrfToken = await getCookie('csrftoken');
         if (!csrfToken) {
             alert('CSRF token is missing!');
             return;
@@ -110,7 +133,7 @@ const Login = () => {
         const googleToken = response.credential;
 
         console.log("Google Token: ", googleToken);
-        const csrfToken = getCookie('csrftoken');
+        const csrfToken = await getCookie('csrftoken');
         if (!csrfToken) {
             alert('CSRF token is missing.');
             return;

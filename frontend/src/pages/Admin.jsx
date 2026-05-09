@@ -123,12 +123,12 @@ const Admin = () => {
             } else if (itemType === 'urgent_request') {
                 url = `https://pulsenet-45is.onrender.com/accounts/delete-urgent-request/${item.id}/`;
             }
-
+            const csrfToken = await getCookie('csrftoken');
             const response = await fetch(url, {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-CSRFToken': csrfToken,
                 },
             });
 
@@ -188,11 +188,13 @@ const Admin = () => {
                 url = `https://pulsenet-45is.onrender.com/accounts/delete-user-contact/${item.id}/`;
             }
 
+            const csrfToken = await getCookie('csrftoken');
+
             const response = await fetch(url, {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-CSRFToken': csrfToken,
                 },
             });
 
@@ -232,12 +234,13 @@ const Admin = () => {
     };
 
     const handleResolveSignal = async (signalId, message) => {
+        const csrfToken = await getCookie('csrftoken');
         try {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/resolve-rental-signal/${signalId}/`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-CSRFToken': csrfToken,
                     'Content-Type': 'application/json',
                 },
 
@@ -353,13 +356,13 @@ const Admin = () => {
     }, [query]);
 
     const handleDeleteReport = async (reportId) => {
-
+        const csrfToken = await getCookie('csrftoken');
         try {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/delete_report/${reportId}/`, {
                 method: "DELETE",
                 credentials: "include",
                 headers: {
-                    "X-CSRFToken": getCookie('csrftoken')
+                    "X-CSRFToken": csrfToken
                 },
             });
 
@@ -400,7 +403,7 @@ const Admin = () => {
 
         setBanSubmitting(true);
         setBanError('');
-
+        const csrfToken = await getCookie('csrftoken');
         try {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/ban-user/${selectedUserToBan.id}/`, {
                 method: 'POST',
@@ -408,7 +411,7 @@ const Admin = () => {
                 headers: {
                     "Accept": "application/json",
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie('csrftoken')
+                    "X-CSRFToken": csrfToken,
                 },
                 body: JSON.stringify({
                     ban_until: new Date(banUntil).toISOString()

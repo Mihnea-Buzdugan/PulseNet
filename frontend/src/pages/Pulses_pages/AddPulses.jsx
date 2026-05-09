@@ -22,20 +22,42 @@ const COUNTRY_OPTIONS = getCountries().map(code => {
     } catch { return null; }
 }).filter(Boolean);
 
-function getCookie(name) {
+let csrfTokenCache = null;
+
+async function getCookie(name) {
     let cookieValue = null;
-    if (typeof document === "undefined") return null;
-    if (document.cookie && document.cookie !== "") {
-        const cookies = document.cookie.split(";");
+
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
         for (let cookie of cookies) {
             cookie = cookie.trim();
-            if (cookie.startsWith(name + "=")) {
+            if (cookie.startsWith(name + '=')) {
                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                 break;
             }
         }
     }
-    return cookieValue;
+
+    if (cookieValue) return cookieValue;
+
+    if (name === 'csrftoken') {
+        if (csrfTokenCache) return csrfTokenCache;
+
+        const response = await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
+            method: 'GET',
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch CSRF token');
+        }
+
+        const data = await response.json();
+        csrfTokenCache = data.csrf_token;
+        return csrfTokenCache;
+    }
+
+    return null;
 }
 
 function AddPulses() {
@@ -213,11 +235,11 @@ function AddPulses() {
             selectedFiles.forEach((file) => {
                 formData.append("images", file);
             });
-
+            const csrfToken = await getCookie('csrftoken');
             const response = await fetch("https://pulsenet-45is.onrender.com/accounts/add_pulse/", {
                 method: "POST",
                 headers: {
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "X-CSRFToken": csrfToken,
                 },
                 credentials: "include",
                 body: formData,
