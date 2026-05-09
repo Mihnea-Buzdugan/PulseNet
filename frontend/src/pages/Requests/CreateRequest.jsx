@@ -104,13 +104,9 @@ export default function CreateRequest() {
     };
 
     const getCookie = (name) => {
-        if (!document.cookie) return null;
-        for (const cookie of document.cookie.split(";")) {
-            const c = cookie.trim();
-            if (c.startsWith(name + "=")) return decodeURIComponent(c.substring(name.length + 1));
-        }
-        return null;
-    };
+    // Read the token from sessionStorage exactly like you do in the Login component
+    return sessionStorage.getItem(name);
+};
 
     const handleSubmit = async (e) => {
         e.preventDefault();
