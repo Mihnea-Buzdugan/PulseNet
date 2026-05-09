@@ -24,7 +24,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://localhost:5173",
-    "https://pulsenet-fiicode.netlify.app"
+    "https://pulsenet1.netlify.app"
 ]
 
 # --- FIX: CROSS-DOMAIN COOKIE SETTINGS ---
@@ -37,7 +37,7 @@ CSRF_COOKIE_SAMESITE = "None" if not DEBUG else "Lax"
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "https://localhost:5173",
-    "https://pulsenet-fiicode.netlify.app",
+    "https://pulsenet1.netlify.app",
     "https://pulsenet-45is.onrender.com", # <-- FIX 1: Allows you to log into the Render admin panel!
 ]
 
