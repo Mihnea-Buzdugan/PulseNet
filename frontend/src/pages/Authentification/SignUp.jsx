@@ -3,18 +3,12 @@ import styles from '../../styles/Authentification/registration.module.css';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
-import {GoogleLogin} from "@react-oauth/google";
-import {initializeE2EE} from "@/utils/cryptoUtils";
-import React from 'react';
-
-let csrfTokenCache = null;
+import { GoogleLogin } from "@react-oauth/google";
+import { initializeE2EE } from "@/utils/cryptoUtils";
 
 function getCookie(name) {
-    // If you saved it in sessionStorage:
+    // Retrieving the CSRF token from sessionStorage
     return sessionStorage.getItem(name);
-    
-    // OR if you saved it in localStorage instead:
-    // return localStorage.getItem(name);
 }
 
 const SignUp = () => {
@@ -45,14 +39,13 @@ const SignUp = () => {
             })
             .then((data) => {
                 console.log('Fetched CSRF token (response):', data.csrf_token);
-                // FIX: Store the token in sessionStorage instead of relying on cookies
+                // Store the token in sessionStorage
                 if (data.csrf_token) {
                     sessionStorage.setItem('csrftoken', data.csrf_token);
                 }
             })
             .catch((error) => console.error('Error fetching CSRF token:', error));
     }, []);
-
 
     const togglePasswordVisibility = (passwordId) => {
         if (passwordId === 'password1') {
@@ -62,9 +55,9 @@ const SignUp = () => {
         }
     };
 
-
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         if (password !== confirmPassword) {
             alert('Passwords do not match');
             return;
@@ -77,11 +70,13 @@ const SignUp = () => {
             alert('Please enter a valid email address');
             return;
         }
+
         const csrfToken = getCookie('csrftoken');
         if (!csrfToken) {
-            alert('CSRF token is missing!');
+            alert('CSRF token is missing! Please refresh the page.');
             return;
         }
+
         const userData = {
             email,
             password,
@@ -89,6 +84,7 @@ const SignUp = () => {
             last_name: lastName,
             username,
         };
+
         try {
             const response = await fetch('https://pulsenet-45is.onrender.com/accounts/signup/', {
                 method: 'POST',
@@ -102,11 +98,12 @@ const SignUp = () => {
 
             if (response.ok) {
                 const expirationTime = new Date();
-
                 await initializeE2EE();
+
                 expirationTime.setHours(expirationTime.getHours() + 6);
                 localStorage.setItem('auth-token', 'true');
                 localStorage.setItem('token-expiration', expirationTime.toString());
+
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 0);
@@ -122,11 +119,11 @@ const SignUp = () => {
 
     const handleGoogleLogin = async (response) => {
         const googleToken = response.credential;
-
         console.log("Google Token: ", googleToken);
+
         const csrfToken = getCookie('csrftoken');
         if (!csrfToken) {
-            alert('CSRF token is missing.');
+            alert('CSRF token is missing! Please refresh the page.');
             return;
         }
 
@@ -139,23 +136,25 @@ const SignUp = () => {
             credentials: 'include',
             body: JSON.stringify({ google_token: googleToken })
         });
+
         if (resp.ok) {
             const data = await resp.json();
             console.log(data);
+
             await initializeE2EE();
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 0);
             const exp = new Date();
             exp.setHours(exp.getHours() + 6);
             localStorage.setItem('auth-token', 'true');
             localStorage.setItem('token-expiration', exp.toString());
+
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 0);
         } else {
             const err = await resp.json();
             alert(err.message);
         }
     };
-
 
     return (
         <div>
