@@ -54,8 +54,8 @@ export default function SearchUsers() {
 
         await fetch(`https://pulsenet-45is.onrender.com/accounts/follow/${userId}/`, {
             method: "POST",
-            credentials: "include",
-            headers: { "X-CSRFToken": csrf },
+            
+            headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
         });
 
 
@@ -77,8 +77,8 @@ export default function SearchUsers() {
 
         await fetch(`https://pulsenet-45is.onrender.com/accounts/unfollow/${userId}/`, {
             method: "POST",
-            credentials: "include",
-            headers: { "X-CSRFToken": csrf },
+            
+            headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
         });
 
         setUsers((prev) =>

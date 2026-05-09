@@ -138,9 +138,9 @@ export async function initializeE2EE() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
-                credentials: "include",
+                
                 body: JSON.stringify({ publicKey: publicKeyBase64 }),
             }
         );

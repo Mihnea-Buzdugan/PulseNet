@@ -53,7 +53,7 @@ export default function RequestOffer() {
 
                 const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-request/${requestId}/`, {
                     method: "GET",
-                    credentials: "include",
+                    
                 });
                 const data = await res.json();
                 if (mounted && data.success) {
@@ -81,7 +81,7 @@ export default function RequestOffer() {
             try {
                 const res = await fetch("https://pulsenet-45is.onrender.com/accounts/user/", {
                     method: "GET",
-                    credentials: "include",
+                    
                 });
                 if (!mounted) return;
                 if (res.ok) {
@@ -205,10 +205,10 @@ export default function RequestOffer() {
 
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/create_request_offer/`, {
                 method: "POST",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
                 body: JSON.stringify(payload),
             });

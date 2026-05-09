@@ -130,9 +130,8 @@ const Admin = () => {
 
             const response = await fetch(url, {
                 method: 'DELETE',
-                credentials: 'include',
                 headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
             });
 
@@ -194,9 +193,8 @@ const Admin = () => {
 
             const response = await fetch(url, {
                 method: 'DELETE',
-                credentials: 'include',
                 headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
             });
 
@@ -239,12 +237,11 @@ const Admin = () => {
         try {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/resolve-rental-signal/${signalId}/`, {
                 method: 'POST',
-                credentials: 'include',
                 headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'Content-Type': 'application/json',
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                'Content-Type': 'application/json',
                 },
-
+                
                 body: JSON.stringify({ message: message }),
             });
 
@@ -286,13 +283,13 @@ const Admin = () => {
             try {
                 if (activeTab === 'reports' && reports.length === 0) {
                     const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/admin_alert_reports/`, {
-                        credentials: "include",
+                        
                     });
                     const data = await res.json();
                     if (data.reports) setReports(data.reports);
                 } else if (activeTab === 'flagged' && flaggedData.pulses.length === 0) {
                     const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/flagged_posts/`, {
-                        credentials: "include",
+                        
                     });
                     const data = await res.json();
                     if (data.success) setFlaggedData(data.flagged);
@@ -303,7 +300,7 @@ const Admin = () => {
                     feedbackData.user_contacts.length === 0
                 ) {
                     const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/feedbacks/`, {
-                        credentials: "include",
+                        
                     });
                     const data = await res.json();
 
@@ -361,9 +358,8 @@ const Admin = () => {
         try {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/delete_report/${reportId}/`, {
                 method: "DELETE",
-                credentials: "include",
                 headers: {
-                    "X-CSRFToken": getCookie('csrftoken')
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
             });
 
@@ -408,11 +404,10 @@ const Admin = () => {
         try {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/ban-user/${selectedUserToBan.id}/`, {
                 method: 'POST',
-                credentials: "include",
                 headers: {
                     "Accept": "application/json",
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie('csrftoken')
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`
                 },
                 body: JSON.stringify({
                     ban_until: new Date(banUntil).toISOString()
@@ -447,11 +442,10 @@ const Admin = () => {
                 `https://pulsenet-45is.onrender.com/accounts/unban-user/${selectedUserToUnban.id}/`,
                 {
                     method: 'POST',
-                    credentials: "include",
                     headers: {
                         "Accept": "application/json",
                         "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie('csrftoken')
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
                     }
                 }
             );

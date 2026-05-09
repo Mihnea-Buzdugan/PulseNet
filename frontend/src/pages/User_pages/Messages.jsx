@@ -47,7 +47,7 @@ const Messages = ({ currentUser }) => {
         if (!currentUser?.id) return;
 
         fetch("https://pulsenet-45is.onrender.com/accounts/my-conversations/", {
-            credentials: "include",
+            
         })
             .then((res) => res.json())
             .then(async (data) => {

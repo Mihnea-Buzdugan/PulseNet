@@ -32,7 +32,7 @@ export default function FollowRequests() {
             const res = await fetch(
                 "https://pulsenet-45is.onrender.com/accounts/follow-requests/",
                 {
-                    credentials: "include",
+                    
                 }
             );
             const data = await res.json();
@@ -55,8 +55,8 @@ export default function FollowRequests() {
                 `https://pulsenet-45is.onrender.com/accounts/follow-requests/accept/${id}/`,
                 {
                     method: "POST",
-                    credentials: "include",
-                    headers: { "X-CSRFToken": csrfToken },
+                    
+                    headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
                 }
             );
 
@@ -76,8 +76,8 @@ export default function FollowRequests() {
                 `https://pulsenet-45is.onrender.com/accounts/follow-requests/reject/${id}/`,
                 {
                     method: "POST",
-                    credentials: "include",
-                    headers: { "X-CSRFToken": csrfToken },
+                    
+                    headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
                 }
             );
 

@@ -291,9 +291,9 @@ export default function Profile() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,,
                 },
-                credentials: "include",
+                
                 body: JSON.stringify(payload),
             });
 
@@ -352,9 +352,9 @@ export default function Profile() {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRFToken": csrfToken,
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,,
             },
-            credentials: "include",
+            
         })
             .then((response) => response.json())
             .then((data) => {
@@ -388,7 +388,7 @@ export default function Profile() {
 
                 const offersRes = await fetch("https://pulsenet-45is.onrender.com/accounts/pulse_rentals/", {
                     method: "GET",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
                         "X-CSRFToken": getCookie("csrftoken"),
@@ -405,7 +405,7 @@ export default function Profile() {
 
                 const proposalsRes = await fetch("https://pulsenet-45is.onrender.com/accounts/pulse_own_proposals/", {
                     method: "GET",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
                         "X-CSRFToken": getCookie("csrftoken"),
@@ -435,7 +435,7 @@ export default function Profile() {
 
                 const resReceived = await fetch("https://pulsenet-45is.onrender.com/accounts/request-offers/received/", {
                     method: "GET",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
                         "X-CSRFToken": getCookie("csrftoken"),
@@ -446,7 +446,7 @@ export default function Profile() {
 
                 const resSent = await fetch("https://pulsenet-45is.onrender.com/accounts/own-request-offers/", {
                     method: "GET",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
                         "X-CSRFToken": getCookie("csrftoken"),
@@ -505,9 +505,9 @@ export default function Profile() {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,,
                 },
-                credentials: "include",
+                
                 body: JSON.stringify({
                     ...editForm,
                 }),
@@ -562,8 +562,8 @@ export default function Profile() {
             const res = await fetch(uploadUrl, {
                 method: "POST",
                 body: form,
-                credentials: "include",
-                headers: { "X-CSRFToken": csrfToken },
+                
+                headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
             });
             if (res.ok) {
                 const data = await res.json();
@@ -598,7 +598,7 @@ export default function Profile() {
         try {
             const response = await fetch("https://pulsenet-45is.onrender.com/accounts/delete_profile_picture/", {
                 method: "POST",
-                credentials: "include",
+                
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
             });
             if (!response.ok) throw new Error("Failed to delete profile picture");
@@ -711,7 +711,7 @@ export default function Profile() {
                 {
                     method: "POST",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },
-                    credentials: "include",
+                    
                     body: formData,
                 }
             );
@@ -762,7 +762,7 @@ export default function Profile() {
                 {
                     method: "POST",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },
-                    credentials: "include",
+                    
                     body: formData,
                 }
             );
@@ -797,7 +797,7 @@ export default function Profile() {
             {
                 method: "PUT",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
-                credentials: "include",
+                
             }
         );
 
@@ -827,7 +827,7 @@ export default function Profile() {
                 {
                     method: "DELETE",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },
-                    credentials: "include",
+                    
                 }
             );
 
@@ -866,7 +866,7 @@ export default function Profile() {
         try {
             const res = await fetch(url, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRFToken": getCookie("csrftoken"),
@@ -900,7 +900,7 @@ export default function Profile() {
         try {
             const res = await fetch(url, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRFToken": getCookie("csrftoken"),
@@ -933,7 +933,7 @@ export default function Profile() {
                 "https://pulsenet-45is.onrender.com/accounts/signal_pulse_rental/", // your backend endpoint
                 {
                     method: "POST",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
                         "X-CSRFToken": getCookie("csrftoken"),
@@ -968,7 +968,7 @@ export default function Profile() {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse_rentals/${id}/`, {
                 method: "DELETE",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
-                credentials: "include",
+                
             });
 
             if (response.ok) {
@@ -1011,7 +1011,7 @@ export default function Profile() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse_rentals/${id}/`, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRFToken": getCookie("csrftoken"),
@@ -1096,7 +1096,7 @@ export default function Profile() {
         try {
             const res = await fetch(url, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRFToken": getCookie("csrftoken"),
@@ -1128,7 +1128,7 @@ export default function Profile() {
         try {
             const res = await fetch(url, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRFToken": getCookie("csrftoken"),
@@ -1164,7 +1164,7 @@ export default function Profile() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/request-offers/${id}/`, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRFToken": getCookie("csrftoken"),
@@ -1201,7 +1201,7 @@ export default function Profile() {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/request-offers/${id}/`, {
                 method: "DELETE",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
-                credentials: "include",
+                
             });
 
             if (response.ok) {
@@ -1268,7 +1268,7 @@ export default function Profile() {
                 {
                     method: "DELETE",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },
-                    credentials: "include",
+                    
                 }
             );
 

@@ -31,7 +31,7 @@ const SignUp = () => {
 
         fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
             method: 'GET',
-            credentials: 'include',
+            
         })
             .then((response) => {
                 if (response.ok) return response.json();
@@ -90,10 +90,10 @@ const SignUp = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
                 body: JSON.stringify(userData),
-                credentials: 'include',
+                
             });
 
             if (response.ok) {
@@ -131,9 +131,9 @@ const SignUp = () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken,
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
             },
-            credentials: 'include',
+            
             body: JSON.stringify({ google_token: googleToken })
         });
 

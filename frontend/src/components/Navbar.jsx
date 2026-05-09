@@ -151,8 +151,11 @@ function Navbar() {
             try {
                 await fetch('https://pulsenet-45is.onrender.com/accounts/notifications/mark-read/', {
                     method: 'POST',
-                    headers: { 'X-CSRFToken': getCookie('csrftoken') },
-                    credentials: 'include'
+                    headers: {
+
+"Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+
+},
                 });
             } catch (err) {
                 console.error("Failed to mark notifications read", err);
@@ -178,8 +181,11 @@ function Navbar() {
         try {
             await fetch(`https://pulsenet-45is.onrender.com/accounts/delete_notification/${id}/`, {
                 method: "DELETE",
-                headers: { 'X-CSRFToken': getCookie('csrftoken') },
-                credentials: 'include'
+                headers: {
+
+"Authorization": `Bearer ${localStorage.getItem("access_token")}`, is ok?
+
+},
             });
 
             setNotifications(prev => prev.filter(n => n.id !== id));

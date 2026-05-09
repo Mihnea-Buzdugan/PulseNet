@@ -7,6 +7,9 @@ from django.middleware.csrf import get_token
 from django.utils.dateparse import parse_datetime, parse_date
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie, csrf_protect
 import os
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from datetime import datetime
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth import get_user_model, login as django_login,logout as django_logout
@@ -215,7 +218,7 @@ def logout(request):
 
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def user(request):
     if request.method == "GET":
         user = request.user
@@ -234,7 +237,7 @@ def user(request):
         return JsonResponse({'message': 'Method not allowed'}, status=405)
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def profile(request):
     if request.method == "GET":
         user = request.user
@@ -308,8 +311,8 @@ def profile(request):
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
-@login_required
-@require_http_methods(["PUT"])
+@permission_classes([IsAuthenticated])
+@api_view(['PUT'])
 def become_verified(request):
     try:
         user = request.user
@@ -344,8 +347,8 @@ def become_verified(request):
 
 
 
-@login_required
-@require_http_methods(["PUT"])
+@permission_classes([IsAuthenticated])
+@api_view(['PUT'])
 def update_profile(request):
     try:
 
@@ -415,8 +418,8 @@ def update_profile(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-@login_required
-@require_POST
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 @csrf_protect
 def upload_profile_picture(request):
     user = request.user
@@ -481,8 +484,8 @@ def upload_profile_picture(request):
         }
     })
 
-@login_required
-@require_POST
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 @csrf_protect
 def delete_profile_picture(request):
     user = request.user
@@ -507,9 +510,8 @@ def delete_profile_picture(request):
     })
 
 
-@login_required
-@require_POST
-@csrf_protect
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 @check_hate_speech
 def add_pulse(request):
     try:
@@ -598,8 +600,8 @@ def add_pulse(request):
 
 
 
-@login_required
-@require_http_methods(["POST"])
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def update_pulse(request, pulse_id):
     try:
         pulse = get_object_or_404(Pulse, id=pulse_id)
@@ -678,8 +680,8 @@ def update_pulse(request, pulse_id):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@login_required
-@require_http_methods(["DELETE"])
+@permission_classes([IsAuthenticated])
+@api_view(['DELETE'])
 def remove_pulse(request, pulse_id):
     try:
         pulse = Pulse.objects.get(id=pulse_id, user=request.user)
@@ -695,8 +697,8 @@ def remove_pulse(request, pulse_id):
 
 
 @csrf_protect
-@login_required
-@require_POST
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def update_location(request):
     try:
         data = json.loads(request.body)
@@ -734,7 +736,7 @@ def get_base_pulse_queryset(user):
     return qs
 
 
-@require_GET
+@api_view(['GET'])
 def list_all_pulses(request):
     page = int(request.GET.get("page", 1))
     page_size = 15
@@ -816,8 +818,8 @@ def list_all_pulses(request):
 
 
 @csrf_protect
-@login_required
-@require_http_methods(["GET"])
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def get_latest_pulses(request):
     page_number = request.GET.get('page', 1)
     per_page = 15
@@ -868,8 +870,8 @@ def get_latest_pulses(request):
 
 
 @csrf_protect
-@login_required
-@require_http_methods(["GET"])
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def get_nearest_pulses(request):
 
     lat = request.GET.get("lat")
@@ -925,8 +927,8 @@ def get_nearest_pulses(request):
 
 
 @csrf_protect
-@login_required
-@require_http_methods(["GET"])
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def get_best_pulses(request):
     page_number = request.GET.get('page', 1)
     per_page = 15
@@ -964,8 +966,8 @@ def get_best_pulses(request):
     })
 
 @csrf_protect
-@login_required
-@require_http_methods(["GET"])
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def get_favorite_pulses(request):
     page_number = request.GET.get("page", 1)
     per_page = request.GET.get("per_page", 15)
@@ -1029,8 +1031,8 @@ def get_favorite_pulses(request):
 
 
 @csrf_exempt
-@login_required
-@require_http_methods(["GET"])
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def get_pulse_by_id(request, pulse_id):
     try:
         pulse = (
@@ -1113,7 +1115,7 @@ def get_pulse_by_id(request, pulse_id):
         }, status=400)
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def get_pulse_comments(request, pulse_id):
     if request.method == "GET":
         comments = (
@@ -1192,7 +1194,7 @@ def get_pulse_comments(request, pulse_id):
         }, status=405)
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def add_pulse_rating(request, pulse_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
@@ -1236,7 +1238,7 @@ def add_pulse_rating(request, pulse_id):
         "popularity_score": float(pulse.popularity_score)
     })
 
-@login_required
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 def create_pulse_rental(request):
     if request.method != "POST":
@@ -1471,8 +1473,8 @@ def modify_rental_status(request, rental_id):
 
 
 @csrf_protect
-@login_required
-@require_POST
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def signal_pulse_rental(request):
     try:
         data = json.loads(request.body)
@@ -1516,8 +1518,8 @@ def signal_pulse_rental(request):
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
-@login_required
-@require_POST
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def pulse_rental_feedback(request, rental_id):
     rental = get_object_or_404(PulseRental, id=rental_id)
 
@@ -1569,8 +1571,8 @@ def pulse_rental_feedback(request, rental_id):
     }, status=201 if feedback_created else 200)
 
 
-@login_required
-@require_POST
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def request_rental_feedback(request, rental_id):
     urgent_request = get_object_or_404(UrgentRequestOffer, id=rental_id)
 
@@ -1612,7 +1614,7 @@ def request_rental_feedback(request, rental_id):
     }, status=201 if feedback_created else 200)
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def get_rental_proposals(request):
     if request.method == "GET":
         user = request.user
@@ -1635,8 +1637,8 @@ def get_rental_proposals(request):
 
         return JsonResponse(data, safe=False)
 
-@login_required
-@require_POST
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def add_pulse_to_favorites(request, pulse_id):
     try:
         pulse = Pulse.objects.get(id=pulse_id)
@@ -1672,8 +1674,8 @@ def add_pulse_to_favorites(request, pulse_id):
         }, status=400)
 
 
-@login_required
-@require_POST
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def add_pulse_to_favorites(request, pulse_id):
     try:
         pulse = Pulse.objects.get(id=pulse_id)
@@ -1710,8 +1712,8 @@ def add_pulse_to_favorites(request, pulse_id):
 
 
 
-@login_required
-@require_http_methods(["DELETE"])
+@permission_classes([IsAuthenticated])
+@api_view(['DELETE'])
 def delete_pulse_from_favorites(request, pulse_id):
     try:
         pulse = Pulse.objects.get(id=pulse_id)
@@ -1752,7 +1754,7 @@ def delete_pulse_from_favorites(request, pulse_id):
 User = get_user_model()
 
 @csrf_exempt
-@login_required
+@permission_classes([IsAuthenticated])
 def search_users(request):
     query = request.GET.get("q", "")
 
@@ -1801,7 +1803,7 @@ def search_users(request):
 
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def user_profile(request, user_id):
     if request.method == "GET":
         user = User.objects.get(id=user_id)
@@ -1885,7 +1887,7 @@ def user_profile(request, user_id):
 
 
 @csrf_exempt
-@login_required
+@permission_classes([IsAuthenticated])
 def follow_user(request, user_id):
     from .models import Follow, PendingFollow
 
@@ -1913,7 +1915,7 @@ def follow_user(request, user_id):
     return JsonResponse({"status": "follow_created"})
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def unfollow_user(request, user_id):
     from .models import Follow, Friendship
 
@@ -1947,7 +1949,7 @@ def unfollow_user(request, user_id):
 
 
 @csrf_exempt
-@login_required
+@permission_classes([IsAuthenticated])
 def accept_follow_request(request, request_id):
     from .models import PendingFollow, Follow
 
@@ -1968,7 +1970,7 @@ def accept_follow_request(request, request_id):
     return JsonResponse({"status": "accepted"})
 
 @csrf_exempt
-@login_required
+@permission_classes([IsAuthenticated])
 def reject_follow_request(request, request_id):
     from .models import PendingFollow
 
@@ -1980,7 +1982,7 @@ def reject_follow_request(request, request_id):
     return JsonResponse({"status": "rejected"})
 
 @csrf_exempt
-@login_required
+@permission_classes([IsAuthenticated])
 def get_follow_requests(request):
     from .models import PendingFollow
 
@@ -2100,8 +2102,8 @@ async def get_message_history(request, chat_type, conversation_id):
     return JsonResponse(result, status=status_code)
 
 
-@login_required
-@require_http_methods(["POST"])
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def upload_public_key(request):
 
     try:
@@ -2125,15 +2127,15 @@ def upload_public_key(request):
     except Exception as e:
         return JsonResponse({"error": str(e), "status": 500})
 
-@login_required
-@require_http_methods(["GET"])
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def get_my_public_key(request):
     if not request.user.public_key:
         return JsonResponse({"error": "No key found"}, status=404)
     return JsonResponse({"public_key": request.user.public_key})
 
-@login_required
-@require_http_methods(["GET"])
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def get_public_key(request, user_id):
 
     try:
@@ -2157,7 +2159,7 @@ def get_public_key(request, user_id):
         return JsonResponse({"error": str(e), "status": 500})
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def my_conversations(request):
     if request.method != "GET":
         return JsonResponse({"error": "Invalid request method"}, status=405)
@@ -2209,7 +2211,7 @@ def my_conversations(request):
 
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def list_alerts(request):
     """Return all active alerts with their images"""
 
@@ -2256,7 +2258,7 @@ def list_alerts(request):
     return JsonResponse({"success": True, "alerts": data})
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 @check_hate_speech
 def create_alert(request):
     if request.method != "POST":
@@ -2417,8 +2419,8 @@ def alert_details(request, alert_id):
         "alert": data
     })
 
-@login_required
-@require_POST
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def confirm_alert(request, alert_id):
     alert = get_object_or_404(Alert, id=alert_id)
 
@@ -2430,8 +2432,8 @@ def confirm_alert(request, alert_id):
         return JsonResponse({"success": False, "message": "You have already confirmed this alert."})
 
 
-@login_required
-@require_POST
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def unconfirm_alert(request, alert_id):
     alert = get_object_or_404(Alert, id=alert_id)
     confirm = AlertConfirm.objects.filter(alert=alert, user=request.user).first()
@@ -2441,7 +2443,7 @@ def unconfirm_alert(request, alert_id):
     return JsonResponse({"success": False, "message": "You had not confirmed this alert."})
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 def report_alert(request, alert_id):
     if request.method != "POST":
@@ -2517,7 +2519,7 @@ def delete_report(request, report_id):
         )
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def get_alert_comments(request, alert_id):
     if request.method == "GET":
         comments = (
@@ -2597,7 +2599,7 @@ def get_alert_comments(request, alert_id):
         }, status=405)
 
 
-@require_GET
+@api_view(['GET'])
 def get_current_weather(request):
 
     lat_str = request.GET.get('lat')
@@ -2657,7 +2659,7 @@ def get_current_weather(request):
         return JsonResponse({"error": "Failed to fetch weather data."}, status=500)
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def get_notifications(request):
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')[:20]
     data = []
@@ -2680,13 +2682,13 @@ def get_notifications(request):
     return JsonResponse({"notifications": data}, safe=False)
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def mark_notifications_read(request):
     Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
     return JsonResponse({"status": "success"})
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def delete_notification(request, notif_id):
     if request.method != "DELETE":
         return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
@@ -2771,7 +2773,7 @@ def urgent_requests_list(request):
 
     return JsonResponse({"success": True, "urgent_requests": data})
 
-@require_GET
+@api_view(['GET'])
 def list_all_requests(request):
     page = int(request.GET.get("page", 1))
     page_size = 15
@@ -2864,8 +2866,8 @@ import json
 
 
 @csrf_exempt
-@login_required
-@require_http_methods(["GET"])
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def get_request_by_id(request, request_id):
     try:
         urgent_request = (
@@ -2935,8 +2937,8 @@ def get_request_by_id(request, request_id):
 
 
 
-@login_required
-@require_POST
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 @check_hate_speech
 def create_urgent_request(request):
     data = request.POST
@@ -3030,8 +3032,8 @@ def create_urgent_request(request):
 
 
 
-@login_required
-@require_http_methods(["POST"])
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def update_request(request, request_id):
     try:
         urgent_request = get_object_or_404(UrgentRequest, id=request_id)
@@ -3114,8 +3116,8 @@ def update_request(request, request_id):
 
 
 
-@login_required
-@require_http_methods(["DELETE"])
+@permission_classes([IsAuthenticated])
+@api_view(['DELETE'])
 def remove_request(request, request_id):
     try:
         request = UrgentRequest.objects.get(id=request_id, user=request.user)
@@ -3131,7 +3133,7 @@ def remove_request(request, request_id):
         )
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def get_request_comments(request, request_id):
     if request.method == "GET":
         comments = (
@@ -3211,7 +3213,7 @@ def get_request_comments(request, request_id):
         }, status=405)
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 def create_request_offer(request):
     if request.method != "POST":
@@ -3439,7 +3441,7 @@ def modify_offer_status(request, offer_id):
     return JsonResponse({"error": "Invalid method"}, status=405)
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 def get_my_offers(request):
     """Gets all offers made BY the current user on others' UrgentRequests."""
     if request.method == "GET":
@@ -3462,8 +3464,8 @@ def get_my_offers(request):
         return JsonResponse(data, safe=False)
 
 
-@require_http_methods(["POST"])
-@login_required
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def create_contact_post(request):
     try:
         data = json.loads(request.body)
@@ -3529,7 +3531,7 @@ def admin_alert_reports(request):
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 
-@login_required
+@permission_classes([IsAuthenticated])
 def admin_feedbacks(request):
     if not request.user.is_staff:
         return JsonResponse({"error": "Unauthorized"}, status=403)
@@ -3637,7 +3639,7 @@ def admin_feedbacks(request):
 
 
 @staff_member_required
-@require_POST
+@api_view(['POST'])
 def ban_user(request, user_id):
     user_to_ban = get_object_or_404(User, id=user_id)
 
@@ -3672,7 +3674,7 @@ def ban_user(request, user_id):
 
 
 @staff_member_required
-@require_POST
+@api_view(['POST'])
 def unban_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
 
@@ -3685,7 +3687,7 @@ def unban_user(request, user_id):
 
 
 @staff_member_required
-@require_GET
+@api_view(['GET'])
 def flagged_posts(request):
     if not request.user.is_staff:
         return JsonResponse({"error": "Unauthorized"}, status=403)
@@ -3709,8 +3711,8 @@ def flagged_posts(request):
     })
 
 
-@login_required
-@require_http_methods(["DELETE"])
+@permission_classes([IsAuthenticated])
+@api_view(['DELETE'])
 def delete_pulse(request, id):
     if not request.user.is_superuser:
         return JsonResponse({"error": "Unauthorized"}, status=403)
@@ -3724,8 +3726,8 @@ def delete_pulse(request, id):
 
 
 
-@login_required
-@require_http_methods(["DELETE"])
+@permission_classes([IsAuthenticated])
+@api_view(['DELETE'])
 def delete_alert(request, id):
     if not request.user.is_superuser:
         return JsonResponse({"error": "Unauthorized"}, status=403)
@@ -3739,8 +3741,8 @@ def delete_alert(request, id):
 
 
 
-@login_required
-@require_http_methods(["DELETE"])
+@permission_classes([IsAuthenticated])
+@api_view(['DELETE'])
 def delete_urgent_request(request, id):
     if not request.user.is_superuser:
         return JsonResponse({"error": "Unauthorized"}, status=403)
@@ -3753,8 +3755,8 @@ def delete_urgent_request(request, id):
         return JsonResponse({"error": "Urgent request not found"}, status=404)
 
 
-@require_http_methods(["DELETE"])
-@login_required
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_rental_signal(request, id):
     try:
         PulseRentalSignal.objects.get(id=id).delete()
@@ -3763,8 +3765,8 @@ def delete_rental_signal(request, id):
         return JsonResponse({"error": "Not found"}, status=404)
 
 
-@require_http_methods(["DELETE"])
-@login_required
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_rental_feedback(request, id):
     feedback_type = request.GET.get("type")
 
@@ -3784,8 +3786,8 @@ def delete_rental_feedback(request, id):
         return JsonResponse({"error": "Not found"}, status=404)
 
 
-@require_http_methods(["DELETE"])
-@login_required
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_user_contact(request, id):
     try:
         Contact.objects.get(id=id).delete()
@@ -3794,8 +3796,8 @@ def delete_user_contact(request, id):
         return JsonResponse({"error": "Not found"}, status=404)
 
 
-@require_http_methods(["POST"])
-@login_required
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def resolve_rental_signal(request, id):
     try:
 
