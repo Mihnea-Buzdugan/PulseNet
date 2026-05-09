@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.contrib.gis.db import models
+from django.contrib.gis.db.models import PointField
 from django.contrib.postgres.fields import ArrayField
 from django.utils.crypto  import get_random_string
 from django.db.models import F
@@ -445,7 +446,6 @@ class DirectMessage(models.Model):
     def __str__(self):
         return f"From {self.sender.email} at {self.timestamp}"
 
-
 class Alert(models.Model):
     CATEGORY_CHOICES = [
         ("weather", "Weather Alert"),
@@ -622,6 +622,122 @@ class AlertReport(models.Model):
     def __str__(self):
         return f"Report for Alert {self.alert.id} ({self.reason})"
 
+class IncidentType(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(
+        unique=True,
+        null=True,
+        blank=True
+    )
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class SpecialIncident(models.Model):
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="special_incidents"
+    )
+
+    incident_type = models.ForeignKey(
+        IncidentType,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="incidents"
+    )
+
+    title = models.CharField(max_length=150)
+
+    description = models.TextField()
+
+    embedding = VectorField(
+        dimensions=512,
+        null=True,
+        blank=True
+    )
+
+    duplicate_check_embedding = VectorField(
+        dimensions=512,
+        null=True,
+        blank=True
+    )
+
+    is_approved = models.BooleanField(default=True)
+
+    is_flagged = models.BooleanField(default=False)
+
+    toxicity_score = models.FloatField(default=0.0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    location = PointField(
+        srid=4326,
+        null=True,
+        blank=True
+    )
+
+    address = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True
+    )
+
+    confirm_count = models.PositiveIntegerField(default=0)
+
+    report_count = models.PositiveIntegerField(default=0)
+
+    views_count = models.PositiveIntegerField(default=0)
+
+    viewed_users = ArrayField(
+        models.IntegerField(),
+        default=list,
+        blank=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    severity_level = models.CharField(
+        max_length=20,
+        choices=[
+            ("low", "Low"),
+            ("medium", "Medium"),
+            ("high", "High"),
+            ("critical", "Critical"),
+        ],
+        default="medium"
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+        indexes = [
+            models.Index(fields=['location']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} ({self.incident_type})"
+
+    @property
+    def is_verified(self):
+        return self.confirm_count > 10
+
+class SpecialIncidentImage(models.Model):
+    special_incident = models.ForeignKey(
+        SpecialIncident,
+        on_delete=models.CASCADE,
+        related_name="images"
+    )
+    image = models.ImageField(upload_to="special_incidents_images/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
 class Notification(models.Model):
     NOTIFICATION_TYPES = (
@@ -840,3 +956,12 @@ class Contact(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} - {self.created_at.strftime('%d-%m-%Y')}"
+
+class PersonalDocument(models.Model):
+    DOC_TYPES = [('PASSPORT', 'Passport'), ('ID', 'ID Card'), ('LICENSE', 'Driver License')]
+
+    doc_type = models.CharField(max_length=20, choices=DOC_TYPES)
+    extracted_data = models.JSONField(default=dict)
+    # original_image = models.ImageField(upload_to='originals/') # Keep for processing
+    redacted_image = models.ImageField(upload_to='redacted/')
+    created_at = models.DateTimeField(auto_now_add=True)

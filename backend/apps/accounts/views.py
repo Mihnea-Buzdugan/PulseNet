@@ -24,7 +24,8 @@ from math import ceil
 from .decorators import api_login_required, check_hate_speech
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
     PulseComment, PulseRating, Notification, UrgentRequest, UrgentRequestImage, AlertConfirm, AlertReport, \
-    RequestComment, UrgentRequestOffer, AlertComment, PulseRentalSignal, PulseFeedback, UrgentRequestFeedback, Contact
+    RequestComment, UrgentRequestOffer, AlertComment, PulseRentalSignal, PulseFeedback, UrgentRequestFeedback, Contact, \
+    IncidentType, SpecialIncident, SpecialIncidentImage
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
@@ -2256,6 +2257,7 @@ def list_alerts(request):
     return JsonResponse({"success": True, "alerts": data})
 
 
+
 @login_required
 @check_hate_speech
 def create_alert(request):
@@ -2656,6 +2658,222 @@ def get_current_weather(request):
     except Exception as e:
         return JsonResponse({"error": "Failed to fetch weather data."}, status=500)
 
+from django.utils.text import slugify
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_incident_type(request):
+    if not request.user.is_staff:
+        return JsonResponse(
+            {"error": "Admin only."},
+            status=403
+        )
+
+    try:
+        data = json.loads(request.body)
+
+        name = data.get("label")
+
+        if not name:
+            return JsonResponse(
+                {"error": "Name required."},
+                status=400
+            )
+
+        slug = slugify(name)
+
+        incident_type, created = IncidentType.objects.get_or_create(
+            slug=slug,
+            defaults={
+                "name": name
+            }
+        )
+
+        if not created:
+            return JsonResponse(
+                {"error": "Incident type already exists."},
+                status=400
+            )
+
+        return JsonResponse({
+            "message": "Incident type created.",
+            "id": incident_type.id,
+            "name": incident_type.name,
+            "slug": incident_type.slug
+        })
+
+    except Exception as e:
+
+        return JsonResponse(
+            {"error": str(e)},
+            status=500
+        )
+
+
+@login_required
+@csrf_exempt
+def delete_incident_type(request, incident_type_id):
+
+    if request.method != "DELETE":
+        return JsonResponse(
+            {"error": "DELETE method required."},
+            status=405
+        )
+
+    if not request.user.is_staff:
+        return JsonResponse(
+            {"error": "Admin only."},
+            status=403
+        )
+    try:
+        incident_type = IncidentType.objects.get(id=incident_type_id)
+        incident_type.delete()
+        return JsonResponse({
+            "message": "Incident type deleted."
+        })
+    except IncidentType.DoesNotExist:
+        return JsonResponse(
+            {"error": "Incident type not found."},
+            status=404
+        )
+
+@csrf_exempt
+@login_required
+@require_http_methods(["GET"])
+def get_incident_types(request):
+    incident_types = IncidentType.objects.filter(
+        is_active=True
+    )
+    data = [
+        {
+            "id": i.id,
+            "value": i.slug,
+            "label": i.name
+        }
+        for i in incident_types
+    ]
+    return JsonResponse(data, safe=False)
+
+@login_required
+@require_http_methods(["POST"])
+@csrf_exempt
+def create_special_incident(request):
+    try:
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        incident_type_value = request.POST.get("incident_type")
+        location_data = request.POST.get("location")
+
+        if not title or not description:
+            return JsonResponse({"error": "Titlul și descrierea sunt obligatorii."}, status=400)
+
+        incident_type = None
+        if incident_type_value:
+            incident_type = IncidentType.objects.filter(slug=incident_type_value).first()
+
+        point = None
+        if location_data:
+            try:
+                loc_json = json.loads(location_data)
+                coords = loc_json.get("coordinates")
+                if coords and len(coords) == 2:
+                    point = Point(x=coords[0], y=coords[1], srid=4326)
+            except json.JSONDecodeError:
+                return JsonResponse({"error": "Format de locație invalid."}, status=400)
+
+        incident = SpecialIncident.objects.create(
+            user=request.user,
+            incident_type=incident_type,
+            title=title,
+            description=description,
+            location=point
+        )
+
+        images = request.FILES.getlist('images')
+        for image_file in images:
+            SpecialIncidentImage.objects.create(special_incident=incident, image=image_file)
+
+        return JsonResponse({
+            "message": "Incident creat cu succes!",
+            "incident_id": incident.id
+        }, status=201)
+
+    except Exception as e:
+        return JsonResponse({"error": f"A apărut o eroare: {str(e)}"}, status=500)
+
+@login_required
+@require_http_methods(["GET"])
+def get_special_incidents(request):
+    incidents = SpecialIncident.objects.all().order_by('-created_at').select_related(
+        'user', 'incident_type'
+    ).prefetch_related('images')
+
+    data = []
+    for incident in incidents:
+        data.append({
+            "id": incident.id,
+            "title": incident.title,
+            "description": incident.description,
+            "incident_type": {
+                "id": incident.incident_type.id if incident.incident_type else None,
+                "label": incident.incident_type.name if incident.incident_type else None,
+                "value": incident.incident_type.slug if incident.incident_type else None,
+            },
+            "location": {
+                "lat": incident.location.y if incident.location else None,
+                "lng": incident.location.x if incident.location else None,
+            },
+            "user": {
+                "id": incident.user.id,
+                "username": incident.user.username,
+            },
+            "images": [
+                request.build_absolute_uri(img.image.url)
+                for img in incident.images.all()
+            ],
+            "created_at": incident.created_at.isoformat(),
+        })
+
+    return JsonResponse(data, safe=False)
+
+@login_required
+@require_http_methods(["GET"])
+def get_special_incident_detail(request, incident_id):
+    try:
+        incident = SpecialIncident.objects.select_related(
+            'user', 'incident_type'
+        ).prefetch_related('images').get(id=incident_id)
+
+        data = {
+            "id": incident.id,
+            "title": incident.title,
+            "description": incident.description,
+            "incident_type": {
+                "id": incident.incident_type.id if incident.incident_type else None,
+                "label": incident.incident_type.name if incident.incident_type else "Unknown",
+                "value": incident.incident_type.slug if incident.incident_type else None,
+            },
+            "location": {
+                "lat": incident.location.y if incident.location else None,
+                "lng": incident.location.x if incident.location else None,
+            },
+            "user": {
+                "id": incident.user.id,
+                "username": incident.user.username,
+            },
+            "images": [
+                request.build_absolute_uri(img.image.url)
+                for img in incident.images.all()
+            ],
+            "created_at": incident.created_at.isoformat(),
+        }
+
+        return JsonResponse({"success": True, "incident": data})
+
+    except SpecialIncident.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Incident not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 @login_required
 def get_notifications(request):

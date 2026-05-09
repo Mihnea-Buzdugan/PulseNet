@@ -29,8 +29,9 @@ const RequestDetails = React.lazy(()=> import('./pages/Requests/RequestDetails.j
 const Pulses = React.lazy(()=> import('./pages/Pulses_pages/Pulses.jsx'));
 const RequestOffer = React.lazy(() => import('./pages/Requests/RequestOffer'));
 const Contact = React.lazy(() => import('./pages/User_pages/Contact.jsx'));
-const AIChat = React.lazy(() => import('./pages/AIChat'));
-
+const AddIncidents = React.lazy(() => import('./pages/Incidents/AddIncidents.jsx'));
+const SpecialIncidents = React.lazy(() => import('./pages/Incidents/SpecialIncidents.jsx'));
+const SpecialIncidentsDetails = React.lazy(() => import('./pages/Incidents/SpecialIncidentsDetails.jsx'));
 const NotificationHandler = ({ currentUser }) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -480,7 +481,6 @@ function App() {
                 <Routes>
                     <Route path="/login" element={<Login onLoginSuccess={fetchUser} />} />
                     <Route path="/signup" element={<SignUp />} />
-                    <Route path="/ai-chat" element={<AIChat />} />
 
                     <Route element={user ? <Outlet /> : <Navigate to="/login" replace />}>
                         <Route path="/" element={<Index user={user} />} />
@@ -503,6 +503,9 @@ function App() {
                         <Route path="/create-request" element={<CreateRequest />} />
                         <Route path="/request/:id" element={<RequestDetails />} />
                         <Route path="/offer/:requestId" element={<RequestOffer />} />
+                        <Route path="/add-incidents" element={<AddIncidents />} />
+                        <Route path="special-incidents" element={<SpecialIncidents />} />
+                        <Route path="special-incident/:id" element={<SpecialIncidentsDetails />} />
 
                         <Route path="/admin-page" element={<AdminRoute><Admin /></AdminRoute>} />
                     </Route>

@@ -83,6 +83,14 @@ urlpatterns = [
     path('own-request-offers/', views.get_my_offers, name='own-request-offers'),
     path("request_rental_feedback/<int:rental_id>/", views.request_rental_feedback, name="request_rental_feedback"),
 
+    #Special Incidents
+    path("get-incident-types/",views.get_incident_types,name="incident_types"),
+    path( "incident-types/create/",views.create_incident_type,name="create_incident_type"),
+    path("incident-types/delete/<int:incident_type_id>/",views.delete_incident_type,name="delete_incident_type"),
+    path('special-incidents/create/', views.create_special_incident, name='create_special_incident'),
+    path("special-incidents/", views.get_special_incidents, name="get_special_incidents"),
+    path("special-incidents/<int:incident_id>/", views.get_special_incident_detail, name="get_special_incident_detail"),
+
     #Admin urls
     path('admin_alert_reports/', views.admin_alert_reports, name='admin_reports'),
     path('ban-user/<int:user_id>/', views.ban_user, name='ban_user'),
