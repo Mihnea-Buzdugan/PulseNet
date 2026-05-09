@@ -37,9 +37,8 @@ export default function AIChat() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
-                credentials: "include",
                 body: JSON.stringify({ question }),
             });
 

@@ -54,9 +54,9 @@ const DirectChat = ({ currentUser }) => {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': getCookie('csrftoken'),
+                            "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                         },
-                        credentials: 'include',
+                        
                         body: JSON.stringify(bodyData)
                     }
                 );
@@ -65,7 +65,7 @@ const DirectChat = ({ currentUser }) => {
                     setConversationId(data.conversation_id);
 
                     const keyRes = await fetch(`https://pulsenet-45is.onrender.com/accounts/message_keys/get/${id}/`, {
-                        credentials: 'include',
+                        
                     });
 
                     if (keyRes.ok) {

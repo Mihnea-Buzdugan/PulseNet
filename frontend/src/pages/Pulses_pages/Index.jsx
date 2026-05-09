@@ -178,10 +178,10 @@ export default function Index() {
 
                 fetch("https://pulsenet-45is.onrender.com/accounts/update_location/", {
                     method: "POST",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     },
                     body: JSON.stringify({ lat, lng }),
                 })
@@ -320,7 +320,7 @@ export default function Index() {
                 `https://pulsenet-45is.onrender.com/accounts/get_nearest_pulses/?lat=${userLocation.lat}&lng=${userLocation.lng}`,
                 {
                     method: "GET",
-                    credentials: "include",
+                    
                 }
             );
 
@@ -344,7 +344,7 @@ export default function Index() {
             setLoadingRequests(true);
             const res = await fetch("https://pulsenet-45is.onrender.com/accounts/urgent-requests/", {
                 method: "GET",
-                credentials: "include",
+                
             });
 
             const data = await res.json();

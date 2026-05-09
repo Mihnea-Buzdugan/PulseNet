@@ -291,9 +291,9 @@ export default function Profile() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
-                credentials: "include",
+                
                 body: JSON.stringify(payload),
             });
 
@@ -352,9 +352,9 @@ export default function Profile() {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRFToken": csrfToken,
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
             },
-            credentials: "include",
+            
         })
             .then((response) => response.json())
             .then((data) => {
@@ -388,10 +388,10 @@ export default function Profile() {
 
                 const offersRes = await fetch("https://pulsenet-45is.onrender.com/accounts/pulse_rentals/", {
                     method: "GET",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     },
                 });
 
@@ -405,10 +405,10 @@ export default function Profile() {
 
                 const proposalsRes = await fetch("https://pulsenet-45is.onrender.com/accounts/pulse_own_proposals/", {
                     method: "GET",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     },
                 });
 
@@ -435,10 +435,10 @@ export default function Profile() {
 
                 const resReceived = await fetch("https://pulsenet-45is.onrender.com/accounts/request-offers/received/", {
                     method: "GET",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     },});
                 const dataReceived = await resReceived.json();
                 setReceivedRequestOffers(dataReceived);
@@ -446,10 +446,10 @@ export default function Profile() {
 
                 const resSent = await fetch("https://pulsenet-45is.onrender.com/accounts/own-request-offers/", {
                     method: "GET",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     },});
                 const dataSent = await resSent.json();
                 setSentRequestOffers(dataSent);
@@ -505,9 +505,9 @@ export default function Profile() {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
-                credentials: "include",
+                
                 body: JSON.stringify({
                     ...editForm,
                 }),
@@ -562,8 +562,8 @@ export default function Profile() {
             const res = await fetch(uploadUrl, {
                 method: "POST",
                 body: form,
-                credentials: "include",
-                headers: { "X-CSRFToken": csrfToken },
+                
+                headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
             });
             if (res.ok) {
                 const data = await res.json();
@@ -598,8 +598,8 @@ export default function Profile() {
         try {
             const response = await fetch("https://pulsenet-45is.onrender.com/accounts/delete_profile_picture/", {
                 method: "POST",
-                credentials: "include",
-                headers: { "X-CSRFToken": getCookie("csrftoken") },
+                
+                headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
             });
             if (!response.ok) throw new Error("Failed to delete profile picture");
             setUser((prev) => ({ ...prev, profilePicture: null }));
@@ -710,8 +710,8 @@ export default function Profile() {
                 `https://pulsenet-45is.onrender.com/accounts/update_pulse/${editingPulse.id}/`,
                 {
                     method: "POST",
-                    headers: { "X-CSRFToken": getCookie("csrftoken") },
-                    credentials: "include",
+                    headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
+                    
                     body: formData,
                 }
             );
@@ -761,8 +761,8 @@ export default function Profile() {
                 `https://pulsenet-45is.onrender.com/accounts/update_request/${editingRequest.id}/`,
                 {
                     method: "POST",
-                    headers: { "X-CSRFToken": getCookie("csrftoken") },
-                    credentials: "include",
+                    headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
+                    
                     body: formData,
                 }
             );
@@ -796,8 +796,8 @@ export default function Profile() {
             `https://pulsenet-45is.onrender.com/accounts/become_verified/`,
             {
                 method: "PUT",
-                headers: { "X-CSRFToken": getCookie("csrftoken") },
-                credentials: "include",
+                headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
+                
             }
         );
 
@@ -826,8 +826,8 @@ export default function Profile() {
                 `https://pulsenet-45is.onrender.com/accounts/remove_pulse/${deletePulseModal.id}/`,
                 {
                     method: "DELETE",
-                    headers: { "X-CSRFToken": getCookie("csrftoken") },
-                    credentials: "include",
+                    headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
+                    
                 }
             );
 
@@ -866,10 +866,10 @@ export default function Profile() {
         try {
             const res = await fetch(url, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
                 body: JSON.stringify({ status: "confirmed" }),
             });
@@ -900,10 +900,10 @@ export default function Profile() {
         try {
             const res = await fetch(url, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
                 body: JSON.stringify({ status: "declined" }),
             });
@@ -933,10 +933,10 @@ export default function Profile() {
                 "https://pulsenet-45is.onrender.com/accounts/signal_pulse_rental/", // your backend endpoint
                 {
                     method: "POST",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     },
                     body: JSON.stringify({
                         rental_id: selectedRental.id,
@@ -967,8 +967,8 @@ export default function Profile() {
         try {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse_rentals/${id}/`, {
                 method: "DELETE",
-                headers: { "X-CSRFToken": getCookie("csrftoken") },
-                credentials: "include",
+                headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
+                
             });
 
             if (response.ok) {
@@ -1011,10 +1011,10 @@ export default function Profile() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse_rentals/${id}/`, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
                 body: JSON.stringify({ total_price: parsed }),
             });
@@ -1096,10 +1096,10 @@ export default function Profile() {
         try {
             const res = await fetch(url, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
                 body: JSON.stringify({ status: "confirmed" }),
             });
@@ -1128,10 +1128,10 @@ export default function Profile() {
         try {
             const res = await fetch(url, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
                 body: JSON.stringify({ status: "declined" }),
             });
@@ -1164,10 +1164,10 @@ export default function Profile() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/request-offers/${id}/`, {
                 method: "PATCH",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
                 body: JSON.stringify({ total_price: parsed }),
             });
@@ -1200,8 +1200,8 @@ export default function Profile() {
         try {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/request-offers/${id}/`, {
                 method: "DELETE",
-                headers: { "X-CSRFToken": getCookie("csrftoken") },
-                credentials: "include",
+                headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
+                
             });
 
             if (response.ok) {
@@ -1267,8 +1267,8 @@ export default function Profile() {
                 `https://pulsenet-45is.onrender.com/accounts/remove_request/${deleteRequestModal.id}/`,
                 {
                     method: "DELETE",
-                    headers: { "X-CSRFToken": getCookie("csrftoken") },
-                    credentials: "include",
+                    headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}`, },
+                    
                 }
             );
 

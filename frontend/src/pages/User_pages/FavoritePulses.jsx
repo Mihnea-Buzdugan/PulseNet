@@ -77,9 +77,9 @@ export default function FavoritePulses() {
                     `https://pulsenet-45is.onrender.com/accounts/favorites/${qs}`,
                     {
                         method: "GET",
-                        credentials: "include",
+                        
                         headers: {
-                            "X-CSRFToken": csrfToken,
+                            "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                             "Accept": "application/json",
                         },
                     }

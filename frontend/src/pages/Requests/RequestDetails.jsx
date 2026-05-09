@@ -95,7 +95,7 @@ export default function RequestDetails() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-requests/comments/${id}/?page=${page}`, {
                 method: "GET",
-                credentials: "include",
+                
                 headers: { "Accept": "application/json" },
             });
             const data = await res.json().catch(() => ({}));
@@ -139,10 +139,10 @@ export default function RequestDetails() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-requests/comments/${id}/`, {
                 method: "POST",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrftoken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     "Accept": "application/json",
                 },
                 body: JSON.stringify({ content: text }),
@@ -181,8 +181,8 @@ export default function RequestDetails() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-requests/comments/${commentId}/`, {
                 method: "DELETE",
-                credentials: "include",
-                headers: { "X-CSRFToken": csrftoken },
+                
+                headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}` },
             });
             const data = await res.json().catch(() => null);
             if (!res.ok || !data?.success) throw new Error(data?.error || "Failed to delete comment");
@@ -205,8 +205,8 @@ export default function RequestDetails() {
 
         fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-request/${id}/`, {
             method: "GET",
-            credentials: "include",
-            headers: { "X-CSRFToken": csrfToken },
+            
+            headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}` },
         })
             .then(res => res.json())
             .then(data => {

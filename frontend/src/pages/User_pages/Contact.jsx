@@ -126,10 +126,10 @@ const ContactPage = () => {
 
             const response = await fetch('https://pulsenet-45is.onrender.com/accounts/contact/create/', {
                 method: 'POST',
-                credentials: 'include',
+                
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken'),
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
                 body: JSON.stringify(payload)
             });

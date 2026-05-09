@@ -109,7 +109,7 @@ export default function PulseDetails() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/comments/${id}/?page=${page}`, {
                 method: "GET",
-                credentials: "include",
+                
                 headers: { "Accept": "application/json" },
             });
             const data = await res.json().catch(() => ({}));
@@ -153,10 +153,10 @@ export default function PulseDetails() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/comments/${id}/`, {
                 method: "POST",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrftoken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     "Accept": "application/json",
                 },
                 body: JSON.stringify({ content: text }),
@@ -195,8 +195,8 @@ export default function PulseDetails() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/comments/${commentId}/`, {
                 method: "DELETE",
-                credentials: "include",
-                headers: { "X-CSRFToken": csrftoken },
+                
+                headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}` },
             });
             const data = await res.json().catch(() => null);
             if (!res.ok || !data?.success) throw new Error(data?.error || "Failed to delete comment");
@@ -219,10 +219,10 @@ export default function PulseDetails() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/ratings/${id}/`, {
                 method: "POST",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrftoken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     "Accept": "application/json",
                 },
                 body: JSON.stringify({ rating: userRating }),
@@ -253,8 +253,8 @@ export default function PulseDetails() {
 
         fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/${id}/`, {
             method: "GET",
-            credentials: "include",
-            headers: { "X-CSRFToken": csrfToken },
+            
+            headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}` },
         })
             .then(res => res.json())
             .then(data => {
@@ -353,8 +353,8 @@ export default function PulseDetails() {
             const csrfToken = getCookie("csrftoken");
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/add_to_favorites/${pulse.id}/`, {
                 method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("access_token")}` },
             });
             const data = await response.json().catch(() => null);
             if (response.ok && data?.success) setPulse(prev => ({ ...prev, is_favorite: true }));
@@ -368,8 +368,8 @@ export default function PulseDetails() {
             const csrfToken = getCookie("csrftoken");
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/delete_from_favorites/${pulse.id}/`, {
                 method: "DELETE",
-                credentials: "include",
-                headers: { "X-CSRFToken": csrfToken },
+                
+                headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}` },
             });
             const data = await response.json().catch(() => null);
             if (response.ok && data?.success) setPulse(prev => ({ ...prev, is_favorite: false }));

@@ -22,22 +22,6 @@ const COUNTRY_OPTIONS = getCountries().map(code => {
     } catch { return null; }
 }).filter(Boolean);
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
 function AddPulses() {
     const [title, setTitle] = useState("");
     const [pulseType, setPulseType] = useState("servicii");
@@ -115,7 +99,6 @@ function AddPulses() {
 
         if (selectedFiles.length + files.length > 7) {
             alert("Poți adăuga maxim 7 imagini.");
-
             e.target.value = null;
             return;
         }
@@ -124,13 +107,11 @@ function AddPulses() {
         setImagesPreview((prev) => [...prev, ...newPreviews]);
         setSelectedFiles((prev) => [...prev, ...files]);
 
-
         e.target.value = null;
     };
 
     const removeImageAt = (index) => {
         setImagesPreview((prev) => {
-
             try {
                 URL.revokeObjectURL(prev[index]);
             } catch (e) {}
@@ -160,7 +141,6 @@ function AddPulses() {
                     });
                 },
                 (error) => {
-
                     reject(error);
                 },
                 { enableHighAccuracy: true, timeout: 10000 }
@@ -169,7 +149,6 @@ function AddPulses() {
     };
 
     const addPulse = async () => {
-
         if (!title.trim() || !description.trim() || !phone.trim()) {
             alert("Please fill in all required fields (*)");
             return;
@@ -177,6 +156,13 @@ function AddPulses() {
 
         if (!isValidPhoneNumber(phone, selectedCountry.value)) {
             alert(`The phone number entered is not valid for ${selectedCountry.value}.`);
+            return;
+        }
+
+        // --- NEW: JWT Token Check ---
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+            alert("You must be logged in to post a listing.");
             return;
         }
 
@@ -193,7 +179,6 @@ function AddPulses() {
             setIsGettingLocation(false);
         }
 
-
         setIsSubmitting(true);
         try {
             const formData = new FormData();
@@ -205,26 +190,23 @@ function AddPulses() {
             const e164Phone = parsePhoneNumberWithError(phone, selectedCountry.value).format('E.164');
             formData.append("phone_number", e164Phone);
             formData.append("is_available", "true");
-
             formData.append("lat", location.lat);
             formData.append("lng", location.lng);
-
 
             selectedFiles.forEach((file) => {
                 formData.append("images", file);
             });
 
+            // --- CHANGED: Fetch request uses Authorization header instead of CSRF ---
             const response = await fetch("https://pulsenet-45is.onrender.com/accounts/add_pulse/", {
                 method: "POST",
                 headers: {
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Authorization": `Bearer ${token}`,
                 },
-                credentials: "include",
                 body: formData,
             });
 
             if (response.ok) {
-
                 setTitle("");
                 setPrice("");
                 setDescription("");
@@ -241,7 +223,6 @@ function AddPulses() {
 
                 alert("Listing published successfully!");
             } else {
-
                 let errorData = null;
                 try {
                     errorData = await response.json();
@@ -249,7 +230,13 @@ function AddPulses() {
                     console.error("Could not parse error response as JSON.", e);
                 }
                 console.error("Server error:", errorData || response.statusText);
-                alert(errorData?.error || "A server error occurred. Check the console for details.");
+
+                // Extra check for expired token
+                if (response.status === 401) {
+                    alert("Your session has expired. Please log in again.");
+                } else {
+                    alert(errorData?.error || "A server error occurred. Check the console for details.");
+                }
             }
         } catch (error) {
             console.error("Error adding pulse:", error);
@@ -266,10 +253,9 @@ function AddPulses() {
             </div>
             <div className={styles["anunt-container"]}>
                 <div className="flex justify-between items-center">
-                <h1 className={styles["anunt-header"]}>Post a listing</h1>
-                <Link to="/create-request" className="mb-5 text-[#3B82A6] underline hover:text-[#2F6B87]  cursor-pointer ">Have an urgent request?</Link>
+                    <h1 className={styles["anunt-header"]}>Post a listing</h1>
+                    <Link to="/create-request" className="mb-5 text-[#3B82A6] underline hover:text-[#2F6B87]  cursor-pointer ">Have an urgent request?</Link>
                 </div>
-
 
                 <section className={styles["form-section"]}>
                     <h3 className={styles["section-title"]}>Add as many details as possible!</h3>
@@ -346,7 +332,6 @@ function AddPulses() {
                             <span>Add images</span>
                         </label>
 
-
                         {imagesPreview.map((img, idx) => (
                             <div
                                 key={idx}
@@ -367,17 +352,15 @@ function AddPulses() {
                             </div>
                         ))}
 
-
                         {[...Array(Math.max(0, 7 - imagesPreview.length))].map((_, i) => (
                             <div key={i} className={styles["image-slot"]}>
-                <span role="img" aria-label="camera">
-                  📷
-                </span>
+                                <span role="img" aria-label="camera">
+                                  📷
+                                </span>
                             </div>
                         ))}
                     </div>
                 </section>
-
 
                 <section className={styles["form-section"]}>
                     <div className={styles["form-group"]}>
@@ -395,7 +378,6 @@ function AddPulses() {
                         </div>
                     </div>
                 </section>
-
 
                 <section className={styles["form-section"]}>
                     <h3 className={styles["section-title"]}>Contact details</h3>

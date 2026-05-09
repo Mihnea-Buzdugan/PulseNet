@@ -1,55 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import styles from '../../styles/Authentification/registration.module.css';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
-import {GoogleLogin} from "@react-oauth/google";
-import {initializeE2EE} from "@/utils/cryptoUtils";
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
+import { GoogleLogin } from "@react-oauth/google";
+import { initializeE2EE } from "@/utils/cryptoUtils";
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
-    const csrfFetched = useRef(false);
-
-    useEffect(() => {
-        if (csrfFetched.current) return;
-        csrfFetched.current = true;
-
-        fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
-            method: 'GET',
-            credentials: 'include',
-        })
-            .then((response) => {
-                if (response.ok) return response.json();
-                throw new Error('Failed to fetch CSRF token');
-            })
-            .then((data) => {
-                console.log('Fetched CSRF token (response):', data.csrf_token);
-                // FIX: Store the token in sessionStorage instead of relying on cookies
-                if (data.csrf_token) {
-                    sessionStorage.setItem('csrftoken', data.csrf_token);
-                }
-            })
-            .catch((error) => console.error('Error fetching CSRF token:', error));
-    }, []);
 
     const togglePasswordVisibility = () => {
         setShowPassword((prev) => !prev);
@@ -65,11 +26,6 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const csrfToken = getCookie('csrftoken');
-        if (!csrfToken) {
-            alert('CSRF token is missing!');
-            return;
-        }
 
         const userData = {
             email,
@@ -77,19 +33,22 @@ const Login = () => {
         };
 
         try {
-            const response = await fetch('https://pulsenet-45is.onrender.com/accounts/user_login/', {
+            // Pointing to the new SimpleJWT endpoint
+            const response = await fetch('https://pulsenet-45is.onrender.com/api/token/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
                 },
                 body: JSON.stringify(userData),
-                credentials: 'include',
             });
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('Login successful:', data);
+                console.log('Login successful');
+
+                // Save the JWT tokens to localStorage
+                localStorage.setItem('access_token', data.access);
+                localStorage.setItem('refresh_token', data.refresh);
 
                 await initializeE2EE();
 
@@ -97,12 +56,14 @@ const Login = () => {
                 expirationTime.setHours(expirationTime.getHours() + 6);
                 localStorage.setItem('auth-token', 'true');
                 localStorage.setItem('token-expiration', expirationTime.toString());
+
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 0);
             } else {
                 const errorData = await response.json();
-                alert('Error: ' + errorData.message);
+                // SimpleJWT usually returns errors in 'detail' rather than 'message'
+                alert('Error: ' + (errorData.detail || errorData.message || 'Invalid credentials'));
             }
         } catch (error) {
             console.error('Error during login:', error);
@@ -110,41 +71,46 @@ const Login = () => {
         }
     };
 
-
     const handleGoogleLogin = async (response) => {
         const googleToken = response.credential;
-
         console.log("Google Token: ", googleToken);
-        const csrfToken = getCookie('csrftoken');
-        if (!csrfToken) {
-            alert('CSRF token is missing.');
-            return;
-        }
 
-        const resp = await fetch('https://pulsenet-45is.onrender.com/accounts/google_login/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken,
-            },
-            credentials: 'include',
-            body: JSON.stringify({ google_token: googleToken })
-        });
-        if (resp.ok) {
-            const data = await resp.json();
-            console.log(data);
-            await initializeE2EE();
-            navigate('/');
-            const exp = new Date();
-            exp.setHours(exp.getHours() + 6);
-            localStorage.setItem('auth-token', 'true');
-            localStorage.setItem('token-expiration', exp.toString());
-        } else {
-            const err = await resp.json();
-            alert(err.message);
+        try {
+            const resp = await fetch('https://pulsenet-45is.onrender.com/accounts/google_login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ google_token: googleToken })
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                console.log('Google login successful');
+
+                // Assuming your backend returns the tokens here too
+                if (data.access && data.refresh) {
+                    localStorage.setItem('access_token', data.access);
+                    localStorage.setItem('refresh_token', data.refresh);
+                }
+
+                await initializeE2EE();
+
+                const exp = new Date();
+                exp.setHours(exp.getHours() + 6);
+                localStorage.setItem('auth-token', 'true');
+                localStorage.setItem('token-expiration', exp.toString());
+
+                navigate('/');
+            } else {
+                const err = await resp.json();
+                alert(err.message || 'Google login failed');
+            }
+        } catch (error) {
+            console.error('Error during Google login:', error);
+            alert('There was an error during Google login');
         }
     };
-
 
     return (
         <div>

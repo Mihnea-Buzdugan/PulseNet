@@ -62,9 +62,9 @@ export default function Profile() {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken,
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
             },
-            credentials: 'include',
+            
         })
             .then((response) => response.json())
             .then((data) => {
@@ -106,8 +106,8 @@ export default function Profile() {
         try {
             await fetch(url, {
                 method: "POST",
-                credentials: "include",
-                headers: { "X-CSRFToken": csrf },
+                
+                headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}` },
             });
 
 

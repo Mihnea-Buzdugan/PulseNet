@@ -158,9 +158,9 @@ export default function AddAlerts() {
             const response = await fetch("https://pulsenet-45is.onrender.com/accounts/alerts/create/", {
                 method: "POST",
                 headers: {
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
-                credentials: "include",
+                
                 body: data,
             });
 

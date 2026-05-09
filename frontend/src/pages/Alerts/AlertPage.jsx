@@ -88,7 +88,7 @@ export default function AlertPage() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/alerts/comments/${id}/?page=${page}`, {
                 method: "GET",
-                credentials: "include",
+                
                 headers: { "Accept": "application/json" },
             });
             const data = await res.json().catch(() => ({}));
@@ -177,10 +177,10 @@ export default function AlertPage() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/alerts/comments/${id}/`, {
                 method: "POST",
-                credentials: "include",
+                
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrftoken,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     "Accept": "application/json",
                 },
                 body: JSON.stringify({ content: text }),
@@ -219,8 +219,8 @@ export default function AlertPage() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-requests/comments/${commentId}/`, {
                 method: "DELETE",
-                credentials: "include",
-                headers: { "X-CSRFToken": csrftoken },
+                
+                headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}` },
             });
             const data = await res.json().catch(() => null);
             if (!res.ok || !data?.success) throw new Error(data?.error || "Failed to delete comment");
@@ -239,9 +239,9 @@ export default function AlertPage() {
         fetch(`https://pulsenet-45is.onrender.com/accounts/alerts/${id}/`,
             {
                 headers: {
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`
                 },
-                credentials: "include",
+                
             })
             .then((r) => r.json())
             .then((data) => {
@@ -295,9 +295,9 @@ export default function AlertPage() {
             const res = await fetch(endpoint, {
                 method: "POST",
                 headers: {
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
-                credentials: "include",
+                
                 body: null
             });
 
@@ -335,9 +335,9 @@ export default function AlertPage() {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/alerts/${id}/report/`, {
                 method: "POST",
                 headers: {
-                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
-                credentials: "include",
+                
                 body: JSON.stringify({ reason: reportReason, description: reportDescription || "" })
             });
 

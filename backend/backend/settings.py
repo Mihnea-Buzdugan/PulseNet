@@ -58,6 +58,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "cloudinary",
     "django.contrib.gis",
+
+    # --- ADD THESE TWO ---
+    "rest_framework",
+    "rest_framework_simplejwt",
+
     "corsheaders",
     "apps.accounts",
     "allauth",
@@ -117,6 +122,28 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         "REDIRECT_URI": "http://localhost:8000/accounts/google/login/callback/",
     }
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # Keep SessionAuthentication for the Django browsable API/Admin
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60000),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=70),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
 }
 
 ACCOUNT_AUTHENTICATION_METHOD = "email"

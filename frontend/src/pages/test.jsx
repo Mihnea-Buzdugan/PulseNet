@@ -98,10 +98,10 @@ export default function Index() {
 
                 fetch("https://pulsenet-45is.onrender.com/accounts/update_location/", {
                     method: "POST",
-                    credentials: "include",
+                    
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     },
                     body: JSON.stringify({ lat, lng }),
                 }).catch(() => { });
@@ -117,7 +117,7 @@ export default function Index() {
     useEffect(() => {
         fetch("https://pulsenet-45is.onrender.com/accounts/profile/", {
             method: "GET",
-            credentials: "include",
+            
         })
             .then((r) => r.json())
             .then((data) => {
@@ -356,7 +356,7 @@ export default function Index() {
     // fetch admin-posted weather alerts
     useEffect(() => {
         fetch("https://pulsenet-45is.onrender.com/accounts/alerts/?category=weather", {
-            credentials: "include",
+            
         })
             .then((r) => r.json())
             .then((data) => {
