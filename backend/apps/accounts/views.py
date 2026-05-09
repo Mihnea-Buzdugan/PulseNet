@@ -206,7 +206,7 @@ def logout(request):
 
 
 
-
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user(request):
     if request.method == "GET":
