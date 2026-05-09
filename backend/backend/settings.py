@@ -33,6 +33,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://localhost:5173",
+    "https://pulsenet-fiicode.netlify.app"
     # replace this with your real frontend domain when you deploy it
     # "https://your-frontend.onrender.com",
 ]
@@ -44,6 +45,7 @@ CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "https://localhost:5173",
+    "https://pulsenet-fiicode.netlify.app/",
     # add your deployed frontend URL here later
     # "https://your-frontend.onrender.com",
 ]
