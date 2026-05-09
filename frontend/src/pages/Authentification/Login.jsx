@@ -32,7 +32,7 @@ const Login = () => {
         if (csrfFetched.current) return;
         csrfFetched.current = true;
 
-        fetch('http://localhost:8000/accounts/csrf-token/', {
+        fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
             method: 'GET',
             credentials: 'include',
         })
@@ -72,7 +72,7 @@ const Login = () => {
         };
 
         try {
-            const response = await fetch('http://localhost:8000/accounts/user_login/', {
+            const response = await fetch('https://pulsenet-45is.onrender.com/accounts/user_login/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -116,7 +116,7 @@ const Login = () => {
             return;
         }
 
-        const resp = await fetch('http://localhost:8000/accounts/google_login/', {
+        const resp = await fetch('https://pulsenet-45is.onrender.com/accounts/google_login/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

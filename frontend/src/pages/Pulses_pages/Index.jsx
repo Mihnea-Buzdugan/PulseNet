@@ -175,7 +175,7 @@ export default function Index() {
 
                 setUserLocation({ lat, lng });
 
-                fetch("http://localhost:8000/accounts/update_location/", {
+                fetch("https://pulsenet-45is.onrender.com/accounts/update_location/", {
                     method: "POST",
                     credentials: "include",
                     headers: {
@@ -316,7 +316,7 @@ export default function Index() {
         try {
             setLoadingPulses(true);
             const res = await fetch(
-                `http://localhost:8000/accounts/get_nearest_pulses/?lat=${userLocation.lat}&lng=${userLocation.lng}`,
+                `https://pulsenet-45is.onrender.com/accounts/get_nearest_pulses/?lat=${userLocation.lat}&lng=${userLocation.lng}`,
                 {
                     method: "GET",
                     credentials: "include",
@@ -341,7 +341,7 @@ export default function Index() {
     const fetchUrgentRequests = async () => {
         try {
             setLoadingRequests(true);
-            const res = await fetch("http://localhost:8000/accounts/urgent-requests/", {
+            const res = await fetch("https://pulsenet-45is.onrender.com/accounts/urgent-requests/", {
                 method: "GET",
                 credentials: "include",
             });

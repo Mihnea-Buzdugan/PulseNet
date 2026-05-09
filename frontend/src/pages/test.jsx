@@ -95,7 +95,7 @@ export default function Index() {
                 const lng = pos.coords.longitude;
                 setUserLocation({ lat, lng });
 
-                fetch("http://localhost:8000/accounts/update_location/", {
+                fetch("https://pulsenet-45is.onrender.com/accounts/update_location/", {
                     method: "POST",
                     credentials: "include",
                     headers: {
@@ -114,7 +114,7 @@ export default function Index() {
 
     // fetch visibility radius from profile
     useEffect(() => {
-        fetch("http://localhost:8000/accounts/profile/", {
+        fetch("https://pulsenet-45is.onrender.com/accounts/profile/", {
             method: "GET",
             credentials: "include",
         })
@@ -263,7 +263,7 @@ export default function Index() {
             const fetchWeather = async () => {
 
                 try {
-                    const res = await fetch(`http://localhost:8000/accounts/alerts/weather?lat=${userLocation.lat}&lon=${userLocation.lng}`);
+                    const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/alerts/weather?lat=${userLocation.lat}&lon=${userLocation.lng}`);
 
                     if (res.ok) {
                         const data = await res.json();
@@ -291,7 +291,7 @@ export default function Index() {
                 ? `&lat=${userLocation.lat}&lng=${userLocation.lng}`
                 : "";
             const res = await fetch(
-                `http://localhost:8000/accounts/get_latest_pulses/?page=${pageNum}${locationParams}`,
+                `https://pulsenet-45is.onrender.com/accounts/get_latest_pulses/?page=${pageNum}${locationParams}`,
                 { method: "GET", credentials: "include" }
             );
             const data = await res.json();
@@ -318,7 +318,7 @@ export default function Index() {
         if (!userLocation) return;
         try {
             const res = await fetch(
-                `http://localhost:8000/accounts/get_nearest_pulses/?lat=${userLocation.lat}&lng=${userLocation.lng}`,
+                `https://pulsenet-45is.onrender.com/accounts/get_nearest_pulses/?lat=${userLocation.lat}&lng=${userLocation.lng}`,
                 { method: "GET", credentials: "include" }
             );
             const data = await res.json();
@@ -338,7 +338,7 @@ export default function Index() {
     const fetchUrgentRequests = async () => {
         try {
             const res = await fetch(
-                `http://localhost:8000/accounts/urgent-requests/`,
+                `https://pulsenet-45is.onrender.com/accounts/urgent-requests/`,
                 { method: "GET", credentials: "include" }
             );
             const data = await res.json();
@@ -354,7 +354,7 @@ export default function Index() {
 
     // fetch admin-posted weather alerts
     useEffect(() => {
-        fetch("http://localhost:8000/accounts/alerts/?category=weather", {
+        fetch("https://pulsenet-45is.onrender.com/accounts/alerts/?category=weather", {
             credentials: "include",
         })
             .then((r) => r.json())

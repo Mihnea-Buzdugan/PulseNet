@@ -277,10 +277,10 @@ export default function Profile() {
 
             if (feedbackItem.pulse_title) {
 
-                endpoint = `http://localhost:8000/accounts/pulse_rental_feedback/${feedbackItem.id}/`;
+                endpoint = `https://pulsenet-45is.onrender.com/accounts/pulse_rental_feedback/${feedbackItem.id}/`;
             } else if (feedbackItem.request_title) {
 
-                endpoint = `http://localhost:8000/accounts/request_rental_feedback/${feedbackItem.id}/`;
+                endpoint = `https://pulsenet-45is.onrender.com/accounts/request_rental_feedback/${feedbackItem.id}/`;
             } else {
                 console.warn("Unknown feedback item type:", feedbackItem);
                 return;
@@ -347,7 +347,7 @@ export default function Profile() {
 
     useEffect(() => {
         const csrfToken = getCookie("csrftoken");
-        fetch("http://localhost:8000/accounts/profile/", {
+        fetch("https://pulsenet-45is.onrender.com/accounts/profile/", {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -385,7 +385,7 @@ export default function Profile() {
 
             try {
 
-                const offersRes = await fetch("http://localhost:8000/accounts/pulse_rentals/", {
+                const offersRes = await fetch("https://pulsenet-45is.onrender.com/accounts/pulse_rentals/", {
                     method: "GET",
                     credentials: "include",
                     headers: {
@@ -402,7 +402,7 @@ export default function Profile() {
                 }
 
 
-                const proposalsRes = await fetch("http://localhost:8000/accounts/pulse_own_proposals/", {
+                const proposalsRes = await fetch("https://pulsenet-45is.onrender.com/accounts/pulse_own_proposals/", {
                     method: "GET",
                     credentials: "include",
                     headers: {
@@ -432,7 +432,7 @@ export default function Profile() {
         const fetchOffers = async () => {
             try {
 
-                const resReceived = await fetch("http://localhost:8000/accounts/request-offers/received/", {
+                const resReceived = await fetch("https://pulsenet-45is.onrender.com/accounts/request-offers/received/", {
                     method: "GET",
                     credentials: "include",
                     headers: {
@@ -443,7 +443,7 @@ export default function Profile() {
                 setReceivedRequestOffers(dataReceived);
 
 
-                const resSent = await fetch("http://localhost:8000/accounts/own-request-offers/", {
+                const resSent = await fetch("https://pulsenet-45is.onrender.com/accounts/own-request-offers/", {
                     method: "GET",
                     credentials: "include",
                     headers: {
@@ -500,7 +500,7 @@ export default function Profile() {
     const handleSave = async () => {
         const csrfToken = getCookie("csrftoken");
         try {
-            const response = await fetch("http://localhost:8000/accounts/update_profile/", {
+            const response = await fetch("https://pulsenet-45is.onrender.com/accounts/update_profile/", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -552,7 +552,7 @@ export default function Profile() {
         setPreview(objectUrl);
         setUser((prev) => (prev ? { ...prev, profilePicture: objectUrl } : prev));
 
-        const uploadUrl = "http://localhost:8000/accounts/upload_profile_picture/";
+        const uploadUrl = "https://pulsenet-45is.onrender.com/accounts/upload_profile_picture/";
         const csrfToken = getCookie("csrftoken");
         const form = new FormData();
         form.append("profile_picture", file);
@@ -595,7 +595,7 @@ export default function Profile() {
 
     const handleDeleteProfilePicture = async () => {
         try {
-            const response = await fetch("http://localhost:8000/accounts/delete_profile_picture/", {
+            const response = await fetch("https://pulsenet-45is.onrender.com/accounts/delete_profile_picture/", {
                 method: "POST",
                 credentials: "include",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
@@ -706,7 +706,7 @@ export default function Profile() {
             newImages.forEach((file) => formData.append("images", file));
 
             const res = await fetch(
-                `http://localhost:8000/accounts/update_pulse/${editingPulse.id}/`,
+                `https://pulsenet-45is.onrender.com/accounts/update_pulse/${editingPulse.id}/`,
                 {
                     method: "POST",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },
@@ -757,7 +757,7 @@ export default function Profile() {
             newImages.forEach((file) => formData.append("images", file));
 
             const res = await fetch(
-                `http://localhost:8000/accounts/update_request/${editingRequest.id}/`,
+                `https://pulsenet-45is.onrender.com/accounts/update_request/${editingRequest.id}/`,
                 {
                     method: "POST",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },
@@ -792,7 +792,7 @@ export default function Profile() {
 
     const becomeVerified = async (id) => {
         const res = await fetch(
-            `http://localhost:8000/accounts/become_verified/`,
+            `https://pulsenet-45is.onrender.com/accounts/become_verified/`,
             {
                 method: "PUT",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
@@ -822,7 +822,7 @@ export default function Profile() {
 
         try {
             const response = await fetch(
-                `http://localhost:8000/accounts/remove_pulse/${deletePulseModal.id}/`,
+                `https://pulsenet-45is.onrender.com/accounts/remove_pulse/${deletePulseModal.id}/`,
                 {
                     method: "DELETE",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },
@@ -860,7 +860,7 @@ export default function Profile() {
     const handleAcceptOffer = async (id) => {
         // decide which endpoint to call based on whether id is in rentalProposals
         const isProposal = rentalProposals.some((p) => p.id === id);
-        const url = `http://localhost:8000/accounts/pulse_rentals/${id}/`;
+        const url = `https://pulsenet-45is.onrender.com/accounts/pulse_rentals/${id}/`;
 
         try {
             const res = await fetch(url, {
@@ -894,7 +894,7 @@ export default function Profile() {
     const handleDeclineOffer = async (id) => {
         
         const isProposal = rentalProposals.some((p) => p.id === id);
-        const url = `http://localhost:8000/accounts/pulse_rentals/${id}/`;
+        const url = `https://pulsenet-45is.onrender.com/accounts/pulse_rentals/${id}/`;
 
         try {
             const res = await fetch(url, {
@@ -929,7 +929,7 @@ export default function Profile() {
 
         try {
             const response = await fetch(
-                "http://localhost:8000/accounts/signal_pulse_rental/", // your backend endpoint
+                "https://pulsenet-45is.onrender.com/accounts/signal_pulse_rental/", // your backend endpoint
                 {
                     method: "POST",
                     credentials: "include",
@@ -964,7 +964,7 @@ export default function Profile() {
         if (!id) return;
 
         try {
-            const response = await fetch(`http://localhost:8000/accounts/pulse_rentals/${id}/`, {
+            const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse_rentals/${id}/`, {
                 method: "DELETE",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
                 credentials: "include",
@@ -1008,7 +1008,7 @@ export default function Profile() {
 
         const isProposal = rentalProposals.some((p) => p.id === id);
         try {
-            const res = await fetch(`http://localhost:8000/accounts/pulse_rentals/${id}/`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse_rentals/${id}/`, {
                 method: "PATCH",
                 credentials: "include",
                 headers: {
@@ -1090,7 +1090,7 @@ export default function Profile() {
     const handleAcceptRequestOffer = async (id) => {
         const isSentByMe = sentRequestOffers.some((o) => o.id === id);
 
-        const url = `http://localhost:8000/accounts/request-offers/${id}/`;
+        const url = `https://pulsenet-45is.onrender.com/accounts/request-offers/${id}/`;
 
         try {
             const res = await fetch(url, {
@@ -1122,7 +1122,7 @@ export default function Profile() {
 
     const handleDeclineRequestOffer = async (id) => {
         const isSentByMe = sentRequestOffers.some((o) => o.id === id);
-        const url = `http://localhost:8000/accounts/request-offers/${id}/`;
+        const url = `https://pulsenet-45is.onrender.com/accounts/request-offers/${id}/`;
 
         try {
             const res = await fetch(url, {
@@ -1161,7 +1161,7 @@ export default function Profile() {
 
         const isSentByMe = sentRequestOffers.some((o) => o.id === id);
         try {
-            const res = await fetch(`http://localhost:8000/accounts/request-offers/${id}/`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/request-offers/${id}/`, {
                 method: "PATCH",
                 credentials: "include",
                 headers: {
@@ -1197,7 +1197,7 @@ export default function Profile() {
 
     const handleDeleteRequestOffer = async (id) => {
         try {
-            const response = await fetch(`http://localhost:8000/accounts/request-offers/${id}/`, {
+            const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/request-offers/${id}/`, {
                 method: "DELETE",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
                 credentials: "include",
@@ -1263,7 +1263,7 @@ export default function Profile() {
 
         try {
             const response = await fetch(
-                `http://localhost:8000/accounts/remove_request/${deleteRequestModal.id}/`,
+                `https://pulsenet-45is.onrender.com/accounts/remove_request/${deleteRequestModal.id}/`,
                 {
                     method: "DELETE",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },

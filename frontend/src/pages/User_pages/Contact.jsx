@@ -116,7 +116,7 @@ const ContactPage = () => {
                 phone_number: finalPhoneNumber
             };
 
-            const response = await fetch('http://localhost:8000/accounts/contact/create/', {
+            const response = await fetch('https://pulsenet-45is.onrender.com/accounts/contact/create/', {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

@@ -78,7 +78,7 @@ export default function AlertPage() {
         setCommentsLoading(true);
         setCommentsError("");
         try {
-            const res = await fetch(`http://localhost:8000/accounts/alerts/comments/${id}/?page=${page}`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/alerts/comments/${id}/?page=${page}`, {
                 method: "GET",
                 credentials: "include",
                 headers: { "Accept": "application/json" },
@@ -167,7 +167,7 @@ export default function AlertPage() {
         setIsPosting(true);
         setCommentsError("");
         try {
-            const res = await fetch(`http://localhost:8000/accounts/alerts/comments/${id}/`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/alerts/comments/${id}/`, {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -209,7 +209,7 @@ export default function AlertPage() {
     const handleDeleteComment = async (commentId) => {
         const csrftoken = getCookie("csrftoken");
         try {
-            const res = await fetch(`http://localhost:8000/accounts/urgent-requests/comments/${commentId}/`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-requests/comments/${commentId}/`, {
                 method: "DELETE",
                 credentials: "include",
                 headers: { "X-CSRFToken": csrftoken },
@@ -228,7 +228,7 @@ export default function AlertPage() {
         if (!id) return;
         setLoading(true);
 
-        fetch(`http://localhost:8000/accounts/alerts/${id}/`,
+        fetch(`https://pulsenet-45is.onrender.com/accounts/alerts/${id}/`,
             {
                 headers: {
                     "X-CSRFToken": getCookie("csrftoken"),
@@ -281,7 +281,7 @@ export default function AlertPage() {
         setConfirmLoading(true);
 
         const currentlyConfirmed = !!alert.is_confirmed;
-        const endpoint = `http://localhost:8000/accounts/alerts/${id}/${currentlyConfirmed ? "unconfirm" : "confirm"}/`;
+        const endpoint = `https://pulsenet-45is.onrender.com/accounts/alerts/${id}/${currentlyConfirmed ? "unconfirm" : "confirm"}/`;
 
         try {
             const res = await fetch(endpoint, {
@@ -324,7 +324,7 @@ export default function AlertPage() {
         setReportLoading(true);
 
         try {
-            const res = await fetch(`http://localhost:8000/accounts/alerts/${id}/report/`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/alerts/${id}/report/`, {
                 method: "POST",
                 headers: {
                     "X-CSRFToken": getCookie("csrftoken"),

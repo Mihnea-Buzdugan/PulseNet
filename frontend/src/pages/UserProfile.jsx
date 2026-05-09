@@ -57,7 +57,7 @@ export default function Profile() {
 
     useEffect(() => {
         const csrfToken = getCookie('csrftoken');
-        fetch(`http://localhost:8000/accounts/user_profile/${id}`, {
+        fetch(`https://pulsenet-45is.onrender.com/accounts/user_profile/${id}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ export default function Profile() {
         e.stopPropagation();
         const csrf = getCookie("csrftoken");
 
-        const url = `http://localhost:8000/accounts/${action}/${targetUser.id}/`;
+        const url = `https://pulsenet-45is.onrender.com/accounts/${action}/${targetUser.id}/`;
 
         try {
             await fetch(url, {

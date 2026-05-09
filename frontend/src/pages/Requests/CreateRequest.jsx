@@ -45,7 +45,7 @@ export default function CreateRequest() {
     });
 
     useEffect(() => {
-        fetch("http://localhost:8000/accounts/profile/", { credentials: "include" })
+        fetch("https://pulsenet-45is.onrender.com/accounts/profile/", { credentials: "include" })
             .then((res) => res.json())
             .then((data) => {
                 const coords = data?.user?.location?.coordinates;
@@ -132,7 +132,7 @@ export default function CreateRequest() {
         selectedFiles.forEach((file) => formDataToSend.append("images", file));
 
         try {
-            const response = await fetch("http://localhost:8000/accounts/urgent-requests/create/", {
+            const response = await fetch("https://pulsenet-45is.onrender.com/accounts/urgent-requests/create/", {
                 method: "POST",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
                 credentials: "include",

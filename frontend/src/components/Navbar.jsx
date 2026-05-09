@@ -60,12 +60,12 @@ function Navbar() {
         if (!isAuthenticated) return;
         try {
 
-            const userRes = await fetch('http://localhost:8000/accounts/user/', { credentials: 'include' });
+            const userRes = await fetch('https://pulsenet-45is.onrender.com/accounts/user/', { credentials: 'include' });
             const userData = await userRes.json();
             setUser(userData);
 
 
-            const notifRes = await fetch('http://localhost:8000/accounts/notifications/', { credentials: 'include' });
+            const notifRes = await fetch('https://pulsenet-45is.onrender.com/accounts/notifications/', { credentials: 'include' });
             const notifData = await notifRes.json();
             setNotifications(notifData.notifications || []);
         } catch (err) {
@@ -97,7 +97,7 @@ function Navbar() {
         const timeout = setTimeout(async () => {
             try {
                 const res = await fetch(
-                    `http://localhost:8000/accounts/search-users/?q=${encodeURIComponent(query)}`,
+                    `https://pulsenet-45is.onrender.com/accounts/search-users/?q=${encodeURIComponent(query)}`,
                     { credentials: "include" }
                 );
                 const data = await res.json();
@@ -129,7 +129,7 @@ function Navbar() {
 
 
     const handleLogout = async () => {
-        await fetch('http://localhost:8000/accounts/logout/', { method: 'POST', credentials: 'include' });
+        await fetch('https://pulsenet-45is.onrender.com/accounts/logout/', { method: 'POST', credentials: 'include' });
         localStorage.removeItem('auth-token');
         localStorage.removeItem('token-expiration');
         clearUserIdCache();
@@ -146,7 +146,7 @@ function Navbar() {
         if (nextState && unreadNotifCount > 0) {
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
             try {
-                await fetch('http://localhost:8000/accounts/notifications/mark-read/', {
+                await fetch('https://pulsenet-45is.onrender.com/accounts/notifications/mark-read/', {
                     method: 'POST',
                     headers: { 'X-CSRFToken': getCookie('csrftoken') },
                     credentials: 'include'
@@ -173,7 +173,7 @@ function Navbar() {
 
     const deleteNotification = async (id) => {
         try {
-            await fetch(`http://localhost:8000/accounts/delete_notification/${id}/`, {
+            await fetch(`https://pulsenet-45is.onrender.com/accounts/delete_notification/${id}/`, {
                 method: "DELETE",
                 headers: { 'X-CSRFToken': getCookie('csrftoken') },
                 credentials: 'include'
@@ -189,7 +189,7 @@ function Navbar() {
     const handleUserAction = async (e, targetUser, action) => {
         e.stopPropagation();
         const csrf = getCookie("csrftoken");
-        const url = `http://localhost:8000/accounts/${action}/${targetUser.id}/`;
+        const url = `https://pulsenet-45is.onrender.com/accounts/${action}/${targetUser.id}/`;
 
         try {
             await fetch(url, {

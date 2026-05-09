@@ -31,7 +31,7 @@ export default function FollowRequests() {
         setLoading(true);
         try {
             const res = await fetch(
-                "http://localhost:8000/accounts/follow-requests/",
+                "https://pulsenet-45is.onrender.com/accounts/follow-requests/",
                 {
                     credentials: "include",
                 }
@@ -53,7 +53,7 @@ export default function FollowRequests() {
         const csrfToken = getCookie("csrftoken");
         try {
             const res = await fetch(
-                `http://localhost:8000/accounts/follow-requests/accept/${id}/`,
+                `https://pulsenet-45is.onrender.com/accounts/follow-requests/accept/${id}/`,
                 {
                     method: "POST",
                     credentials: "include",
@@ -74,7 +74,7 @@ export default function FollowRequests() {
         const csrfToken = getCookie("csrftoken");
         try {
             const res = await fetch(
-                `http://localhost:8000/accounts/follow-requests/reject/${id}/`,
+                `https://pulsenet-45is.onrender.com/accounts/follow-requests/reject/${id}/`,
                 {
                     method: "POST",
                     credentials: "include",

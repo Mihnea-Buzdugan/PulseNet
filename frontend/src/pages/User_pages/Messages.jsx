@@ -46,7 +46,7 @@ const Messages = ({ currentUser }) => {
     useEffect(() => {
         if (!currentUser?.id) return;
 
-        fetch("http://localhost:8000/accounts/my-conversations/", {
+        fetch("https://pulsenet-45is.onrender.com/accounts/my-conversations/", {
             credentials: "include",
         })
             .then((res) => res.json())
@@ -60,8 +60,8 @@ const Messages = ({ currentUser }) => {
                             const contentObj = JSON.parse(convo.last_message);
                             if (contentObj.for_sender && contentObj.for_receiver) {
                                 const [myRes, receiverRes] = await Promise.all([
-                                    fetch(`http://localhost:8000/accounts/message_keys/get/${currentUser.id}/`, { credentials: "include" }),
-                                    fetch(`http://localhost:8000/accounts/message_keys/get/${convo.other_user_id}/`, { credentials: "include" }),
+                                    fetch(`https://pulsenet-45is.onrender.com/accounts/message_keys/get/${currentUser.id}/`, { credentials: "include" }),
+                                    fetch(`https://pulsenet-45is.onrender.com/accounts/message_keys/get/${convo.other_user_id}/`, { credentials: "include" }),
                                 ]);
 
                                 if (contentObj.for_sender && contentObj.for_receiver) {
@@ -105,9 +105,9 @@ const Messages = ({ currentUser }) => {
                     setKeysLoading(true);
                     try {
                         const [receiverRes, myRes] = await Promise.all([
-                            fetch(`http://localhost:8000/accounts/message_keys/get/${selectedConvo.other_user_id}/`,
+                            fetch(`https://pulsenet-45is.onrender.com/accounts/message_keys/get/${selectedConvo.other_user_id}/`,
                                 { credentials: "include" }),
-                            fetch(`http://localhost:8000/accounts/message_keys/get/${currentUser?.id}/`,
+                            fetch(`https://pulsenet-45is.onrender.com/accounts/message_keys/get/${currentUser?.id}/`,
                                 { credentials: "include" })
                         ]);
 
@@ -144,7 +144,7 @@ const Messages = ({ currentUser }) => {
 
             try {
                 const res = await fetch(
-                    `http://localhost:8000/accounts/messages/history/${selectedConvo.type}/${selectedConvo.id}/`,
+                    `https://pulsenet-45is.onrender.com/accounts/messages/history/${selectedConvo.type}/${selectedConvo.id}/`,
                     { credentials: "include" }
                 );
                 const data = await res.json();

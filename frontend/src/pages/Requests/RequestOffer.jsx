@@ -51,7 +51,7 @@ export default function RequestOffer() {
         const fetchRequest = async () => {
             try {
 
-                const res = await fetch(`http://localhost:8000/accounts/urgent-request/${requestId}/`, {
+                const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-request/${requestId}/`, {
                     method: "GET",
                     credentials: "include",
                 });
@@ -79,7 +79,7 @@ export default function RequestOffer() {
         let mounted = true;
         const fetchUser = async () => {
             try {
-                const res = await fetch("http://localhost:8000/accounts/user/", {
+                const res = await fetch("https://pulsenet-45is.onrender.com/accounts/user/", {
                     method: "GET",
                     credentials: "include",
                 });
@@ -203,7 +203,7 @@ export default function RequestOffer() {
             };
 
 
-            const res = await fetch(`http://localhost:8000/accounts/create_request_offer/`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/create_request_offer/`, {
                 method: "POST",
                 credentials: "include",
                 headers: {

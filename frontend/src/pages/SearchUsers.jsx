@@ -26,7 +26,7 @@ export default function SearchUsers() {
         setLoading(true);
         try {
             const res = await fetch(
-                `http://localhost:8000/accounts/search-users/?q=${encodeURIComponent(query)}`,
+                `https://pulsenet-45is.onrender.com/accounts/search-users/?q=${encodeURIComponent(query)}`,
                 { credentials: "include" }
             );
 
@@ -51,7 +51,7 @@ export default function SearchUsers() {
     const followUser = async (userId) => {
         const csrf = getCookie("csrftoken");
 
-        await fetch(`http://localhost:8000/accounts/follow/${userId}/`, {
+        await fetch(`https://pulsenet-45is.onrender.com/accounts/follow/${userId}/`, {
             method: "POST",
             credentials: "include",
             headers: { "X-CSRFToken": csrf },
@@ -74,7 +74,7 @@ export default function SearchUsers() {
     const unfollowUser = async (userId) => {
         const csrf = getCookie("csrftoken");
 
-        await fetch(`http://localhost:8000/accounts/unfollow/${userId}/`, {
+        await fetch(`https://pulsenet-45is.onrender.com/accounts/unfollow/${userId}/`, {
             method: "POST",
             credentials: "include",
             headers: { "X-CSRFToken": csrf },

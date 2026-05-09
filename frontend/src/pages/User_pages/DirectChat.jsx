@@ -48,7 +48,7 @@ const DirectChat = ({ currentUser }) => {
 
             try {
                 const response = await fetch(
-                    `http://localhost:8000/accounts/direct_conversations/create/${id}/`,
+                    `https://pulsenet-45is.onrender.com/accounts/direct_conversations/create/${id}/`,
                     {
                         method: 'POST',
                         headers: {
@@ -63,7 +63,7 @@ const DirectChat = ({ currentUser }) => {
                 if (response.ok) {
                     setConversationId(data.conversation_id);
 
-                    const keyRes = await fetch(`http://localhost:8000/accounts/message_keys/get/${id}/`, {
+                    const keyRes = await fetch(`https://pulsenet-45is.onrender.com/accounts/message_keys/get/${id}/`, {
                         credentials: 'include',
                     });
 
@@ -73,7 +73,7 @@ const DirectChat = ({ currentUser }) => {
                     } else {
                         console.error("Message Key error: ", response.error);
                     }
-                    const myKeyRes = await fetch(`http://localhost:8000/accounts/message_keys/get/${currentUser.id}/`, {
+                    const myKeyRes = await fetch(`https://pulsenet-45is.onrender.com/accounts/message_keys/get/${currentUser.id}/`, {
                         credentials: 'include'
                     });
                     if (myKeyRes.ok) {
@@ -123,7 +123,7 @@ const DirectChat = ({ currentUser }) => {
         if (!conversationId) return;
         const fetchHistory = async () => {
             try {
-                const response = await fetch(`http://localhost:8000/accounts/messages/history/direct/${conversationId}/`, {
+                const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/messages/history/direct/${conversationId}/`, {
                     credentials: 'include'
                 });
                 const data = await response.json();

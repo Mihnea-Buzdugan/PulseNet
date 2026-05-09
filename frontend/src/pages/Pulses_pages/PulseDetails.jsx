@@ -103,7 +103,7 @@ export default function PulseDetails() {
         setCommentsLoading(true);
         setCommentsError("");
         try {
-            const res = await fetch(`http://localhost:8000/accounts/pulse/comments/${id}/?page=${page}`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/comments/${id}/?page=${page}`, {
                 method: "GET",
                 credentials: "include",
                 headers: { "Accept": "application/json" },
@@ -147,7 +147,7 @@ export default function PulseDetails() {
         setIsPosting(true);
         setCommentsError("");
         try {
-            const res = await fetch(`http://localhost:8000/accounts/pulse/comments/${id}/`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/comments/${id}/`, {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -189,7 +189,7 @@ export default function PulseDetails() {
     const handleDeleteComment = async (commentId) => {
         const csrftoken = getCookie("csrftoken");
         try {
-            const res = await fetch(`http://localhost:8000/accounts/pulse/comments/${commentId}/`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/comments/${commentId}/`, {
                 method: "DELETE",
                 credentials: "include",
                 headers: { "X-CSRFToken": csrftoken },
@@ -213,7 +213,7 @@ export default function PulseDetails() {
         const csrftoken = getCookie("csrftoken");
         setIsSubmittingRating(true);
         try {
-            const res = await fetch(`http://localhost:8000/accounts/pulse/ratings/${id}/`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/ratings/${id}/`, {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -247,7 +247,7 @@ export default function PulseDetails() {
         let mounted = true;
         const csrfToken = getCookie("csrftoken");
 
-        fetch(`http://localhost:8000/accounts/pulse/${id}/`, {
+        fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/${id}/`, {
             method: "GET",
             credentials: "include",
             headers: { "X-CSRFToken": csrfToken },
@@ -347,7 +347,7 @@ export default function PulseDetails() {
         setFavAnim(true);
         try {
             const csrfToken = getCookie("csrftoken");
-            const response = await fetch(`http://localhost:8000/accounts/add_to_favorites/${pulse.id}/`, {
+            const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/add_to_favorites/${pulse.id}/`, {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
@@ -362,7 +362,7 @@ export default function PulseDetails() {
         if (!pulse) return;
         try {
             const csrfToken = getCookie("csrftoken");
-            const response = await fetch(`http://localhost:8000/accounts/delete_from_favorites/${pulse.id}/`, {
+            const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/delete_from_favorites/${pulse.id}/`, {
                 method: "DELETE",
                 credentials: "include",
                 headers: { "X-CSRFToken": csrfToken },

@@ -7,7 +7,7 @@ let cachedUserId = null;
 
 async function getCurrentUserId() {
     if (cachedUserId) return cachedUserId;
-    const res = await fetch("http://localhost:8000/accounts/user/", { credentials: "include" });
+    const res = await fetch("https://pulsenet-45is.onrender.com/accounts/user/", { credentials: "include" });
     if (!res.ok) throw new Error("Failed to fetch user info for E2EE key scoping");
     const data = await res.json();
     cachedUserId = data.id;
@@ -97,7 +97,7 @@ export async function initializeE2EE() {
         const existingPrivateKey = await getKeyFromDB(PRIVATE_KEY_ID);
 
         const serverCheck = await fetch(
-            "http://localhost:8000/accounts/message_keys/get/me/",
+            "https://pulsenet-45is.onrender.com/accounts/message_keys/get/me/",
             { credentials: "include" }
         );
         const keyExistsOnServer = serverCheck.ok && (await serverCheck.json()).public_key;
@@ -133,7 +133,7 @@ export async function initializeE2EE() {
             ?.split("=")[1];
 
         const response = await fetch(
-            "http://localhost:8000/accounts/message_keys/upload/",
+            "https://pulsenet-45is.onrender.com/accounts/message_keys/upload/",
             {
                 method: "POST",
                 headers: {

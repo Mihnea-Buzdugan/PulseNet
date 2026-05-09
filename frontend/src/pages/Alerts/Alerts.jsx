@@ -137,7 +137,7 @@ export default function Alerts() {
     const socketRef = useRef(null);
 
     useEffect(() => {
-        fetch("http://localhost:8000/accounts/alerts/", { credentials: "include" })
+        fetch("https://pulsenet-45is.onrender.com/accounts/alerts/", { credentials: "include" })
             .then((res) => res.json())
             .then((data) => {
                 if (data.success) setAlerts(data.alerts || []);

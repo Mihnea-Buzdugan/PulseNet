@@ -147,7 +147,7 @@ export default function AddAlerts() {
                 data.append("images", file);
             });
 
-            const response = await fetch("http://localhost:8000/accounts/alerts/create/", {
+            const response = await fetch("https://pulsenet-45is.onrender.com/accounts/alerts/create/", {
                 method: "POST",
                 headers: {
                     "X-CSRFToken": getCookie("csrftoken"),

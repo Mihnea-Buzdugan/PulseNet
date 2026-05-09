@@ -214,7 +214,7 @@ function AddPulses() {
                 formData.append("images", file);
             });
 
-            const response = await fetch("http://localhost:8000/accounts/add_pulse/", {
+            const response = await fetch("https://pulsenet-45is.onrender.com/accounts/add_pulse/", {
                 method: "POST",
                 headers: {
                     "X-CSRFToken": getCookie("csrftoken"),

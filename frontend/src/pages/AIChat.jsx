@@ -30,7 +30,7 @@ export default function AIChat() {
         const csrfToken = getCookie("csrftoken");
 
         try {
-            const res = await fetch("http://localhost:8000/accounts/ai_chat/", {
+            const res = await fetch("https://pulsenet-45is.onrender.com/accounts/ai_chat/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

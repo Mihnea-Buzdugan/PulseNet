@@ -89,7 +89,7 @@ export default function RequestDetails() {
         setCommentsLoading(true);
         setCommentsError("");
         try {
-            const res = await fetch(`http://localhost:8000/accounts/urgent-requests/comments/${id}/?page=${page}`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-requests/comments/${id}/?page=${page}`, {
                 method: "GET",
                 credentials: "include",
                 headers: { "Accept": "application/json" },
@@ -133,7 +133,7 @@ export default function RequestDetails() {
         setIsPosting(true);
         setCommentsError("");
         try {
-            const res = await fetch(`http://localhost:8000/accounts/urgent-requests/comments/${id}/`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-requests/comments/${id}/`, {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -175,7 +175,7 @@ export default function RequestDetails() {
     const handleDeleteComment = async (commentId) => {
         const csrftoken = getCookie("csrftoken");
         try {
-            const res = await fetch(`http://localhost:8000/accounts/urgent-requests/comments/${commentId}/`, {
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-requests/comments/${commentId}/`, {
                 method: "DELETE",
                 credentials: "include",
                 headers: { "X-CSRFToken": csrftoken },
@@ -199,7 +199,7 @@ export default function RequestDetails() {
         let mounted = true;
         const csrfToken = getCookie("csrftoken");
 
-        fetch(`http://localhost:8000/accounts/urgent-request/${id}/`, {
+        fetch(`https://pulsenet-45is.onrender.com/accounts/urgent-request/${id}/`, {
             method: "GET",
             credentials: "include",
             headers: { "X-CSRFToken": csrfToken },
