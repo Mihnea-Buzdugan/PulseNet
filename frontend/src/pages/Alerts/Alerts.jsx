@@ -146,7 +146,7 @@ export default function Alerts() {
     }, []);
 
     useEffect(() => {
-        const socketUrl = `ws://localhost:8000/ws/alerts/`;
+        const socketUrl = `wss://pulsenet-45is.onrender.com/ws/alerts/`;
         socketRef.current = new WebSocket(socketUrl);
 
         socketRef.current.onmessage = (event) => {

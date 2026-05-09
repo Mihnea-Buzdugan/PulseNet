@@ -53,7 +53,7 @@ export default function Pulses() {
 
     const socketRef = useRef(null);
     useEffect(() => {
-        socketRef.current = new WebSocket("ws://localhost:8000/ws/pulses/");
+        socketRef.current = new WebSocket("wss://pulsenet-45is.onrender.com/ws/pulses/");
 
         socketRef.current.onopen = () => {
             console.log("Connected to Pulse WebSocket");

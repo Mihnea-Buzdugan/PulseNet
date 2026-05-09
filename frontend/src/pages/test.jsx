@@ -133,7 +133,7 @@ export default function Index() {
     const socketRef = useRef(null);
     useEffect(() => {
         // 1. Inițializăm socket-ul o singură dată
-        socketRef.current = new WebSocket("ws://localhost:8000/ws/pulses/");
+        socketRef.current = new WebSocket("wss://pulsenet-45is.onrender.com/ws/pulses/");
 
         socketRef.current.onopen = () => {
             console.log("Connected to Pulse WebSocket");
@@ -199,7 +199,7 @@ export default function Index() {
         let reconnectTimeout;
 
         const connectWebSocket = () => {
-            socket = new WebSocket("ws://localhost:8000/ws/alerts/");
+            socket = new WebSocket("wss://pulsenet-45is.onrender.com/ws/alerts/");
 
             socket.onopen = () => {
                 console.log("Connected to Alerts WebSocket");

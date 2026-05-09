@@ -167,7 +167,7 @@ const Messages = ({ currentUser }) => {
             socketRef.current.close();
         }
 
-        const wsUrl = `ws://localhost:8000/ws/chat/${selectedConvo.type}/${selectedConvo.id}/`;
+        const wsUrl = `wss://pulsenet-45is.onrender.com/ws/chat/${selectedConvo.type}/${selectedConvo.id}/`;
         socketRef.current = new WebSocket(wsUrl);
 
         socketRef.current.onmessage = async (e) => {
