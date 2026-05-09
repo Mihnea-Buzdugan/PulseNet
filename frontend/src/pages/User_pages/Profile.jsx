@@ -598,13 +598,7 @@ export default function Profile() {
             const response = await fetch("https://pulsenet-45is.onrender.com/accounts/delete_profile_picture/", {
                 method: "POST",
                 credentials: "include",
-                headers: {
-    "Content-Type": "application/json",
-    "X-CSRFToken": (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
-        method: 'GET',
-        credentials: 'include',
-    }).then(res => res.json())).csrf_token,
-},
+                headers: { "X-CSRFToken": getCookie("csrftoken") },
             });
             if (!response.ok) throw new Error("Failed to delete profile picture");
             setUser((prev) => ({ ...prev, profilePicture: null }));
@@ -715,13 +709,7 @@ export default function Profile() {
                 `https://pulsenet-45is.onrender.com/accounts/update_pulse/${editingPulse.id}/`,
                 {
                     method: "POST",
-                    headers: {
-    "Content-Type": "application/json",
-    "X-CSRFToken": (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
-        method: 'GET',
-        credentials: 'include',
-    }).then(res => res.json())).csrf_token,
-},
+                    headers: { "X-CSRFToken": getCookie("csrftoken") },
                     credentials: "include",
                     body: formData,
                 }
@@ -772,13 +760,7 @@ export default function Profile() {
                 `https://pulsenet-45is.onrender.com/accounts/update_request/${editingRequest.id}/`,
                 {
                     method: "POST",
-                    headers: {
-    "Content-Type": "application/json",
-    "X-CSRFToken": (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
-        method: 'GET',
-        credentials: 'include',
-    }).then(res => res.json())).csrf_token,
-},
+                    headers: { "X-CSRFToken": getCookie("csrftoken") },
                     credentials: "include",
                     body: formData,
                 }
@@ -813,13 +795,7 @@ export default function Profile() {
             `https://pulsenet-45is.onrender.com/accounts/become_verified/`,
             {
                 method: "PUT",
-                headers: {
-    "Content-Type": "application/json",
-    "X-CSRFToken": (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
-        method: 'GET',
-        credentials: 'include',
-    }).then(res => res.json())).csrf_token,
-},
+                headers: { "X-CSRFToken": getCookie("csrftoken") },
                 credentials: "include",
             }
         );
@@ -849,13 +825,7 @@ export default function Profile() {
                 `https://pulsenet-45is.onrender.com/accounts/remove_pulse/${deletePulseModal.id}/`,
                 {
                     method: "DELETE",
-                    headers: {
-    "Content-Type": "application/json",
-    "X-CSRFToken": (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
-        method: 'GET',
-        credentials: 'include',
-    }).then(res => res.json())).csrf_token,
-},
+                    headers: { "X-CSRFToken": getCookie("csrftoken") },
                     credentials: "include",
                 }
             );
@@ -996,13 +966,7 @@ export default function Profile() {
         try {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse_rentals/${id}/`, {
                 method: "DELETE",
-                headers: {
-    "Content-Type": "application/json",
-    "X-CSRFToken": (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
-        method: 'GET',
-        credentials: 'include',
-    }).then(res => res.json())).csrf_token,
-},
+                headers: { "X-CSRFToken": getCookie("csrftoken") },
                 credentials: "include",
             });
 
@@ -1235,13 +1199,7 @@ export default function Profile() {
         try {
             const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/request-offers/${id}/`, {
                 method: "DELETE",
-                headers: {
-    "Content-Type": "application/json",
-    "X-CSRFToken": (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
-        method: 'GET',
-        credentials: 'include',
-    }).then(res => res.json())).csrf_token,
-},
+                headers: { "X-CSRFToken": getCookie("csrftoken") },
                 credentials: "include",
             });
 
@@ -1308,13 +1266,7 @@ export default function Profile() {
                 `https://pulsenet-45is.onrender.com/accounts/remove_request/${deleteRequestModal.id}/`,
                 {
                     method: "DELETE",
-                    headers: {
-    "Content-Type": "application/json",
-    "X-CSRFToken": (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
-        method: 'GET',
-        credentials: 'include',
-    }).then(res => res.json())).csrf_token,
-},
+                    headers: { "X-CSRFToken": getCookie("csrftoken") },
                     credentials: "include",
                 }
             );

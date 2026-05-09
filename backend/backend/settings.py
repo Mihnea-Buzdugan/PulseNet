@@ -33,27 +33,24 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://localhost:5173",
-    "https://pulsenet-fiicode.netlify.app"
-    # replace this with your real frontend domain when you deploy it
-    # "https://your-frontend.onrender.com",
+    "https://pulsenet-fiicode.netlify.app",
 ]
 
 CSRF_COOKIE_NAME = "csrftoken"
 CSRF_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "None"
+
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "https://localhost:5173",
-    "https://pulsenet-fiicode.netlify.app/",
-    # add your deployed frontend URL here later
-    # "https://your-frontend.onrender.com",
+    "https://pulsenet-fiicode.netlify.app",
 ]
 
 SESSION_COOKIE_NAME = "session"
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SAMESITE = "None"
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 INSTALLED_APPS = [
