@@ -136,7 +136,7 @@ const DirectChat = ({ currentUser }) => {
 
     useEffect(() => {
         if (!conversationId) return;
-        const wsUrl = `ws://localhost:8000/ws/chat/direct/${conversationId}/`;
+        const wsUrl = `wss://pulsenet-45is.onrender.com/ws/chat/direct/${conversationId}/`;
         socketRef.current = new WebSocket(wsUrl);
         socketRef.current.onmessage = async (e) => {
             const data = JSON.parse(e.data);

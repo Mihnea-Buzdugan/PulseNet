@@ -194,7 +194,7 @@ export default function Index() {
     }, []);
 
     useEffect(() => {
-        pulseSocketRef.current = new WebSocket("ws://localhost:8000/ws/pulses/");
+        pulsesocketRef.current = new WebSocket("wss://pulsenet-45is.onrender.com/ws/pulses/");
 
         pulseSocketRef.current.onopen = () => {
             console.log("Connected to Pulse WebSocket");
@@ -250,7 +250,7 @@ export default function Index() {
 
     useEffect(() => {
 
-        requestSocketRef.current = new WebSocket("ws://localhost:8000/ws/requests/");
+        requestsocketRef.current = new WebSocket("wss://pulsenet-45is.onrender.com/ws/requests/");
 
         requestSocketRef.current.onopen = () => {
             console.log("Connected to Request WebSocket");

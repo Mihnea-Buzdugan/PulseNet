@@ -251,7 +251,7 @@ def profile(request):
                 "price": float(p.price),
                 "currencyType": p.currencyType,
                 "description": p.description,
-                "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
+                "images": [img.image.url for img in p.images.all()],
                 "phone_number": p.phone_number,
                 "location": json.loads(p.location.geojson) if p.location else None,
                 "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
@@ -267,7 +267,7 @@ def profile(request):
                 "category": req.category,
                 "price": float(req.max_price) if req.max_price is not None else None,
                 "currencyType": req.currencyType,
-                "images": [request.build_absolute_uri(img.image.url) for img in req.images.all()],
+                "images": [img.image.url for img in req.images.all()],
                 "location": json.loads(req.location.geojson) if req.location else None,
                 "timestamp": req.created_at.strftime("%Y-%m-%d %H:%M"),
             })
@@ -285,7 +285,7 @@ def profile(request):
             "firstName": user.first_name,
             "lastName": user.last_name,
             "username": user.username,
-            "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
+            "profilePicture": user.profile_picture.url if user.profile_picture else None,
             "biography": user.biography,
             "location": json.loads(user.location.geojson) if user.location else None,
             "visibility_radius": user.visibility_radius,
@@ -379,7 +379,7 @@ def update_profile(request):
                 "pulseType": p.pulse_type,
                 "price": float(p.price),
                 "currencyType": p.currencyType,
-                "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
+                "images": [img.image.url for img in p.images.all()],
             } for p in pulses
         ]
 
@@ -391,7 +391,7 @@ def update_profile(request):
                 "firstName": user.first_name,
                 "lastName": user.last_name,
                 "username": user.username,
-                "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
+                "profilePicture": user.profile_picture.url if user.profile_picture else None,
                 "biography": user.biography,
                 "location": json.loads(user.location.geojson) if user.location else None,
                 "visibility_radius": user.visibility_radius,
@@ -456,7 +456,7 @@ def upload_profile_picture(request):
             "id": p.id,
             "title": p.title,
             "pulseType": p.pulse_type,
-            "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
+            "images": [img.image.url for img in p.images.all()],
         } for p in pulses
     ]
 
@@ -467,7 +467,7 @@ def upload_profile_picture(request):
                 "firstName": user.first_name,
                 "lastName": user.last_name,
                 "username": user.username,
-                "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
+                "profilePicture": user.profile_picture.url if user.profile_picture else None,
                 "biography": user.biography,
                 "location": json.loads(user.location.geojson) if user.location else None,
                 "visibility_radius": user.visibility_radius,
@@ -555,7 +555,7 @@ def add_pulse(request):
             PulseImage.objects.create(pulse=pulse, image=img)
 
         first_image = pulse.images.first()
-        image_url = request.build_absolute_uri(first_image.image.url) if first_image else None
+        image_url = first_image.image.url if first_image else None
 
         broadcast_payload = {
             "id": pulse.id,
@@ -589,7 +589,7 @@ def add_pulse(request):
                 "title": pulse.title,
                 "pulseType": pulse.pulse_type,
                 "location": json.loads(pulse.location.geojson) if pulse.location else None,
-                "images": [request.build_absolute_uri(i.image.url) for i in pulse.images.all()]
+                "images": [i.image.url for i in pulse.images.all()]
             }
         }, status=201)
 
@@ -664,7 +664,7 @@ def update_pulse(request, pulse_id):
                 "type": "Point",
                 "coordinates": [pulse.location.x, pulse.location.y]
             } if pulse.location else None,
-            "images": [request.build_absolute_uri(img.image.url) for img in pulse.images.all()],
+            "images": [img.image.url for img in pulse.images.all()],
         }
 
         return JsonResponse({"message": "Pulse updated", "pulse": pulse_data}, status=200)
@@ -777,7 +777,7 @@ def list_all_pulses(request):
     results = []
     for pulse in pulses:
         images_qs = [
-            request.build_absolute_uri(img.image.url)
+            img.image.url
             for img in pulse.images.all()
             if img.image
         ]
@@ -842,13 +842,13 @@ def get_latest_pulses(request):
     final_data = []
     for p in page_obj:
         images = list(p.images.all())
-        image_url = request.build_absolute_uri(images[0].image.url) if images else None
+        image_url = images[0].image.url if images else None
 
         final_data.append({
             "id": p.id,
             "type": p.pulse_type,
             "user": p.user.username,
-            "user_avatar": request.build_absolute_uri(p.user.profile_picture.url) if p.user.profile_picture else None,
+            "user_avatar": p.user.profile_picture.url if p.user.profile_picture else None,
             "name": p.title,
             "description": p.description,
             "popularity_score": p.popularity_score,
@@ -898,7 +898,7 @@ def get_nearest_pulses(request):
     data = []
     for p in pulses:
         images = list(p.images.all())
-        image_url = request.build_absolute_uri(images[0].image.url) if images else None
+        image_url = images[0].image.url if images else None
 
         data.append({
             "id": p.id,
@@ -939,13 +939,13 @@ def get_best_pulses(request):
     final_data = []
     for p in page_obj:
         images = list(p.images.all())
-        image_url = request.build_absolute_uri(images[0].image.url) if images else None
+        image_url = images[0].image.url if images else None
 
         final_data.append({
             "id": p.id,
             "type": p.pulse_type,
             "user": p.user.username,
-            "user_avatar": request.build_absolute_uri(p.user.profile_picture.url) if p.user.profile_picture else None,
+            "user_avatar": (p.user.profile_picture.url) if p.user.profile_picture else None,
             "name": p.title,
             "price": float(p.price),
             "pulse_type": p.pulse_type,
@@ -1003,13 +1003,13 @@ def get_favorite_pulses(request):
                 "id": p.id,
                 "type": p.pulse_type,
                 "user": p.user.username,
-                "user_avatar": request.build_absolute_uri(p.user.profile_picture.url)
+                "user_avatar": (p.user.profile_picture.url)
                 if p.user.profile_picture else None,
                 "name": p.title,
                 "price": float(p.price),
                 "currency": p.currencyType,
                 "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
-                "image": request.build_absolute_uri(p.images.first().image.url)
+                "image": (p.images.first().image.url)
                 if p.images.exists() else None,
                 "is_favorite": True
             })
@@ -1043,7 +1043,7 @@ def get_pulse_by_id(request, pulse_id):
         coords = list(pulse.location.coords) if pulse.location else [27.5766, 47.1585]
 
         images = [
-            request.build_absolute_uri(img.image.url)
+            (img.image.url)
             for img in pulse.images.all()
         ]
 
@@ -1076,7 +1076,7 @@ def get_pulse_by_id(request, pulse_id):
             "type": pulse.pulse_type,
             "user": pulse.user.username,
             "user_id": pulse.user.id,
-            "user_avatar": request.build_absolute_uri(pulse.user.profile_picture.url) if pulse.user.profile_picture else None,
+            "user_avatar": (pulse.user.profile_picture.url) if pulse.user.profile_picture else None,
             "trustLevel": pulse.user.trust_level,
             "trustRequired": pulse.trust_required,
             "name": pulse.title,
@@ -1130,7 +1130,7 @@ def get_pulse_comments(request, pulse_id):
                 "id": comment.id,
                 "user": comment.user.username,
                 "user_id": comment.user.id,
-                "avatar": request.build_absolute_uri(comment.user.profile_picture.url) if comment.user.profile_picture else None,
+                "avatar": (comment.user.profile_picture.url) if comment.user.profile_picture else None,
                 "content": comment.content,
                 "date": comment.pub_date.strftime("%d %b %Y, %H:%M"),
                 "can_delete": comment.can_delete(request.user),
@@ -1164,7 +1164,7 @@ def get_pulse_comments(request, pulse_id):
                 "id": comment.id,
                 "user": comment.user.username,
                 "user_id": comment.user.id,
-                "avatar": request.build_absolute_uri(
+                "avatar": (
                     comment.user.profile_picture.url) if comment.user.profile_picture else None,
                 "content": comment.content,
                 "date": comment.pub_date.strftime("%d %b %Y, %H:%M"),
@@ -1823,7 +1823,7 @@ def user_profile(request, user_id):
                 "price": float(p.price),
                 "currencyType": p.currencyType,
                 "description": p.description,
-                "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
+                "images": [img.image.url for img in p.images.all()],
                 "address": p.address,
                 "phone_number": p.phone_number,
                 "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
@@ -1839,7 +1839,7 @@ def user_profile(request, user_id):
                 "address": r.address,
                 "currencyType": r.currencyType,
                 "max_price": float(r.max_price),
-                "images": [request.build_absolute_uri(img.image.url) for img in r.images.all()],
+                "images": [img.image.url for img in r.images.all()],
                 "timestamp": r.created_at.strftime("%Y-%m-%d %H:%M"),
             } for r in requests
         ]
@@ -1850,7 +1850,7 @@ def user_profile(request, user_id):
             "firstName": user.first_name,
             "lastName": user.last_name,
             "username": user.username,
-            "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
+            "profilePicture": user.profile_picture.url if user.profile_picture else None,
             "biography": user.biography,
             "location": (
                 {"lat": user.location.y, "lng": user.location.x}
@@ -2239,7 +2239,7 @@ def list_alerts(request):
             "lat": float(alert.location.y) if alert.location else None,
             "lng": float(alert.location.x) if alert.location else None,
             "address": alert.address,
-            "images": [request.build_absolute_uri(img.image.url) for img in alert.images.all()],
+            "images": [img.image.url for img in alert.images.all()],
 
             "is_verified": (
             alert.is_verified
@@ -2297,7 +2297,7 @@ def create_alert(request):
         saved_images = []
         for img_file in images_files:
             img_obj = AlertImage.objects.create(alert=alert, image=img_file)
-            saved_images.append(request.build_absolute_uri(img_obj.image.url))
+            saved_images.append(img_obj.image.url)
 
         if alert.category in ["lost_pet", "found_pet"]:
 
@@ -2311,8 +2311,8 @@ def create_alert(request):
                 reverse_geocode_location.delay("Alert", alert.id)
                 address_status = "Searching address..."
 
-            images = [request.build_absolute_uri(img.image.url) for img in alert.images.all()]
-            user_avatar = request.build_absolute_uri(request.user.profile_picture.url) if hasattr(request.user,
+            images = [img.image.url for img in alert.images.all()]
+            user_avatar = request.user.profile_picture.url if hasattr(request.user,
                                                                                                   'profile_picture') and request.user.profile_picture else None
 
             broadcast_data = {
@@ -2388,7 +2388,7 @@ def alert_details(request, alert_id):
 
 
     image_urls = [
-        request.build_absolute_uri(img.image.url)
+        img.image.url
         for img in alert.images.all()
     ]
 
@@ -2534,7 +2534,7 @@ def get_alert_comments(request, alert_id):
                 "id": comment.id,
                 "user": comment.user.username,
                 "user_id": comment.user.id,
-                "avatar": request.build_absolute_uri(comment.user.profile_picture.url) if comment.user.profile_picture else None,
+                "avatar": comment.user.profile_picture.url if comment.user.profile_picture else None,
                 "content": comment.content,
                 "date": comment.pub_date.strftime("%d %b %Y, %H:%M"),
                 "can_delete": comment.can_delete(request.user),
@@ -2568,8 +2568,8 @@ def get_alert_comments(request, alert_id):
                 "id": comment.id,
                 "user": comment.user.username,
                 "user_id": comment.user.id,
-                "avatar": request.build_absolute_uri(
-                    comment.user.profile_picture.url) if comment.user.profile_picture else None,
+                "avatar":
+                    comment.user.profile_picture.url if comment.user.profile_picture else None,
                 "content": comment.content,
                 "date": comment.pub_date.strftime("%d %b %Y, %H:%M"),
                 "can_delete": comment.can_delete(request.user),
@@ -2742,7 +2742,7 @@ def urgent_requests_list(request):
         images = obj.images.all()
 
         image_urls = [
-            request.build_absolute_uri(img.image.url)
+            img.image.url
             for img in images if img.image
         ]
 
@@ -2815,7 +2815,7 @@ def list_all_requests(request):
     results = []
     for req in urgent_requests:
         images_qs = [
-            request.build_absolute_uri(img.image.url)
+            img.image.url
             for img in req.images.all()
             if img.image
         ]
@@ -2881,7 +2881,7 @@ def get_request_by_id(request, request_id):
         )
 
         images = [
-            request.build_absolute_uri(img.image.url)
+            img.image.url
             for img in urgent_request.images.all()
         ]
 
@@ -2891,9 +2891,9 @@ def get_request_by_id(request, request_id):
             "id": urgent_request.id,
             "user": urgent_request.user.username,
             "user_id": urgent_request.user.id,
-            "user_avatar": request.build_absolute_uri(
+            "user_avatar":
                 urgent_request.user.profile_picture.url
-            ) if urgent_request.user.profile_picture else None,
+             if urgent_request.user.profile_picture else None,
             "trustLevel": urgent_request.user.trust_level,
             "trustRequired": urgent_request.trust_required,
 
@@ -2992,7 +2992,7 @@ def create_urgent_request(request):
         UrgentRequestImage.objects.create(urgent_request=new_request, image=img)
 
     first_image = new_request.images.first()
-    image_url = request.build_absolute_uri(first_image.image.url) if first_image else None
+    image_url = first_image.image.url if first_image else None
 
     broadcast_payload = {
         "id": new_request.id,
@@ -3024,7 +3024,7 @@ def create_urgent_request(request):
             "id": new_request.id,
             "title": new_request.title,
             "location": json.loads(new_request.location.geojson) if new_request.location else None,
-            "images": [request.build_absolute_uri(i.image.url) for i in new_request.images.all()]
+            "images": [i.image.url for i in new_request.images.all()]
         }
     }, status=201)
 
@@ -3098,7 +3098,7 @@ def update_request(request, request_id):
                 "type": "Point",
                 "coordinates": [urgent_request.location.x, urgent_request.location.y]
             } if urgent_request.location else None,
-            "images": [request.build_absolute_uri(img.image.url) for img in urgent_request.images.all()],
+            "images": [img.image.url for img in urgent_request.images.all()],
         }
 
         return JsonResponse({"message": "Request updated", "request": request_data}, status=200)
@@ -3148,7 +3148,7 @@ def get_request_comments(request, request_id):
                 "id": comment.id,
                 "user": comment.user.username,
                 "user_id": comment.user.id,
-                "avatar": request.build_absolute_uri(comment.user.profile_picture.url) if comment.user.profile_picture else None,
+                "avatar": comment.user.profile_picture.url if comment.user.profile_picture else None,
                 "content": comment.content,
                 "date": comment.pub_date.strftime("%d %b %Y, %H:%M"),
                 "can_delete": comment.can_delete(request.user),
@@ -3182,8 +3182,8 @@ def get_request_comments(request, request_id):
                 "id": comment.id,
                 "user": comment.user.username,
                 "user_id": comment.user.id,
-                "avatar": request.build_absolute_uri(
-                    comment.user.profile_picture.url) if comment.user.profile_picture else None,
+                "avatar":
+                    comment.user.profile_picture.url if comment.user.profile_picture else None,
                 "content": comment.content,
                 "date": comment.pub_date.strftime("%d %b %Y, %H:%M"),
                 "can_delete": comment.can_delete(request.user),

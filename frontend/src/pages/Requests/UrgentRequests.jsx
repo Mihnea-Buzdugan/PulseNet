@@ -72,7 +72,7 @@ export default function UrgentRequests() {
     const socketRef = useRef(null);
     useEffect(() => {
 
-        socketRef.current = new WebSocket("ws://localhost:8000/ws/requests/");
+        socketRef.current = new WebSocket("wss://pulsenet-45is.onrender.com/ws/requests/");
 
         socketRef.current.onopen = () => {
             console.log("Connected to Request WebSocket");
