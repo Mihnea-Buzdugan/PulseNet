@@ -134,7 +134,13 @@ export default function CreateRequest() {
         try {
             const response = await fetch("https://pulsenet-45is.onrender.com/accounts/urgent-requests/create/", {
                 method: "POST",
-                headers: { "X-CSRFToken": getCookie("csrftoken") },
+                headers: {
+    "Content-Type": "application/json",
+    "X-CSRFToken": (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
+        method: 'GET',
+        credentials: 'include',
+    }).then(res => res.json())).csrf_token,
+},
                 credentials: "include",
                 body: formDataToSend,
             });

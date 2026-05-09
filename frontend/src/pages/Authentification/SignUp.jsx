@@ -77,7 +77,10 @@ const SignUp = () => {
             alert('Please enter a valid email address');
             return;
         }
-        const csrfToken = getCookie('csrftoken');
+        const csrfToken = (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
+    method: 'GET',
+    credentials: 'include',
+}).then((res) => res.json())).csrf_token;
         if (!csrfToken) {
             alert('CSRF token is missing!');
             return;
@@ -125,7 +128,10 @@ const SignUp = () => {
         const googleToken = response.credential;
 
         console.log("Google Token: ", googleToken);
-        const csrfToken = getCookie('csrftoken');
+        const csrfToken = (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
+    method: 'GET',
+    credentials: 'include',
+}).then((res) => res.json())).csrf_token;
         if (!csrfToken) {
             alert('CSRF token is missing.');
             return;

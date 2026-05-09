@@ -56,7 +56,10 @@ export default function Profile() {
 
 
     useEffect(() => {
-        const csrfToken = getCookie('csrftoken');
+        const csrfToken = (await fetch('https://pulsenet-45is.onrender.com/accounts/csrf-token/', {
+    method: 'GET',
+    credentials: 'include',
+}).then((res) => res.json())).csrf_token;
         fetch(`https://pulsenet-45is.onrender.com/accounts/user_profile/${id}`, {
             method: 'GET',
             headers: {
