@@ -1,0 +1,501 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =======================
+   BACKGROUND
+======================= */
+
+.body {
+    background: var(--color-bg);
+    color: black;
+    min-height: 100vh;
+}
+
+/* =======================
+   MAIN LAYOUT
+======================= */
+
+.mainContainer {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.pageWrapper {
+    flex: 1;
+    display: flex;
+    padding: 20px;
+}
+
+.inboxContainer {
+    flex: 1;
+    display: flex;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* =======================
+   SIDEBAR (DESKTOP)
+======================= */
+.sidebar {
+    width: 320px;
+    border-right: 1px solid #e5e5e5;
+    display: flex;
+    flex-direction: column;
+    background: #fafafa;
+    transition: transform 0.3s ease;
+}
+
+.sidebarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+/* TITLE */
+.sidebarTitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.3px;
+}
+
+/* BUTTON */
+.followRequestsBtn {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: none;
+    background: var(--color-secondary);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.25);
+}
+
+/* BUTTON HOVER */
+.followRequestsBtn:hover {
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+}
+
+.convoList {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.convoItem {
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.convoItem:hover {
+    background: #f0f2f5;
+}
+
+.active {
+    background: #e7f3ff;
+}
+
+.backButton {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-secondary);
+    padding: 6px 8px;
+    margin-right:5px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.backButton:hover {
+    background: rgba(0, 132, 255, 0.08);
+}
+
+.backIcon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.backText {
+    display: inline-block;
+}
+
+.avatarPlaceholder {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--color-secondary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-right: 12px;
+}
+
+.convoDetails {
+    flex: 1;
+    min-width: 0;
+}
+
+.convoName {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.lastMsg {
+    font-size: 13px;
+    color: gray;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.unreadDot {
+    width: 10px;
+    height: 10px;
+    background: var(--color-secondary-dark);
+    border-radius: 50%;
+}
+
+/* =======================
+   CHAT AREA
+======================= */
+
+.chatArea {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.activeChat {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* =======================
+   CHAT HEADER
+======================= */
+
+.chatHeader {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    background: white;
+}
+
+.headerAvatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--color-secondary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-weight: 600;
+}
+
+/* =======================
+   MESSAGE WINDOW
+======================= */
+
+.messageWindow {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f0f2f5;
+    display: flex;
+    flex-direction: column;
+}
+
+/* =======================
+   MESSAGE ROW
+======================= */
+
+.messageRow {
+    display: flex;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.justifyStart {
+    justify-content: flex-start;
+}
+
+.justifyEnd {
+    justify-content: flex-end;
+}
+
+.justifyEnd .bubble {
+    margin-left: auto;
+}
+
+.justifyStart .bubble {
+    margin-right: auto;
+}
+
+/* =======================
+   MESSAGE BUBBLES
+======================= */
+
+.bubble {
+    max-width: 60%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    word-wrap: break-word;
+    display: inline-block;
+}
+
+.myBubble {
+    background-color: var(--color-secondary);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.theirBubble {
+    background-color: #e4e6eb;
+    color: black;
+    border-bottom-left-radius: 4px;
+}
+
+.senderName {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.messageText {
+    margin: 0;
+}
+
+.timestamp {
+    font-size: 11px;
+    display: block;
+    margin-top: 4px;
+    opacity: 0.7;
+    text-align: right;
+}
+
+/* =======================
+   INPUT AREA
+======================= */
+
+.inputArea {
+    padding: 14px 18px;
+    border-top: 1px solid #e5e5e5;
+    background: white;
+}
+
+.inputWrapper {
+    display: flex;
+    gap: 10px;
+}
+
+.inputField {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    outline: none;
+    font-size: 14px;
+}
+
+.inputField:focus {
+    border-color: var(--color-secondary);
+}
+
+.sendButton {
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: none;
+    background: var(--color-secondary);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sendButton:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* =======================
+   EMPTY STATE
+======================= */
+
+.emptyState {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: gray;
+}
+
+.iconCircle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #e4e6eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-size: 18px;
+}
+
+/* =======================
+   🔥 MOBILE SLIDING SIDEBAR
+======================= */
+
+.menuButton {
+    display: none;
+    font-size: 22px;
+    background: none;
+    border: none;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+/* Overlay */
+.mobileOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 900;
+}
+
+.mobileOverlayOpen {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Sidebar close wrapper */
+.sidebarCloseWrapper {
+    display: none;
+    justify-content: flex-end;
+    padding: 10px;
+}
+
+.sidebarCloseBtn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 768px) {
+
+    .pageWrapper {
+        padding: 0;
+    }
+
+    .inboxContainer {
+        flex-direction: column;
+        border-radius: 0;
+    }
+
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 75%;
+        transform: translateX(-100%);
+        z-index: 2000;
+        background: white;
+    }
+
+    .sidebarOpen {
+        transform: translateX(0);
+    }
+
+    .menuButton {
+        display: block;
+    }
+
+    .sidebarCloseWrapper {
+        display: flex;
+    }
+
+    .chatArea {
+        height: 100vh;
+    }
+
+    .bubble {
+        max-width: 85%;
+        font-size: 13px;
+    }
+
+    .inputArea {
+        padding: 10px;
+    }
+}
+
+/* VERY SMALL SCREENS */
+
+@media (max-width: 480px) {
+
+    .avatarPlaceholder {
+        width: 35px;
+        height: 35px;
+    }
+
+    .bubble {
+        max-width: 90%;
+    }
+
+    .sendButton {
+        padding: 6px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .mainContainer{
+        padding: 0;
+
+    }
+}

@@ -1,0 +1,118 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.bodyContainer {
+    background-color: var(--color-bg);
+    color: #1f2937;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.pageContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbarAdjust {
+    max-width: 1300px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.chatContainer {
+    width: min(680px, calc(100% - 32px));
+    margin: 40px auto;
+    padding: 28px;
+    background: #ffffff;
+    border: 1px solid #e6e6e6;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    font-family: Arial, sans-serif;
+}
+
+.chatContainer h2 {
+    margin: 0 0 18px;
+    font-size: 26px;
+    font-weight: 700;
+    color: #1f2937;
+    text-align: center;
+}
+
+.chatInput {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    outline: none;
+    font-size: 15px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 12px;
+}
+
+.chatInput:focus {
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-md);
+}
+
+.chatButton {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 12px;
+    background: var(--color-primary);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+    box-shadow: var(--shadow-md);
+}
+
+.chatButton:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+}
+
+.chatButton:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.answerBox {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f8f7fc;
+    border: 1px solid #e8e1f5;
+    border-radius: 14px;
+    color: #1f2937;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.answerBox strong {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--color-border-focus)
+}
+
+/* Push footer to the bottom */
+.bodyContainer > footer {
+    margin-top: auto;
+}
+
+@media (max-width: 480px) {
+    .navbarAdjust {
+        padding: 0;
+    }
+
+    .chatContainer {
+        width: calc(100% - 24px);
+        padding: 20px;
+    }
+}

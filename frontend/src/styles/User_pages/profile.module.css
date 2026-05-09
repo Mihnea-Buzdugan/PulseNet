@@ -1,0 +1,1504 @@
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =======================
+   BACKGROUND
+======================= */
+
+.body {
+    background: var(--color-bg);
+    color: black;
+    min-height: 100vh;
+}
+
+/* =======================
+   MAIN LAYOUT
+======================= */
+
+.mainContainer {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.topGreenBar {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 250px;
+    background-color: var(--color-bg-bar);
+    z-index: 0;
+}
+
+
+.navWrapper {
+    width: 100%;
+}
+
+.container {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8;
+}
+
+/* ============================================================
+   HEADER CARD
+   ============================================================ */
+.coverPhoto {
+    @apply h-40 sm:h-48 w-full rounded-t-3xl bg-red-700 object-cover shadow-sm;
+}
+
+.headerCard {
+    @apply bg-white rounded-3xl px-6 sm:px-6 pb-6 relative mb-8;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    margin-top: 7rem;
+    flex-direction: column;
+}
+
+.headerLayout {
+    @apply flex flex-col sm:flex-row gap-4 md:gap-8 items-start flex-wrap;
+}
+
+/* ============================================================
+   AVATAR & TRUST BADGE
+   ============================================================ */
+.avatarSection {
+    @apply flex flex-col items-center gap-4 -mt-20 mx-auto sm:-mt-24 z-10 shrink-0;
+    width: 100%;
+}
+
+
+
+.avatarWrapper {
+    @apply relative rounded-full p-1.5 bg-white shadow-md;
+}
+
+.avatar {
+    @apply w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-slate-50 shadow-inner bg-cover bg-center;
+    background-color: var(--color-surface-muted);
+}
+
+/* -- Overlay action buttons -- */
+.editButton {
+    @apply absolute bottom-2 right-2 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer z-20;
+    background: var(--color-surface);
+    color: var(--color-indigo);
+    border: 2px solid var(--color-surface-muted);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-base);
+}
+.editButton:hover  { background: var(--color-indigo-bg); transform: scale(1.1); }
+.editButton:active { transform: scale(0.95); }
+
+.deleteButton {
+    @apply absolute top-2 right-3 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer z-20;
+    background: #fecaca;
+    color: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+}
+.deleteButton:hover  { background: var(--color-danger); }
+.deleteButton:active { transform: scale(0.95); }
+
+.editIcon { @apply w-5 h-5; }
+
+/* -- Trust badge base -- */
+.trustBadge {
+    @apply inline-flex items-center gap-2 px-3 py-2 rounded-full font-bold capitalize;
+    font-size: 13px;
+    color: var(--color-text-on-primary);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Trust badge variants */
+.commentsExplorer   { background-color: #9ca3af; }
+.commentsObserver   { background-color: var(--color-surface-alt); color: var(--color-text-subtle); border: 1px solid var(--color-border); }
+.commentsActive     { background-color: var(--color-success-bg-2); color: var(--color-success-strong); border: 1px solid var(--color-success-border-2); }
+.commentsTrusted    { background-color: var(--color-success-bg);  color: var(--color-success); border: 1px solid var(--color-success-border); }
+.commentsProven     { background-color: var(--color-primary); }
+.commentsElite      { background-color: var(--color-purple-bg); color: var(--color-purple); border: 1px solid var(--color-purple-border); }
+.commentsLegend     { background-color: #fffdf3; color: #b45309; border: 1px solid #fde68a; }
+.commentsRisky      { background-color: #f97316; }
+.commentsDangerous  { background-color: var(--color-danger); }
+
+.trustIcon  { @apply text-lg; }
+.trustValue { @apply text-sm font-bold tracking-wide; }
+
+/* ============================================================
+   PROFILE INFO
+   ============================================================ */
+.profileInfo {
+    @apply pt-2 sm:pt-4 flex-1 w-full;
+    min-width: 0;
+}
+
+.infoContent {
+    @apply flex flex-col items-start;
+}
+
+.title {
+    @apply text-2xl font-extrabold tracking-tight mb-0;
+    color: var(--color-text-strong);
+}
+
+.username {
+    @apply font-medium text-sm mb-2;
+    color: var(--color-text-subtle);
+}
+
+.biography {
+    margin-top: 20px;
+    margin-bottom: 1.5rem;
+    max-width: 100%;
+    line-height: 1.6;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.titleRow {
+    @apply flex justify-between items-start gap-3 mb-1;
+}
+
+.verified {
+    @apply inline-flex items-center mt-2 px-2.5 py-0.5 rounded-full text-xs font-bold;
+    background: var(--color-info-bg);
+    color: var(--color-info);
+    white-space: nowrap;
+}
+
+.askVerified {
+    @apply inline-flex items-center mt-2 ml-1 relative px-2 py-1 rounded-full cursor-pointer;
+    background: var(--color-warning);
+    transition: var(--transition-base);
+}
+.askVerified:hover { background: #d97706; }
+
+/* ============================================================
+   ACTION BUTTONS (follow / message)
+   ============================================================ */
+.actionWrapper {
+    @apply relative mt-0 flex justify-center gap-0 w-full;
+    @apply md:absolute md:top-4 md:right-4 md:mt-0 md:w-auto;
+}
+
+.btnBase {
+    @apply px-4 py-2 mr-2 text-sm font-semibold rounded-lg cursor-pointer;
+    border: none;
+    outline: none;
+    transition: var(--transition-base);
+}
+
+.msgBtn {
+    @apply btnBase;
+    background: var(--color-primary);
+    color: white;
+    border: 1px solid var(--color-border-focus);
+}
+.msgBtn:hover { background: var(--color-primary-dark); }
+
+.followBtn {
+    @apply btnBase shadow-sm;
+    background: var(--color-secondary);
+    color: var(--color-text-on-primary);
+}
+.followBtn:hover   { background: var(--color-secondary-dark); }
+.followBtn:active  { transform: scale(0.95); }
+
+.unfollowBtn {
+    @apply btnBase;
+    background: #fee2e2;
+    color: var(--color-danger);
+}
+.unfollowBtn:hover  { background: #fecaca; }
+.unfollowBtn:active { transform: scale(0.95); }
+
+.pendingBtn {
+    @apply btnBase cursor-default;
+    background: var(--color-surface-muted);
+    color: var(--color-text-subtle);
+}
+
+/* ============================================================
+   EDIT PROFILE BUTTON
+   ============================================================ */
+.resWrapperForButtonAndTag {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.editProfileBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: var(--transition-base);
+    position: static;
+}
+
+.editProfileBtn:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.editProfileBtn:active {
+    transform: translateY(0);
+}
+
+/* ============================================================
+   STATUS
+   ============================================================ */
+.statusBottomRight { @apply absolute bottom-4 right-4; }
+.statusRowInline   { @apply flex items-center gap-3; }
+.statusRow         { @apply flex items-center gap-4 mt-3 flex-wrap; }
+.statusItem        { @apply flex items-center gap-2; }
+
+.statusText    { @apply text-sm font-medium capitalize; color: var(--color-text-medium); }
+.statusOnline  { @apply text-lg; color: #22c55e; }
+.statusAway    { @apply text-lg; color: var(--color-warning); }
+.statusDnd     { @apply text-lg; color: var(--color-danger); }
+.statusOffline { @apply text-lg; color: var(--color-text-faint); }
+
+.sleepingBadge {
+    @apply text-xs px-3 py-1 rounded-full font-medium;
+    background: var(--color-indigo-bg);
+    color: var(--color-indigo);
+}
+
+/* ============================================================
+   TABS (SEGMENTED CONTROL)
+   ============================================================ */
+.tabsContainer {
+    @apply flex justify-center sm:justify-start mb-8;
+}
+
+.tabs {
+    @apply flex gap-1 p-1.5 rounded-2xl w-full sm:w-auto overflow-x-auto;
+    background-color: rgba(203, 213, 225, 0.5);
+}
+
+.tabsRow {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.tabBtn {
+    @apply flex-1 sm:flex-none px-6 py-2.5 text-sm font-medium rounded-xl whitespace-nowrap transition-all;
+    color: var(--color-text-subtle);
+}
+
+.activeTab { color: var(--color-text-medium); background: rgba(203,213,225,0.4); }
+
+.tab {
+    @apply flex-1 sm:flex-none px-6 py-2.5 text-sm font-medium rounded-xl whitespace-nowrap transition-all;
+    color: var(--color-text-subtle);
+}
+.tab:hover { color: var(--color-text-medium); background: rgba(203,213,225,0.4); }
+
+.activeTab {
+    @apply flex-1 sm:flex-none px-6 py-2.5 text-sm font-bold rounded-xl whitespace-nowrap transition-all shadow-sm;
+    background: var(--color-surface);
+    color: var(--color-indigo);
+}
+
+/* ============================================================
+   CONTENT & CARDS
+   ============================================================ */
+.contentArea { @apply w-full mb-8; }
+
+.card {
+    @apply bg-white rounded-3xl p-8;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.sectionTitle {
+    @apply text-xl font-extrabold mb-2;
+    color: var(--color-text-strong);
+}
+
+.sectionSubtitle {
+    @apply text-sm max-w-xl mb-4;
+    color: var(--color-text-subtle);
+}
+
+/* ============================================================
+   STATS GRID
+   ============================================================ */
+.statsGrid { @apply grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6; }
+
+.statBox {
+    @apply bg-white rounded-3xl p-6 flex flex-col items-center justify-center text-center;
+    border: 1px solid #f1f5f9;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+}
+.statBox:hover { box-shadow: var(--shadow-md); transform: translateY(-4px); }
+
+.statLabel {
+    @apply text-xs font-bold uppercase tracking-wider mb-2;
+    color: var(--color-text-faint);
+}
+
+.statValue {
+    @apply text-3xl font-black;
+    color: var(--color-text-medium);
+}
+
+/* ============================================================
+   SKILLS
+   ============================================================ */
+.skillGrid { @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4; }
+
+.skillCard {
+    @apply rounded-2xl p-4 flex justify-between items-center transition-colors;
+    background: var(--color-surface-alt);
+    border: 1px solid #f1f5f9;
+}
+.skillCard:hover { border-color: var(--color-indigo-border); }
+
+.skillName  { @apply font-semibold; color: var(--color-text-medium); }
+
+.skillLevel {
+    @apply text-xs uppercase px-3 py-1 rounded-full font-bold;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-subtle);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ============================================================
+   OBJECT / PULSE CARDS
+   ============================================================ */
+.objectGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+}
+
+.objectCard {
+    @apply bg-white rounded-2xl flex flex-col sm:flex-row gap-4 p-4 items-start sm:items-center transition-all duration-300;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+}
+.objectCard:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+.objectImage {
+    @apply flex-shrink-0 rounded-xl overflow-hidden flex items-center justify-center;
+    background: var(--color-surface-muted);
+    width: 100%;
+    height: 180px;
+}
+
+
+.pulseImage      { @apply w-full h-full object-cover; }
+.imagePlaceholder { @apply text-4xl opacity-40; }
+
+.objectInfo  { @apply flex flex-col gap-1 flex-1 w-full; overflow: hidden; }
+
+.objectName {
+    @apply text-base sm:text-lg font-bold;
+    color: var(--color-text-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pulseDescription {
+    @apply text-sm mb-1 leading-relaxed;
+    color: var(--color-text-subtle);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.pulseCategory {
+    @apply text-xs font-semibold uppercase tracking-wide;
+    color: var(--color-indigo);
+}
+
+.pulsePhone { @apply flex text-sm font-medium; color: var(--color-text); font-weight: 500; font-size: 1.25rem; }
+.pulseDate  { @apply flex text-lg ml-1; font-weight: 700;  color: var(--color-text); }
+
+.objectActions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.availableBadge   { @apply px-3 py-1 text-xs rounded-full font-bold; background: #d1fae5; color: #065f46; }
+.unavailableBadge { @apply px-3 py-1 text-xs rounded-full font-bold; background: #fee2e2; color: #991b1b; }
+
+/* ============================================================
+   EDIT FORM
+   ============================================================ */
+.editForm {
+    @apply w-full max-w-2xl p-6 sm:p-8 rounded-3xl shadow-inner mt-2;
+    background: var(--color-surface-alt);
+    border: 1px solid #f1f5f9;
+}
+
+.editGrid  { @apply grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6; }
+
+.inputGroup {
+    @apply flex flex-col gap-1.5 mb-4;
+}
+
+.labelWrapper    { @apply flex justify-between items-center; }
+.inputLabel      { @apply text-xs font-bold uppercase tracking-wider ml-1; color: var(--color-text-subtle); }
+.rangeValue      { @apply text-xs font-bold px-2 py-0.5 rounded-full; background: var(--color-info-bg); color: var(--color-info); }
+
+.rangeInput {
+    @apply w-full h-2 rounded-lg appearance-none cursor-pointer;
+    background: var(--color-border);
+    accent-color: var(--color-info);
+}
+.rangeInput::-webkit-slider-thumb {
+    @apply appearance-none w-5 h-5 border-2 border-white rounded-full shadow-md;
+    background: var(--color-info);
+    transition: transform 0.1s ease;
+}
+.rangeInput::-webkit-slider-thumb:hover { transform: scale(1.1); }
+.rangeInput::-moz-range-thumb {
+    @apply w-5 h-5 border-2 border-white rounded-full shadow-md;
+    background: var(--color-info);
+}
+
+.editInput {
+    @apply w-full px-4 py-2.5 rounded-xl font-medium transition-all shadow-sm;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-medium);
+    outline: none;
+}
+.editInput:focus { border-color: var(--color-indigo); box-shadow: 0 0 0 2px var(--color-indigo-border); }
+
+.editTextarea {
+    @apply w-full px-4 py-3 rounded-xl font-medium transition-all shadow-sm min-h-[120px] resize-y;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-medium);
+    outline: none;
+}
+.editTextarea:focus { border-color: var(--color-indigo); box-shadow: 0 0 0 2px var(--color-indigo-border); }
+
+.editActions { @apply flex flex-wrap gap-3 mt-8 pt-4; border-top: 1px solid var(--color-border); }
+
+.controlsRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.rangeSection {
+    flex: 1;
+    min-width: 0;
+}
+
+.checkboxSection {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    margin-top: 12px;
+}
+
+.checkboxLabel {
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkboxInput {
+    cursor: pointer;
+
+}
+
+.saveButton {
+    @apply flex px-6 py-2.5 rounded-full font-bold shadow-sm;
+    background: var(--color-primary);
+    color: var(--color-text-on-primary);
+    transition: var(--transition-base);
+}
+.saveButton:hover { background: var(--color-primary-dark); }
+
+.cancelButton {
+    @apply px-6 py-2.5 rounded-full font-bold;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-medium);
+    transition: var(--transition-base);
+}
+.cancelButton:hover { background: var(--color-surface-alt); }
+
+.mapContainer {
+    @apply w-full h-96 mt-4 rounded-2xl overflow-hidden shadow-inner;
+    border: 1px solid var(--color-border);
+}
+.mapContainer :global(.leaflet-container) { width: 100%; height: 100%; }
+
+/* ============================================================
+   ANALYTICS
+   ============================================================ */
+.analyticsBox {
+    @apply rounded-2xl p-6;
+    background: var(--color-surface-alt);
+    border: 1px solid #f1f5f9;
+}
+
+.analyticsRow {
+    @apply text-sm font-bold uppercase tracking-wide mb-4;
+    color: var(--color-text-subtle);
+}
+
+.analyticsPlaceholder {
+    @apply h-72 bg-white rounded-xl flex flex-col items-center justify-center font-medium;
+    border: 2px dashed var(--color-border);
+    color: var(--color-text-faint);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.04);
+}
+
+.addFormRow { @apply flex gap-2 items-center mb-4 flex-wrap; }
+
+.smallInput {
+    @apply px-3 py-2 rounded-lg font-medium min-w-[180px] outline-none;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    transition: var(--transition-base);
+}
+.smallInput:focus { border-color: var(--color-indigo); box-shadow: 0 0 0 2px var(--color-indigo-border); }
+
+.smallSelect {
+    @apply px-3 py-2 rounded-lg font-bold min-w-[140px] outline-none;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+}
+
+.primaryButton {
+    @apply px-4 py-2 rounded-lg font-bold shadow-sm;
+    background: var(--color-indigo);
+    color: var(--color-text-on-primary);
+    transition: var(--transition-base);
+}
+.primaryButton:hover { background: var(--color-indigo-dark); }
+
+.iconButton  { @apply bg-transparent border-0 text-lg cursor-pointer; }
+.inlineLabel { @apply inline-flex mx-2 items-center gap-2 font-bold; color: var(--color-text-medium); }
+
+/* ============================================================
+   MODALS (generic)
+   ============================================================ */
+.modalOverlay {
+    @apply fixed inset-0 flex items-center justify-center z-50;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 5000;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.modal {
+    @apply bg-white rounded-2xl w-full max-w-md p-6;
+    box-shadow: var(--shadow-lg);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+}
+.modalTitle   { @apply text-lg font-semibold mb-2; color: var(--color-text-medium); }
+.modalText    { @apply text-sm mb-6;                color: var(--color-text); }
+.modalActions { @apply flex justify-end gap-3; }
+
+.modalCancel {
+    @apply px-4 py-2 rounded-lg transition;
+    background: var(--color-surface-muted);
+}
+.modalCancel:hover { background: var(--color-border); }
+
+.modalDelete {
+    @apply px-4 py-2 rounded-lg text-white transition;
+    background: var(--color-danger);
+}
+.modalDelete:hover { background: var(--color-danger-dark); }
+
+/* ============================================================
+   PULSES HEADER & FILTER BUTTONS
+   ============================================================ */
+.pulsesHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.categoryFilterButtonsRow {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 4px;
+}
+
+.filterButtonsRow {
+    display: flex;
+    gap: 8px;
+    background-color: var(--color-surface-muted);
+    padding: 4px;
+    border-radius: var(--radius-lg);
+}
+
+.filterBtn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text-subtle);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+.filterBtn:hover { color: var(--color-text-medium); }
+
+.activeFilter {
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ============================================================
+   CAROUSEL CONTROLS
+   ============================================================ */
+.carouselControls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+}
+
+.carouselBtn {
+    padding: 8px 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-medium);
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+.carouselBtn:hover:not(:disabled) { background: var(--color-surface-alt); border-color: #94a3b8; }
+.carouselBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.carouselIndicator { font-size: 14px; font-weight: 500; color: var(--color-text-subtle); }
+
+/* ============================================================
+   RENTAL OFFERS SECTION
+   ============================================================ */
+.rentalSection {
+    @apply bg-white rounded-3xl p-8 mt-8;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.rentalHeader { @apply flex items-center justify-between mb-6; }
+.rentalTitle  { @apply text-xl font-extrabold; color: var(--color-text-strong); }
+.offersList   { @apply grid gap-4; }
+
+.offerCard {
+    @apply bg-white rounded-2xl p-5 flex flex-col md:flex-row md:items-start justify-between gap-5 transition-all duration-300;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    font-size: 18px;
+    font-weight: 600;
+}
+.offerCard:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+.offerLeft { @apply flex flex-col gap-2 min-w-0 flex-1; }
+
+.offerPulseTitle {
+    /* Removed 'truncate'. Added 'break-words' just in case you have very long strings */
+    @apply text-base font-bold mb-1 break-words;
+    color: var(--color-text-strong);
+}
+
+.offerMeta {
+    @apply text-sm flex flex-col gap-1.5;
+    color: var(--color-text);
+}
+.offerMeta > div { @apply flex items-center gap-2; }
+
+.offerStatus {
+    @apply inline-flex items-center text-xs font-bold uppercase px-2.5 py-1 rounded-full w-fit mt-1;
+}
+
+.smallNote {
+    @apply text-sm font-medium;
+    color: var(--color-text-subtle);
+}
+
+/* ============================================================
+   OFFER ACTION BUTTONS
+   ============================================================ */
+.offerActions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* This handles all spacing perfectly, no margins needed */
+    flex-shrink: 0;
+    width: auto; /* Removed hardcoded 120px so text fits */
+    min-width: 150px; /* Gives a nice uniform width to the column */
+    align-self: center;
+}
+
+
+
+/* shared base for all three */
+.acceptBtn,
+.rejectBtn,
+.counterBtn,
+.signalBtn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+}
+
+.acceptBtn {
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+}
+.acceptBtn:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.rejectBtn {
+    background-color: transparent;
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger);
+    width: fit-content;
+    min-width: 140px;
+
+}
+.rejectBtn:hover {
+    background-color: var(--color-danger-bg);
+    transform: translateY(-1px);
+}
+
+.counterBtn {
+    background-color: transparent;
+    color: var(--color-indigo);
+    border: 1px solid var(--color-indigo-border);
+}
+.counterBtn:hover {
+    background-color: var(--color-indigo-bg);
+    transform: translateY(-1px);
+}
+
+.signalBtn {
+    background-color: transparent;
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger-border);
+}
+
+.signalBtn:hover {
+    background-color: var(--color-danger-bg);
+    transform: translateY(-1px);
+}
+
+.confirmedActions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.rightActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Feedback button → based on acceptBtn */
+.feedbackBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+}
+
+.feedbackBtn:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Delete button → based on rejectBtn but icon style */
+.deleteIconBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-danger);
+    background-color: transparent;
+
+    color: var(--color-danger);
+    cursor: pointer;
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-sm);
+}
+
+.deleteIconBtn:hover {
+    background-color: var(--color-danger-bg);
+    transform: translateY(-1px);
+}
+/* ============================================================
+   COUNTER OFFER
+   ============================================================ */
+.counterContainer { @apply flex items-center gap-2 mt-3 flex-wrap; }
+
+.counterInput {
+    @apply px-3 py-2 rounded-lg text-sm font-medium outline-none;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+}
+.counterInput:focus { border-color: var(--color-indigo); box-shadow: 0 0 0 2px var(--color-indigo-border); }
+
+.counterSubmit {
+    @apply px-4 py-2 rounded-lg font-bold text-white transition;
+    background: var(--color-indigo);
+}
+.counterSubmit:hover { background: var(--color-indigo-dark); }
+
+.counterCancel {
+    @apply px-4 py-2 rounded-lg font-bold transition;
+    background: var(--color-surface-muted);
+    color: var(--color-text-medium);
+}
+.counterCancel:hover { background: var(--color-border); }
+
+/* ============================================================
+   RENTAL MODALS
+   ============================================================ */
+.rentalModalOverlay {
+    @apply fixed inset-0 flex items-center justify-center z-50;
+    background: rgba(0,0,0,.4);
+    backdrop-filter: blur(4px);
+}
+
+.rentalModal        { @apply bg-white rounded-2xl w-full max-w-md p-6; box-shadow: var(--shadow-lg); }
+.rentalModalTitle   { @apply text-lg font-semibold mb-2; color: var(--color-text-medium); }
+.rentalModalText    { @apply text-sm mb-6; color: var(--color-text); }
+.rentalModalActions { @apply flex justify-end gap-3; }
+
+.rentalModalCancel {
+    @apply px-4 py-2 rounded-lg transition;
+    background: var(--color-surface-muted);
+}
+.rentalModalCancel:hover { background: var(--color-border); }
+
+.rentalModalAccept {
+    @apply px-4 py-2 rounded-lg text-white transition;
+    background: #059669;
+}
+.rentalModalAccept:hover { background: #047857; }
+
+.rentalModalReject {
+    @apply px-4 py-2 rounded-lg text-white transition;
+    background: var(--color-danger);
+}
+.rentalModalReject:hover { background: var(--color-danger-dark); }
+
+/* ============================================================
+   EMPTY STATES
+   ============================================================ */
+.emptyState { @apply text-sm col-span-3 py-8 text-center; color: var(--color-text-faint); font-weight: 500; }
+.rentalEmpty { @apply text-sm py-8 text-center; color: var(--color-text-faint); font-weight: 500; }
+
+/* ============================================================
+   PULSE EDIT MODAL
+   ============================================================ */
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.45);
+    z-index: 1000;
+    padding: 1.25rem;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* .modal is shared – see Generic Modals above */
+
+.modal > h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text-strong);
+}
+
+.error {
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+    background: rgba(239,68,68,.07);
+    color: var(--color-danger);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    word-break: break-word;
+}
+
+.modalActions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 0.5rem; }
+
+.modalActions button[type="button"] {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-medium);
+    padding: 0.5rem 0.8rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 90px;
+}
+
+.modalActions button[type="submit"] {
+    background: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    color: var(--color-text-on-primary);
+    padding: 0.55rem 0.95rem;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    cursor: pointer;
+    min-width: 110px;
+}
+
+.modalActions button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+
+.starRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.starBtn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.starFilled {
+    width: 26px;
+    height: 26px;
+    fill: #FFC107;
+    stroke: #FFC107;
+    transition: transform 0.15s ease, fill 0.15s ease, stroke 0.15s ease;
+}
+
+.starEmpty {
+    width: 26px;
+    height: 26px;
+    fill: transparent;
+    stroke: var(--color-border);
+    transition: transform 0.15s ease, fill 0.15s ease, stroke 0.15s ease;
+}
+
+.starBtn:hover .starFilled,
+.starBtn:hover .starEmpty {
+    transform: scale(1.12);
+}
+
+.starText {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-subtle);
+}
+
+/* ============================================================
+   CARD ACTION BUTTONS (edit / remove)
+   ============================================================ */
+.editBtn {
+    display: flex;
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+    padding: 0.35rem 0.6rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    margin-right: 0.5rem;
+    transition: var(--transition-base);
+}
+.editBtn:hover { background-color: var(--color-primary-dark); }
+
+.removeBtn {
+    display: flex;
+    background: transparent;
+    border: 1px solid var(--color-orange);
+    color: var(--color-orange);
+    padding: 0.35rem 0.6rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition-base);
+}
+.removeBtn:hover { background: var(--color-orange-bg); }
+
+/* ============================================================
+   ALERT / PULSE CREATION FORM
+   ============================================================ */
+.alertForm { display: flex; flex-direction: column; }
+
+.formTitle {
+    color: var(--color-text-strong);
+    font-size: 1.85rem;
+    font-weight: 800;
+    margin-top: 0;
+    margin-bottom: 2rem;
+    text-align: center;
+    letter-spacing: -0.5px;
+}
+
+/* inputGroup is already defined above – these rules extend it */
+.inputGroup label,
+.labelHeader {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.2rem;
+}
+
+.inputGroup input,
+.inputGroup select,
+.inputGroup textarea {
+    padding: 0.85rem 1rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    color: var(--color-text-medium);
+    background-color: var(--color-surface-alt);
+    transition: var(--transition-base);
+    outline: none;
+    font-family: inherit;
+}
+
+.inputGroup input:hover,
+.inputGroup select:hover,
+.inputGroup textarea:hover { border-color: #cbd5e1; }
+
+.inputGroup input:focus,
+.inputGroup select:focus,
+.inputGroup textarea:focus {
+    background-color: var(--color-surface);
+    border-color: var(--color-danger);
+    box-shadow: var(--shadow-focus-danger);
+}
+
+.inputGroup textarea { resize: vertical; min-height: 120px; }
+
+/* ============================================================
+   IMAGE UPLOAD
+   ============================================================ */
+.imageUploadSection { margin-bottom: 1.5rem; display: flex; flex-direction: column; }
+
+.imageGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    margin-top: 0.5rem;
+}
+
+.imagePreviewBox {
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-lg);
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+.imagePreviewBox:hover { transform: scale(1.02); }
+.imagePreviewBox::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.imagePreviewBox:hover::before { opacity: 1; }
+
+.removeImgBtn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%) scale(0.8);
+    background: var(--color-danger);
+    color: var(--color-text-on-primary);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: var(--transition-bounce);
+    box-shadow: 0 4px 6px rgba(239,68,68,.4);
+}
+.imagePreviewBox:hover .removeImgBtn { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+.removeImgBtn:hover { background: var(--color-danger-dark); transform: translate(-50%,-50%) scale(1.1) !important; }
+
+.uploadBtnBox {
+    aspect-ratio: 1 / 1;
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background-color: var(--color-surface-alt);
+    color: var(--color-text-subtle);
+    transition: var(--transition-base);
+    gap: 0.5rem;
+}
+.uploadBtnBox span { font-size: 0.8rem; font-weight: 600; }
+.uploadBtnBox:hover {
+    border-color: var(--color-danger);
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+/* ============================================================
+   SUBMIT BUTTON
+   ============================================================ */
+.submitBtn {
+    width: 100%;
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+    background-color: transparent;
+    color: var(--color-danger);
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: 2px solid var(--color-danger);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.submitBtn:hover:not(:disabled) {
+    background-color: var(--color-danger);
+    color: var(--color-text-on-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px -3px rgba(239,68,68,.3);
+}
+.submitBtn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+.submitBtn:disabled {
+    border-color: var(--color-border);
+    color: var(--color-text-faint);
+    cursor: not-allowed;
+    background-color: var(--color-surface-muted);
+}
+
+/* ============================================================
+   TAGS
+   ============================================================ */
+.tagsContainer  { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+.tagWithDelete {
+    background: var(--color-surface-muted);
+    color: var(--color-text-subtle);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.deleteTagBtn {
+    background: none;
+    border: none;
+    color: var(--color-danger);
+    font-size: 18px;
+    margin-left: 8px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.publicTagsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.publicTag {
+    flex: 0 1 auto;
+    background: var(--color-surface);
+    color: var(--color-text-subtle);
+    border: 1px solid var(--color-border);
+    padding: 4px 16px;
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: var(--transition-base);
+}
+.publicTag:hover {
+    background: var(--color-surface-muted);
+    border-color: #cbd5e1;
+    color: var(--color-text-medium);
+    transform: translateY(-1px);
+}
+
+.noSkillsText { color: var(--color-text-faint); font-size: 14px; font-style: italic; }
+
+
+.lockContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 50px 30px;
+    min-height: 280px;
+    width: 100%;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: all 0.25s ease;
+}
+
+.lockContainer:hover {
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+}
+
+
+.lockIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: white;
+    margin-bottom: 16px;
+    box-shadow: 0 6px 18px rgba(0, 191, 165, 0.3);
+}
+
+
+.lockTitle {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #222;
+}
+
+
+.lockText {
+    font-size: 14px;
+    color: #666;
+    max-width: 260px;
+    line-height: 1.5;
+}
+
+/* ============================================================
+   PULSE-TYPE DROPDOWN (standalone)
+   ============================================================ */
+.pulseTypeDropdown {
+    @apply px-4 py-2 rounded-xl font-bold cursor-pointer;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-medium);
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-sm);
+    outline: none;
+}
+.pulseTypeDropdown:focus { border-color: var(--color-indigo); box-shadow: 0 0 0 2px var(--color-indigo-border); }
+
+
+/* ============================================================
+   MEDIA QUERRIES
+   ============================================================ */
+
+@media (min-width: 640px) {
+    .editProfileBtn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        margin-left: 0;
+    }
+
+    .resWrapperForButtonAndTag {
+        justify-content: flex-start;
+    }
+
+    .objectImage {
+        width: 120px;
+        height: 120px;
+    }
+
+    .avatarSection {
+        width: auto;
+        margin-left: 0;
+        margin-right: 0;
+        align-self: flex-start;
+    }
+
+    .objectActions {
+        justify-content: flex-start;
+        width: auto;
+    }
+}
+
+@media (max-width: 520px) {
+    .modal {
+        padding: 1rem;
+        border-radius: var(--radius-lg);
+    }
+
+    .modalActions {
+        gap: 0.5rem;
+    }
+}
+
+@media (min-width: 400px) {
+    .editActions {
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .mainContainer{
+        padding: 0;
+
+    }
+}
+
+@media (max-width: 768px) {
+    .offerCard {
+        /* Forces the card contents to stack vertically on small screens */
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .offerActions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+        margin-right: 0;
+        margin-top: 16px; /* Pushes actions down away from text */
+        justify-content: stretch;
+        align-self: stretch;
+    }
+
+    .acceptBtn,
+    .rejectBtn,
+    .counterBtn,
+    .signalBtn,
+    .feedbackBtn {
+        /* Forces buttons to share available width equally and wrap if necessary */
+        flex: 1 1 calc(50% - 8px);
+        width: auto;
+        min-width: 130px;
+        font-size: 14px;
+        padding: 8px 12px; /* Better touch targets for mobile */
+        justify-content: center; /* Centers text and icons in the button */
+        margin: 0 !important; /* Failsafe in case any inline margins were left behind */
+    }
+}

@@ -1,0 +1,456 @@
+/* --- MAIN NAVBAR CONTAINER --- */
+.navbar {
+    position: relative;
+    top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background: white;
+    color: black;
+    width: 100%;
+    margin: 0 auto;
+    z-index: 1000;
+    border-bottom: 1px solid #efefef;
+    box-sizing: border-box;
+}
+
+/* --- LEFT SECTION: BRAND --- */
+.brandContainer {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.logo {
+    height: 45px;
+    width: auto;
+    margin-right: 10px;
+    object-fit: contain;
+}
+
+.navbar .name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* --- MIDDLE SECTION: SEARCH & ICONS --- */
+.middleSection {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    justify-content: center;
+    max-width: 650px;
+    margin: 0 20px;
+}
+
+.searchContainer {
+    position: relative;
+    flex: 1;
+    min-width: 150px;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 10px 18px;
+    border-radius: 20px;
+    border: 1px solid #dbdbdb;
+    background-color: #fafafa;
+    outline: none;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.searchInput:focus {
+    background-color: #fff;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px rgba(255, 138, 101, 0.2);
+}
+
+/* --- ICON BUTTONS (DM & HEART) --- */
+.iconButtonsContainer {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.favoriteNavButton {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #ef4444;
+    transition: transform 0.2s ease;
+}
+
+.favoriteNavButton:hover {
+    transform: scale(1.1);
+}
+
+.heartIcon {
+    font-size: 22px;
+}
+
+.dmButton {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #262626;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dmButton:hover {
+    transform: scale(1.1);
+    color: var(--color-primary);
+}
+
+.activeDm {
+    color: var(--color-primary);
+}
+
+.badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background-color: #ff3b30;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 10px;
+    border: 2px solid white;
+    line-height: 1;
+    min-width: 12px;
+    text-align: center;
+}
+
+/* --- SEARCH DROPDOWN --- */
+.searchDropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 2000;
+    border: 1px solid #efefef;
+}
+
+.searchResultItem {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.searchResultItem:hover {
+    background-color: #f9fafb;
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.userName {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a1a;
+}
+
+.userHandle {
+    font-size: 13px;
+    color: #65676b;
+}
+
+/* --- ACTION BUTTONS (INSIDE DROPDOWN) --- */
+.userActions {
+    display: flex;
+    gap: 8px;
+}
+
+.userActions button {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.userActions button:hover {
+    opacity: 0.8;
+}
+
+.followBtn { background-color: var(--color-secondary); color: white; }
+.unfollowBtn { background-color: var(--color-danger); color: white; }
+.msgBtn { background-color: var(--color-primary);; color: white; }
+.pendingBtn { background-color: #0056b3; color: white; }
+/* --- RIGHT SECTION: DESKTOP NAV LINKS --- */
+.navLinks {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.sus {
+    cursor: pointer;
+    padding: 8px 12px;
+    transition: color 0.3s;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.sus:hover {
+    color: var(--color-primary);
+}
+
+/* --- MOBILE & RESPONSIVE LOGIC --- */
+.hamburger {
+    display: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    border: none;
+    background: transparent;
+    padding: 5px;
+}
+
+.mobileMenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    flex-direction: column;
+    padding: 10px 0;
+    border-top: 1px solid #efefef;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.active { display: flex; }
+
+/* --- TABLET --- */
+@media (max-width: 900px) {
+    .navbar { padding: 10px 20px; }
+    .middleSection { margin: 0 15px; }
+}
+
+/* --- MOBILE --- */
+@media (max-width: 768px) {
+    .navLinks { display: none; }
+    .hamburger { display: block; }
+
+    .navbar .name { font-size: 1.2rem; }
+}
+
+/* --- SMALL MOBILE --- */
+@media (max-width: 500px) {
+    .navbar .name { display: none; }
+
+    .middleSection {
+        margin: 0 10px;
+        gap: 10px;
+    }
+
+    .searchDropdown {
+
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        top: 65px;
+    }
+}
+
+/* --- NOTIFICATIONS --- */
+/* --- NOTIFICATION WRAPPER --- */
+.notifWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* --- BELL BUTTON --- */
+.notifButton {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: black;
+    transition: transform 0.2s ease, color 0.2s ease;
+    position: relative;
+}
+
+.notifButton:hover,
+.activeNotif {
+    transform: scale(1.12);
+    color: var(--color-primary);
+}
+
+.notifIcon {
+    font-size: 25px;
+}
+
+/* --- DROPDOWN CONTAINER --- */
+.notifDropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: -90px;
+    width: 300px;
+    max-height: 420px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+    border: 1px solid #efefef;
+    z-index: 2000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    animation: fadeNotif 0.15s ease;
+}
+
+@keyframes fadeNotif {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- HEADER --- */
+.notifHeader {
+    padding: 14px 16px;
+    font-weight: 600;
+    font-size: 14px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
+}
+
+/* --- LIST --- */
+.notifList {
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+/* --- ITEM --- */
+.notifItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-bottom: 1px solid #f7f7f7;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.notifItem:hover {
+    background-color: #f9fafb;
+}
+
+/* --- TEXT CONTENT --- */
+.notifContent {
+    flex: 1;
+}
+
+.notifTitle {
+    font-weight: 600;
+    font-size: 13.5px;
+    color: #111827;
+    margin-bottom: 3px;
+}
+
+.notifText {
+    font-size: 13px;
+    color: #374151;
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.notifTime {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+/* --- DELETE BUTTON --- */
+.deleteNotifBtn {
+    background: transparent;
+    border: none;
+    font-size: 15px;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+    margin-left: 8px;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.deleteNotifBtn:hover {
+    color: #ef4444;
+    transform: scale(1.15);
+}
+
+/* --- EMPTY STATE --- */
+.emptyNotifs {
+    padding: 24px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 13px;
+}
+
+/* --- BADGE --- */
+.badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background-color: #ff3b30;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 10px;
+    border: 2px solid white;
+    line-height: 1;
+    min-width: 14px;
+    text-align: center;
+    pointer-events: none;
+}
+
+/* --- SCROLLBAR STYLE --- */
+.notifList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notifList::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 10px;
+}
+
+.notifList::-webkit-scrollbar-thumb:hover {
+    background: #d1d5db;
+}
+
+/* --- MOBILE --- */
+@media (max-width: 500px) {
+    .notifDropdown {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        top: 65px;
+        max-height: 60vh;
+    }
+}

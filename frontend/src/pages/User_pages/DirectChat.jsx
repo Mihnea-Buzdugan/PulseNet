@@ -1,0 +1,262 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import Loading from "../../components/Loading";
+import styles from '../../styles/User_pages/directchat.module.css';
+import Navbar from "../../components/Navbar";
+import { useLocation } from "react-router-dom";
+import Footer from "@/components/Footer";
+import {encryptMessage, decryptMessage} from "@/utils/cryptoUtils";
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const DirectChat = ({ currentUser }) => {
+    const location = useLocation();
+
+    const {id} = useParams();
+    const navigate = useNavigate();
+    const [conversationId, setConversationId] = useState(null);
+    const [messages, setMessages] = useState([]);
+    const [newMessage, setNewMessage] = useState("");
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const socketRef = useRef(null);
+    const scrollRef = useRef(null);
+
+    const [receiverPublicKey, setReceiverPublicKey] = useState(null);
+    const [myPublicKey, setMyPublicKey] = useState(null);
+
+    useEffect(() => {
+        const initializeChat = async () => {
+            const fromPulse = location.state?.fromPulse ?? false;
+
+            const bodyData = {
+                fromPulse: fromPulse,
+            };
+
+            try {
+                const response = await fetch(
+                    `https://pulsenet-45is.onrender.com/accounts/direct_conversations/create/${id}/`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(bodyData)
+                    }
+                );
+                const data = await response.json();
+                if (response.ok) {
+                    setConversationId(data.conversation_id);
+
+                    const keyRes = await fetch(`https://pulsenet-45is.onrender.com/accounts/message_keys/get/${id}/`, {
+                        credentials: 'include',
+                    });
+
+                    if (keyRes.ok) {
+                        const keyData = await keyRes.json();
+                        setReceiverPublicKey(keyData.public_key);
+                    } else {
+                        console.error("Message Key error: ", response.error);
+                    }
+                    const myKeyRes = await fetch(`https://pulsenet-45is.onrender.com/accounts/message_keys/get/${currentUser.id}/`, {
+                        credentials: 'include'
+                    });
+                    if (myKeyRes.ok) {
+                        const myKeyData = await myKeyRes.json();
+                        setMyPublicKey(myKeyData.public_key);
+                    }
+                }
+                else {
+                    setError(data.error || "Initialization failed");
+                    setLoading(false);
+                }
+            } catch (err) {
+                setError("Network error.");
+                setLoading(false);
+            }
+        };
+        if (id) initializeChat();
+    }, [id, currentUser]);
+
+    const processMessagesE2EE = async (rawMessages) => {
+        const processed = [];
+
+        for (let msg of rawMessages) {
+            let decryptedText = "[Message cannot be read]";
+
+            try {
+                const contentObj = JSON.parse(msg.content);
+
+                if (msg.is_mine || msg.sender_id === currentUser?.id) {
+                    decryptedText = await decryptMessage(contentObj.for_sender);
+                }
+                else {
+                    decryptedText = await decryptMessage(contentObj.for_receiver);
+                }
+            } catch (e) {
+                console.warn("Could not parse or decrypt message:", msg.content);
+                decryptedText = msg.content;
+            }
+
+            processed.push({ ...msg, content: decryptedText });
+        }
+
+        return processed;
+    };
+
+    useEffect(() => {
+        if (!conversationId) return;
+        const fetchHistory = async () => {
+            try {
+                const response = await fetch(`https://pulsenet-45is.onrender.com/accounts/messages/history/direct/${conversationId}/`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    setMessages(data.history);
+                    const decriptedHistory = await processMessagesE2EE(data.history);
+                    setMessages(decriptedHistory);
+                }
+            } catch (err) {
+                console.error("History load error:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchHistory();
+    }, [conversationId]);
+
+    useEffect(() => {
+        if (!conversationId) return;
+        const wsUrl = `ws://localhost:8000/ws/chat/direct/${conversationId}/`;
+        socketRef.current = new WebSocket(wsUrl);
+        socketRef.current.onmessage = async (e) => {
+            const data = JSON.parse(e.data);
+
+            const [decryptedMessage] = await processMessagesE2EE([data]);
+
+            setMessages((prev) => [...prev, decryptedMessage]);
+        };
+        return () => socketRef.current?.close();
+    }, [conversationId]);
+
+    useEffect(() => {
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+
+
+    const handleSend = async (e) => {
+        e.preventDefault();
+        console.log("Sending...");
+        if (!newMessage.trim() || !socketRef.current) {
+            return;
+        }
+
+        if (!receiverPublicKey || !myPublicKey) {
+            console.log(receiverPublicKey);
+            console.log(myPublicKey);
+            return;
+        }
+
+        const rawText = newMessage;
+        setNewMessage("");
+
+        try {
+            const encryptedForReceiver = await encryptMessage(rawText, receiverPublicKey);
+
+            const encryptedForSender = await encryptMessage(rawText, myPublicKey);
+
+            const payloadContent = JSON.stringify({
+                for_sender: encryptedForSender,
+                for_receiver: encryptedForReceiver
+            });
+
+            socketRef.current.send(JSON.stringify({ message: payloadContent }));
+        } catch (error) {
+            setNewMessage(rawText);
+        }
+    };
+
+    if (error) return <div className="p-10 text-center text-red-500">{error}</div>;
+    if (loading) return <Loading />;
+
+    return (
+        <div className={styles.body}>
+            <div className={styles.mainContainer}>
+                <Navbar />
+        <div className={styles.container}>
+            <div className={styles.header}>
+                <button onClick={() => navigate(-1)} className={styles.backButton}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
+                <h2 className={styles.chatTitle}>Message</h2>
+            </div>
+
+            <div className={styles.messageWindow}>
+                {messages.map((msg, idx) => {
+                    const rawSenderId = msg.sender_id || (msg.sender && (msg.sender.id || msg.sender));
+
+                    const rawCurrentUserId = currentUser?.id || currentUser?.pk;
+
+
+                    const msgSenderId = String(rawSenderId || "");
+                    const currentUserId = String(rawCurrentUserId || "");
+
+                    const isMe = (currentUserId !== "" && msgSenderId === currentUserId) ||
+                        (msg.sender === currentUser?.username && currentUser?.username !== undefined);
+
+                    return (
+                        <div
+                            key={idx}
+                            className={`${styles.messageRow} ${isMe ? styles.justifyEnd : styles.justifyStart}`}
+                        >
+                            <div className={`${styles.bubble} ${isMe ? styles.myBubble : styles.theirBubble}`}>
+                                <p className={styles.messageText}>{msg.content}</p>
+                                <span className={`${styles.timestamp} ${isMe ? styles.myTimestamp : styles.theirTimestamp}`}>
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                            </div>
+                        </div>
+                    );
+                })}
+                <div ref={scrollRef} />
+            </div>
+
+            <form onSubmit={handleSend} className={styles.inputArea}>
+                <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="iMessage"
+                    className={styles.inputField}
+                />
+                <button type="submit" className={styles.sendButton}>
+                    <svg viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                    </svg>
+                </button>
+            </form>
+        </div>
+            </div>
+            <Footer />
+        </div>
+    );
+};
+
+export default DirectChat;

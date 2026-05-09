@@ -4,3 +4,7 @@
 /backend/venv/
 /backend/.env
 /backend/idea/
+/backend/staticfiles/
+.env
+**/__pycache__/
+*.pyc
