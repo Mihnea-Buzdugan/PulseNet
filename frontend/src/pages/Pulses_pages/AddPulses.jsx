@@ -23,19 +23,11 @@ const COUNTRY_OPTIONS = getCountries().map(code => {
 }).filter(Boolean);
 
 function getCookie(name) {
-    let cookieValue = null;
-    if (typeof document === "undefined") return null;
-    if (document.cookie && document.cookie !== "") {
-        const cookies = document.cookie.split(";");
-        for (let cookie of cookies) {
-            cookie = cookie.trim();
-            if (cookie.startsWith(name + "=")) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
+    // If you saved it in sessionStorage:
+    return sessionStorage.getItem(name);
+    
+    // OR if you saved it in localStorage instead:
+    // return localStorage.getItem(name);
 }
 
 function AddPulses() {

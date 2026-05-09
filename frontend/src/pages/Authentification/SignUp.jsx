@@ -5,20 +5,16 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
 import {GoogleLogin} from "@react-oauth/google";
 import {initializeE2EE} from "@/utils/cryptoUtils";
+import React from 'react';
+
+let csrfTokenCache = null;
 
 function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let cookie of cookies) {
-            cookie = cookie.trim();
-            if (cookie.startsWith(name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
+    // If you saved it in sessionStorage:
+    return sessionStorage.getItem(name);
+    
+    // OR if you saved it in localStorage instead:
+    // return localStorage.getItem(name);
 }
 
 const SignUp = () => {
@@ -48,7 +44,11 @@ const SignUp = () => {
                 throw new Error('Failed to fetch CSRF token');
             })
             .then((data) => {
-
+                console.log('Fetched CSRF token (response):', data.csrf_token);
+                // FIX: Store the token in sessionStorage instead of relying on cookies
+                if (data.csrf_token) {
+                    sessionStorage.setItem('csrftoken', data.csrf_token);
+                }
             })
             .catch((error) => console.error('Error fetching CSRF token:', error));
     }, []);
@@ -89,7 +89,6 @@ const SignUp = () => {
             last_name: lastName,
             username,
         };
-
         try {
             const response = await fetch('https://pulsenet-45is.onrender.com/accounts/signup/', {
                 method: 'POST',

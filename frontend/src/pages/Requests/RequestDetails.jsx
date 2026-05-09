@@ -19,15 +19,11 @@ function getLocationCoords(location) {
 }
 
 function getCookie(name) {
-    if (typeof document === "undefined") return null;
-    const cookies = document.cookie ? document.cookie.split(";") : [];
-    for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name + "=")) {
-            return decodeURIComponent(cookie.substring(name.length + 1));
-        }
-    }
-    return null;
+    // If you saved it in sessionStorage:
+    return sessionStorage.getItem(name);
+    
+    // OR if you saved it in localStorage instead:
+    // return localStorage.getItem(name);
 }
 
 function getMapInstance(candidate) {
