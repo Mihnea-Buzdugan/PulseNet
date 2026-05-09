@@ -1,21 +1,27 @@
 import os
+import sys
+from pathlib import Path
 
-from channels.auth import AuthMiddlewareStack
-from channels.routing import ProtocolTypeRouter, URLRouter
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
+
+
 from django.core.asgi import get_asgi_application
 
-import apps.accounts.routing
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
-
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django_asgi_app = get_asgi_application()
 
-application = ProtocolTypeRouter({
-    "http": django_asgi_app,
+try:
+    from channels.auth import AuthMiddlewareStack
+    from channels.routing import ProtocolTypeRouter, URLRouter
+    import apps.accounts.routing
 
-    "websocket": AuthMiddlewareStack(
-        URLRouter(
-            apps.accounts.routing.websocket_urlpatterns
-        )
-    ),
-})
+    application = ProtocolTypeRouter({
+        "http": django_asgi_app,
+        "websocket": AuthMiddlewareStack(
+            URLRouter(apps.accounts.routing.websocket_urlpatterns)
+        ),
+    })
+except ImportError as e:
+    print(f"EROARE CRITICĂ: Tot nu găsesc folderul 'apps'. Eroarea: {e}")
+    raise e
