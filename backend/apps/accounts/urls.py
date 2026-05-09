@@ -98,6 +98,4 @@ urlpatterns = [
     path("delete-user-contact/<int:id>/", views.delete_user_contact, name='delete_user_contact'),
     path("contact/create/", views.create_contact_post, name='create_contact_post'),
     path("resolve-rental-signal/<int:id>/", views.resolve_rental_signal, name='resolve_rental_signal'),
-
-    path("ai_chat/", views.ai_chat, name="ai_chat"),
 ]

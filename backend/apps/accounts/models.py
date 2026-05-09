@@ -6,13 +6,11 @@ from django.contrib.postgres.fields import ArrayField
 from django.utils.crypto  import get_random_string
 from django.db.models import F
 from pgvector.django import VectorField
-from pgvector.django import HnswIndex
+
 
 # Create your models here.
 from django.utils import timezone
 from pgvector.django import VectorField
-
-AI_DIMENSIONS = 768
 
 class User(AbstractUser):
 
@@ -55,8 +53,6 @@ class User(AbstractUser):
     skills_embedding = models.BinaryField(null=True, blank=True)
 
     banned_until = models.DateTimeField(null=True, blank=True)
-
-    ai_embedding = VectorField(dimensions=AI_DIMENSIONS,null=True,blank=True)
 
     is_private = models.BooleanField(default=True)
 
@@ -144,8 +140,6 @@ class Pulse(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     currencyType = models.CharField(max_length=10, default="RON")
 
-    ai_embedding = VectorField(dimensions=AI_DIMENSIONS, null=True, blank=True)
-
     is_available = models.BooleanField(default=True)
     visibility_radius = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -154,16 +148,6 @@ class Pulse(models.Model):
     total_reviews = models.IntegerField(default=0)
     class Meta:
         ordering = ["-created_at"]
-        indexes = [
-            # Add this index to speed up vector searches exponentially!
-            HnswIndex(
-                name='pulse_embedding_idx',
-                fields=['ai_embedding'],
-                m=16,
-                ef_construction=64,
-                opclasses=['vector_cosine_ops']
-            )
-        ]
 
     def __str__(self):
         return f"{self.title} ({self.pulse_type})"
@@ -266,23 +250,11 @@ class PulseFeedback(models.Model):
         null=True
     )
 
-    ai_embedding = VectorField(dimensions=AI_DIMENSIONS, null=True, blank=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
         unique_together = ("pulse", "reviewer")
-        indexes = [
-            # Add this index to speed up vector searches exponentially!
-            HnswIndex(
-                name='pulse_feedback_embedding_idx',
-                fields=['ai_embedding'],
-                m=16,
-                ef_construction=64,
-                opclasses=['vector_cosine_ops']
-            )
-        ]
 
     def __str__(self):
         return f"{self.reviewer} rated {self.pulse.title} ({self.rating}/10)"
@@ -300,30 +272,14 @@ class PulseComment(models.Model):
         related_name="pulse_comments"
     )
 
-    ai_embedding = VectorField(dimensions=AI_DIMENSIONS, null=True, blank=True)
-
     content = models.TextField()
     pub_date = models.DateTimeField(auto_now_add=True)
 
     def can_delete(self, request_user):
         return request_user == self.user or request_user.is_superuser
 
-    class Meta:
-        indexes = [
-            # Add this index to speed up vector searches exponentially!
-            HnswIndex(
-                name='pulse_comment_embedding_idx',
-                fields=['ai_embedding'],
-                m=16,
-                ef_construction=64,
-                opclasses=['vector_cosine_ops']
-            )
-        ]
-
     def __str__(self):
         return f"{self.user} - {self.pub_date}"
-
-
 
 class PulseRating(models.Model):
     pulse = models.ForeignKey(Pulse,on_delete=models.CASCADE)
@@ -515,8 +471,6 @@ class Alert(models.Model):
     title = models.CharField(max_length=150)
     description = models.TextField()
 
-    ai_embedding = VectorField(dimensions=AI_DIMENSIONS, null=True, blank=True)
-
     embedding = VectorField(dimensions=512, null=True, blank=True)
 
     duplicate_check_embedding = VectorField(dimensions=512, null=True, blank=True)
@@ -543,13 +497,6 @@ class Alert(models.Model):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=['location']),
-            HnswIndex(
-                name='alert_embedding_idx',
-                fields=['ai_embedding'],
-                m=16,
-                ef_construction=64,
-                opclasses=['vector_cosine_ops']
-            )
         ]
 
     def __str__(self):
@@ -572,26 +519,11 @@ class AlertComment(models.Model):
         related_name="alert_comments"
     )
 
-    ai_embedding = VectorField(dimensions=AI_DIMENSIONS, null=True, blank=True)
-
     content = models.TextField()
     pub_date = models.DateTimeField(auto_now_add=True)
 
     def can_delete(self, request_user):
         return request_user == self.user or request_user.is_superuser
-
-    class Meta:
-        ordering = ["-pub_date"]
-        indexes = [
-            # Add this index to speed up vector searches exponentially!
-            HnswIndex(
-                name='alert_comment_idx',
-                fields=['ai_embedding'],
-                m=16,
-                ef_construction=64,
-                opclasses=['vector_cosine_ops']
-            )
-        ]
 
     def __str__(self):
         return f"{self.user} - {self.pub_date}"
@@ -769,21 +701,8 @@ class UrgentRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True)
 
-    ai_embedding = VectorField(dimensions=AI_DIMENSIONS, null=True, blank=True)
-
     class Meta:
         ordering = ["-created_at"]
-        indexes = [
-            # Add this index to speed up vector searches exponentially!
-            HnswIndex(
-                name='urgent_request_idx',
-                fields=['ai_embedding'],
-                m=16,
-                ef_construction=64,
-                opclasses=['vector_cosine_ops']
-            )
-        ]
-
 
     def __str__(self):
         return f"UrgentRequest by {self.user.username} ({self.title})"
@@ -854,24 +773,11 @@ class UrgentRequestFeedback(models.Model):
         null=True
     )
 
-    ai_embedding = VectorField(dimensions=AI_DIMENSIONS, null=True, blank=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
         unique_together = ("request", "reviewer")
-        indexes = [
-            # Add this index to speed up vector searches exponentially!
-            HnswIndex(
-                name='request_feedback_idx',
-                fields=['ai_embedding'],
-                m=16,
-                ef_construction=64,
-                opclasses=['vector_cosine_ops']
-            )
-        ]
-
 
     def __str__(self):
         return f"{self.reviewer} rated request #{self.request.id} ({self.rating}/10)"
@@ -927,22 +833,10 @@ class Contact(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    ai_embedding = VectorField(dimensions=AI_DIMENSIONS, null=True, blank=True)
-
     class Meta:
         ordering = ["-created_at"]
         verbose_name = "Contact Message"
         verbose_name_plural = "Contact Messages"
-        indexes = [
-            # Add this index to speed up vector searches exponentially!
-            HnswIndex(
-                name='contact_embedding_idx',
-                fields=['ai_embedding'],
-                m=16,
-                ef_construction=64,
-                opclasses=['vector_cosine_ops']
-            )
-        ]
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} - {self.created_at.strftime('%d-%m-%Y')}"

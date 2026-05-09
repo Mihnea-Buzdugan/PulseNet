@@ -21,7 +21,6 @@ from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from math import ceil
-from django.http import StreamingHttpResponse
 from .decorators import api_login_required, check_hate_speech
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
     PulseComment, PulseRating, Notification, UrgentRequest, UrgentRequestImage, AlertConfirm, AlertReport, \
@@ -3850,40 +3849,3 @@ def resolve_rental_signal(request, id):
         return JsonResponse({"error": "Rental Signal not found."}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
-
-from .utils import ask_ai
-
-@csrf_exempt
-@require_POST
-def ai_chat(request):
-    try:
-        data = json.loads(request.body.decode("utf-8"))
-        question = data.get("question", "").strip()
-
-        if not question:
-            return StreamingHttpResponse(
-                "question is required",
-                status=400
-            )
-
-        def event_stream():
-            for chunk in ask_ai(question):
-                yield chunk  # raw text streaming
-
-        return StreamingHttpResponse(
-            event_stream(),
-            content_type="text/plain"
-        )
-
-    except json.JSONDecodeError:
-        return StreamingHttpResponse(
-            "Invalid JSON body",
-            status=400
-        )
-
-    except Exception as e:
-        return StreamingHttpResponse(
-            f"Error: {str(e)}",
-            status=500
-        )
