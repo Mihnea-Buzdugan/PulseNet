@@ -50,7 +50,7 @@ def csrf_token(request):
     return JsonResponse({'csrf_token': csrf_token})
 
 
-@csrf_protect
+
 def sign_up(request):
     if request.method == 'POST':
         try:
@@ -99,7 +99,7 @@ def sign_up(request):
 
     return JsonResponse({'message': 'Method not allowed'}, status=405)
 
-@csrf_protect
+
 def user_login(request):
     if request.method == 'POST':
         csrf_token = get_token(request)
@@ -136,7 +136,7 @@ def user_login(request):
     return JsonResponse({'message': 'Method Not Allowed'}, status=405)
 
 
-@csrf_protect
+
 def google_login(request):
     GOOGLE_CLIENT_ID = os.environ.get('client_id_Google')
 
@@ -207,7 +207,7 @@ def google_login(request):
 
 
 
-@csrf_exempt
+
 def logout(request):
     if request.method == "POST":
         django_logout(request)
@@ -420,7 +420,7 @@ def update_profile(request):
 
 @permission_classes([IsAuthenticated])
 @api_view(['POST'])
-@csrf_protect
+
 def upload_profile_picture(request):
     user = request.user
 
@@ -486,7 +486,7 @@ def upload_profile_picture(request):
 
 @permission_classes([IsAuthenticated])
 @api_view(['POST'])
-@csrf_protect
+
 def delete_profile_picture(request):
     user = request.user
 
@@ -696,7 +696,7 @@ def remove_pulse(request, pulse_id):
         )
 
 
-@csrf_protect
+
 @permission_classes([IsAuthenticated])
 @api_view(['POST'])
 def update_location(request):
@@ -817,7 +817,7 @@ def list_all_pulses(request):
     })
 
 
-@csrf_protect
+
 @permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def get_latest_pulses(request):
@@ -869,7 +869,7 @@ def get_latest_pulses(request):
     })
 
 
-@csrf_protect
+
 @permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def get_nearest_pulses(request):
@@ -926,7 +926,7 @@ def get_nearest_pulses(request):
     })
 
 
-@csrf_protect
+
 @permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def get_best_pulses(request):
@@ -965,7 +965,7 @@ def get_best_pulses(request):
         "has_next": page_obj.has_next(),
     })
 
-@csrf_protect
+
 @permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def get_favorite_pulses(request):
@@ -1030,7 +1030,7 @@ def get_favorite_pulses(request):
         }, status=400)
 
 
-@csrf_exempt
+
 @permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def get_pulse_by_id(request, pulse_id):
@@ -1239,7 +1239,7 @@ def add_pulse_rating(request, pulse_id):
     })
 
 @permission_classes([IsAuthenticated])
-@csrf_exempt
+
 def create_pulse_rental(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
@@ -1384,7 +1384,7 @@ def get_user_rentals(request):
         return JsonResponse(data, safe=False)
 
 
-@csrf_exempt
+
 def modify_rental_status(request, rental_id):
     try:
         rental = PulseRental.objects.get(id=rental_id)
@@ -1472,7 +1472,7 @@ def modify_rental_status(request, rental_id):
     return JsonResponse({"error": "Invalid method"}, status=405)
 
 
-@csrf_protect
+
 @permission_classes([IsAuthenticated])
 @api_view(['POST'])
 def signal_pulse_rental(request):
@@ -1753,7 +1753,7 @@ def delete_pulse_from_favorites(request, pulse_id):
 
 User = get_user_model()
 
-@csrf_exempt
+
 @permission_classes([IsAuthenticated])
 def search_users(request):
     query = request.GET.get("q", "")
@@ -1886,7 +1886,7 @@ def user_profile(request, user_id):
 
 
 
-@csrf_exempt
+
 @permission_classes([IsAuthenticated])
 def follow_user(request, user_id):
     from .models import Follow, PendingFollow
@@ -1948,7 +1948,7 @@ def unfollow_user(request, user_id):
     return JsonResponse({"success": True})
 
 
-@csrf_exempt
+
 @permission_classes([IsAuthenticated])
 def accept_follow_request(request, request_id):
     from .models import PendingFollow, Follow
@@ -1969,7 +1969,7 @@ def accept_follow_request(request, request_id):
 
     return JsonResponse({"status": "accepted"})
 
-@csrf_exempt
+
 @permission_classes([IsAuthenticated])
 def reject_follow_request(request, request_id):
     from .models import PendingFollow
@@ -1981,7 +1981,7 @@ def reject_follow_request(request, request_id):
 
     return JsonResponse({"status": "rejected"})
 
-@csrf_exempt
+
 @permission_classes([IsAuthenticated])
 def get_follow_requests(request):
     from .models import PendingFollow
@@ -2444,7 +2444,7 @@ def unconfirm_alert(request, alert_id):
 
 
 @permission_classes([IsAuthenticated])
-@csrf_exempt
+
 def report_alert(request, alert_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid method"}, status=405)
@@ -2486,7 +2486,7 @@ def report_alert(request, alert_id):
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
-@csrf_exempt
+
 def delete_report(request, report_id):
     """
     Deletes a single AlertReport by ID and returns JSON responses.
@@ -2865,7 +2865,7 @@ from .models import UrgentRequest, RequestComment
 import json
 
 
-@csrf_exempt
+
 @permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def get_request_by_id(request, request_id):
@@ -3214,7 +3214,7 @@ def get_request_comments(request, request_id):
 
 
 @permission_classes([IsAuthenticated])
-@csrf_exempt
+
 def create_request_offer(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
@@ -3343,7 +3343,7 @@ def get_user_request_offers(request):
         return JsonResponse(data, safe=False)
 
 
-@csrf_exempt
+
 def modify_offer_status(request, offer_id):
     """Allows accepting/declining or making a counteroffer on an existing UrgentRequestOffer."""
     try:
