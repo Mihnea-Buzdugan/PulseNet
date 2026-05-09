@@ -311,8 +311,8 @@ def profile(request):
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def become_verified(request):
     try:
         user = request.user
@@ -347,8 +347,8 @@ def become_verified(request):
 
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def update_profile(request):
     try:
 
@@ -418,9 +418,9 @@ def update_profile(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-@permission_classes([IsAuthenticated])
-@api_view(['POST'])
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def upload_profile_picture(request):
     user = request.user
 
@@ -484,9 +484,9 @@ def upload_profile_picture(request):
         }
     })
 
-@permission_classes([IsAuthenticated])
-@api_view(['POST'])
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def delete_profile_picture(request):
     user = request.user
 
@@ -510,8 +510,8 @@ def delete_profile_picture(request):
     })
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 @check_hate_speech
 def add_pulse(request):
     try:
@@ -600,8 +600,8 @@ def add_pulse(request):
 
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def update_pulse(request, pulse_id):
     try:
         pulse = get_object_or_404(Pulse, id=pulse_id)
@@ -680,8 +680,8 @@ def update_pulse(request, pulse_id):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def remove_pulse(request, pulse_id):
     try:
         pulse = Pulse.objects.get(id=pulse_id, user=request.user)
@@ -696,9 +696,8 @@ def remove_pulse(request, pulse_id):
         )
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def update_location(request):
     try:
         data = json.loads(request.body)
@@ -817,9 +816,8 @@ def list_all_pulses(request):
     })
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_latest_pulses(request):
     page_number = request.GET.get('page', 1)
     per_page = 15
@@ -869,9 +867,8 @@ def get_latest_pulses(request):
     })
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_nearest_pulses(request):
 
     lat = request.GET.get("lat")
@@ -926,9 +923,8 @@ def get_nearest_pulses(request):
     })
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_best_pulses(request):
     page_number = request.GET.get('page', 1)
     per_page = 15
@@ -965,9 +961,8 @@ def get_best_pulses(request):
         "has_next": page_obj.has_next(),
     })
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_favorite_pulses(request):
     page_number = request.GET.get("page", 1)
     per_page = request.GET.get("per_page", 15)
@@ -1030,9 +1025,8 @@ def get_favorite_pulses(request):
         }, status=400)
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_pulse_by_id(request, pulse_id):
     try:
         pulse = (
@@ -1238,8 +1232,8 @@ def add_pulse_rating(request, pulse_id):
         "popularity_score": float(pulse.popularity_score)
     })
 
-@permission_classes([IsAuthenticated])
 
+@permission_classes([IsAuthenticated])
 def create_pulse_rental(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
@@ -1472,9 +1466,8 @@ def modify_rental_status(request, rental_id):
     return JsonResponse({"error": "Invalid method"}, status=405)
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def signal_pulse_rental(request):
     try:
         data = json.loads(request.body)
@@ -1518,8 +1511,8 @@ def signal_pulse_rental(request):
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def pulse_rental_feedback(request, rental_id):
     rental = get_object_or_404(PulseRental, id=rental_id)
 
@@ -1571,8 +1564,8 @@ def pulse_rental_feedback(request, rental_id):
     }, status=201 if feedback_created else 200)
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def request_rental_feedback(request, rental_id):
     urgent_request = get_object_or_404(UrgentRequestOffer, id=rental_id)
 
@@ -1637,8 +1630,8 @@ def get_rental_proposals(request):
 
         return JsonResponse(data, safe=False)
 
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_pulse_to_favorites(request, pulse_id):
     try:
         pulse = Pulse.objects.get(id=pulse_id)
@@ -1674,8 +1667,8 @@ def add_pulse_to_favorites(request, pulse_id):
         }, status=400)
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_pulse_to_favorites(request, pulse_id):
     try:
         pulse = Pulse.objects.get(id=pulse_id)
@@ -1711,9 +1704,8 @@ def add_pulse_to_favorites(request, pulse_id):
         }, status=400)
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_pulse_from_favorites(request, pulse_id):
     try:
         pulse = Pulse.objects.get(id=pulse_id)
@@ -2102,8 +2094,8 @@ async def get_message_history(request, chat_type, conversation_id):
     return JsonResponse(result, status=status_code)
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def upload_public_key(request):
 
     try:
@@ -2127,15 +2119,15 @@ def upload_public_key(request):
     except Exception as e:
         return JsonResponse({"error": str(e), "status": 500})
 
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_my_public_key(request):
     if not request.user.public_key:
         return JsonResponse({"error": "No key found"}, status=404)
     return JsonResponse({"public_key": request.user.public_key})
 
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_public_key(request, user_id):
 
     try:
@@ -2419,8 +2411,8 @@ def alert_details(request, alert_id):
         "alert": data
     })
 
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def confirm_alert(request, alert_id):
     alert = get_object_or_404(Alert, id=alert_id)
 
@@ -2432,8 +2424,8 @@ def confirm_alert(request, alert_id):
         return JsonResponse({"success": False, "message": "You have already confirmed this alert."})
 
 
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def unconfirm_alert(request, alert_id):
     alert = get_object_or_404(Alert, id=alert_id)
     confirm = AlertConfirm.objects.filter(alert=alert, user=request.user).first()
@@ -2444,7 +2436,6 @@ def unconfirm_alert(request, alert_id):
 
 
 @permission_classes([IsAuthenticated])
-
 def report_alert(request, alert_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid method"}, status=405)
@@ -2865,9 +2856,8 @@ from .models import UrgentRequest, RequestComment
 import json
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_request_by_id(request, request_id):
     try:
         urgent_request = (
@@ -2936,9 +2926,8 @@ def get_request_by_id(request, request_id):
         }, status=400)
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 @check_hate_speech
 def create_urgent_request(request):
     data = request.POST
@@ -3031,9 +3020,8 @@ def create_urgent_request(request):
     }, status=201)
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def update_request(request, request_id):
     try:
         urgent_request = get_object_or_404(UrgentRequest, id=request_id)
@@ -3115,9 +3103,8 @@ def update_request(request, request_id):
 
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def remove_request(request, request_id):
     try:
         request = UrgentRequest.objects.get(id=request_id, user=request.user)
@@ -3214,7 +3201,6 @@ def get_request_comments(request, request_id):
 
 
 @permission_classes([IsAuthenticated])
-
 def create_request_offer(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
@@ -3710,9 +3696,8 @@ def flagged_posts(request):
         }
     })
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_pulse(request, id):
     if not request.user.is_superuser:
         return JsonResponse({"error": "Unauthorized"}, status=403)
@@ -3725,9 +3710,8 @@ def delete_pulse(request, id):
         return JsonResponse({"error": "Pulse not found"}, status=404)
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_alert(request, id):
     if not request.user.is_superuser:
         return JsonResponse({"error": "Unauthorized"}, status=403)
@@ -3740,9 +3724,8 @@ def delete_alert(request, id):
         return JsonResponse({"error": "Alert not found"}, status=404)
 
 
-
-@permission_classes([IsAuthenticated])
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_urgent_request(request, id):
     if not request.user.is_superuser:
         return JsonResponse({"error": "Unauthorized"}, status=403)
