@@ -1,25 +1,29 @@
-"""
-URL configuration for backend project.
-"""
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-# --- ADD THESE IMPORTS ---
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("", health_check),
 
-    # --- ADD THE JWT ENDPOINTS ---
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path("admin/", admin.site.urls),
 
-    # Your existing endpoints
-    path('accounts/', include('apps.accounts.urls')),
-    path("accounts/", include("allauth.urls")),
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+
+    # YOUR API
+    path("accounts/", include("apps.accounts.urls")),
+
+    # ALLAUTH
+    path("auth/", include("allauth.urls")),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
