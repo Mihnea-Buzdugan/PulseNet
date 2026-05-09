@@ -1344,7 +1344,7 @@ def create_pulse_rental(request):
         "proposed_total": proposed_total
     })
 
-
+@permission_classes([IsAuthenticated])
 def get_user_rentals(request):
     if request.method == "GET":
         rentals = PulseRental.objects.filter(pulse__user=request.user)
@@ -1367,7 +1367,7 @@ def get_user_rentals(request):
         return JsonResponse(data, safe=False)
 
 
-
+@permission_classes([IsAuthenticated])
 def modify_rental_status(request, rental_id):
     try:
         rental = PulseRental.objects.get(id=rental_id)
@@ -1993,7 +1993,7 @@ from django.db.models import Q
 from .models import User, DirectConversation, Friendship, DirectMessage, Group_Message
 
 
-
+@permission_classes([IsAuthenticated])
 def handle_create_conversation_sync(request, user2_id):
     try:
         if not request.user.is_authenticated:
@@ -2036,7 +2036,7 @@ def handle_create_conversation_sync(request, user2_id):
     except Exception as e:
         return {"error": str(e), "status": 500}
 
-
+@permission_classes([IsAuthenticated])
 def fetch_messages_sync(request, chat_type, conversation_id):
     """Safely handles session check and message fetching in sync thread."""
     if not request.user.is_authenticated:
@@ -2058,7 +2058,7 @@ def fetch_messages_sync(request, chat_type, conversation_id):
     return {"history": history, "status": 200}
 
 
-
+@permission_classes([IsAuthenticated])
 async def create_direct_conversation(request, user2_id):
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
@@ -2070,7 +2070,7 @@ async def create_direct_conversation(request, user2_id):
     status_code = result.pop("status")
     return JsonResponse(result, status=status_code)
 
-
+@permission_classes([IsAuthenticated])
 async def get_message_history(request, chat_type, conversation_id):
     if request.method != "GET":
         return JsonResponse({"error": "Method not allowed"}, status=405)
@@ -2466,7 +2466,7 @@ def report_alert(request, alert_id):
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
-
+@permission_classes([IsAuthenticated])
 def delete_report(request, report_id):
     """
     Deletes a single AlertReport by ID and returns JSON responses.
@@ -2688,7 +2688,7 @@ def delete_notification(request, notif_id):
             "error": "Notification not found"
         }, status=404)
 
-
+@permission_classes([IsAuthenticated])
 def urgent_requests_list(request):
     user = request.user
 
@@ -3294,7 +3294,7 @@ def create_request_offer(request):
         "total_price": str(proposed_total)
     })
 
-
+@permission_classes([IsAuthenticated])
 def get_user_request_offers(request):
     """Gets all offers made ON the current user's UrgentRequests."""
     if request.method == "GET":
@@ -3318,7 +3318,7 @@ def get_user_request_offers(request):
         return JsonResponse(data, safe=False)
 
 
-
+@permission_classes([IsAuthenticated])
 def modify_offer_status(request, offer_id):
     """Allows accepting/declining or making a counteroffer on an existing UrgentRequestOffer."""
     try:
@@ -3481,7 +3481,7 @@ def create_contact_post(request):
         }
     }, status=201)
 
-
+@permission_classes([IsAuthenticated])
 def admin_alert_reports(request):
     if not request.user.is_staff:
         return JsonResponse({"error": "Unauthorized"}, status=403)
@@ -3615,6 +3615,7 @@ def admin_feedbacks(request):
 
 @staff_member_required
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def ban_user(request, user_id):
     user_to_ban = get_object_or_404(User, id=user_id)
 
@@ -3650,6 +3651,7 @@ def ban_user(request, user_id):
 
 @staff_member_required
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def unban_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
 
@@ -3663,6 +3665,7 @@ def unban_user(request, user_id):
 
 @staff_member_required
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def flagged_posts(request):
     if not request.user.is_staff:
         return JsonResponse({"error": "Unauthorized"}, status=403)

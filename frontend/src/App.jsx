@@ -389,16 +389,29 @@ function App() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const fetchUser = () => {
-        fetch('https://pulsenet-45is.onrender.com/accounts/user/', { headers: {
-                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
-            }, })
+        const token = localStorage.getItem("access_token");
+
+        // If no token, don't even bother the server
+        if (!token) {
+            setUser(null);
+            setLoading(false);
+            return;
+        }
+
+        fetch('https://pulsenet-45is.onrender.com/accounts/user/', {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+        })
             .then(response => {
                 if (!response.ok) throw new Error("Unauthorized");
                 return response.json();
             })
             .then(data => {
+                // Based on the view I suggested earlier, 'data' is the user object
                 const userData = data.user || data;
-                if (userData && userData.id) {
+                if (userData && (userData.id || userData.email)) {
                     setUser(userData);
                 }
             })
