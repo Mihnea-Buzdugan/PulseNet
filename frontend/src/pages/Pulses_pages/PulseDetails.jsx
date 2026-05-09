@@ -109,8 +109,9 @@ export default function PulseDetails() {
         try {
             const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/comments/${id}/?page=${page}`, {
                 method: "GET",
-                
-                headers: { "Accept": "application/json" },
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                },
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || "Failed to load comments");

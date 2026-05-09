@@ -201,7 +201,7 @@ function AddPulses() {
             const response = await fetch("https://pulsenet-45is.onrender.com/accounts/add_pulse/", {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${token}`,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
                 body: formData,
             });
