@@ -5,11 +5,11 @@ import { X, Plus, ChevronDown } from 'lucide-react';
 import Footer from "@/components/Footer";
 
 function getCookie(name) {
-    if (typeof document === "undefined") return null;
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
-    return null;
+    // If you saved it in sessionStorage:
+    return sessionStorage.getItem(name);
+    
+    // OR if you saved it in localStorage instead:
+    // return localStorage.getItem(name);
 }
 
 export default function AddAlerts() {
