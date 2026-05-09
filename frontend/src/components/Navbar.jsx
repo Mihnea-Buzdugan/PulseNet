@@ -63,12 +63,16 @@ function Navbar() {
         if (!isAuthenticated) return;
         try {
 
-            const userRes = await fetch('https://pulsenet-45is.onrender.com/accounts/user/', { credentials: 'include' });
+            const userRes = await fetch('https://pulsenet-45is.onrender.com/accounts/user/', {headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                }, });
             const userData = await userRes.json();
             setUser(userData);
 
 
-            const notifRes = await fetch('https://pulsenet-45is.onrender.com/accounts/notifications/', { credentials: 'include' });
+            const notifRes = await fetch('https://pulsenet-45is.onrender.com/accounts/notifications/', { headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                }, });
             const notifData = await notifRes.json();
             setNotifications(notifData.notifications || []);
         } catch (err) {
@@ -101,7 +105,9 @@ function Navbar() {
             try {
                 const res = await fetch(
                     `https://pulsenet-45is.onrender.com/accounts/search-users/?q=${encodeURIComponent(query)}`,
-                    { credentials: "include" }
+                    { headers: {
+                            "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                        }, }
                 );
                 const data = await res.json();
                 setSearchResults(data.users || []);
@@ -132,7 +138,9 @@ function Navbar() {
 
 
     const handleLogout = async () => {
-        await fetch('https://pulsenet-45is.onrender.com/accounts/logout/', { method: 'POST', credentials: 'include' });
+        await fetch('https://pulsenet-45is.onrender.com/accounts/logout/', { method: 'POST', headers: {
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+            }, });
         localStorage.removeItem('auth-token');
         localStorage.removeItem('token-expiration');
         clearUserIdCache();
