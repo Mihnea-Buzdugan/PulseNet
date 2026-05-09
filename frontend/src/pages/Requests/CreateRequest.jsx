@@ -45,7 +45,9 @@ export default function CreateRequest() {
     });
 
     useEffect(() => {
-        fetch("https://pulsenet-45is.onrender.com/accounts/profile/", { credentials: "include" })
+        fetch("https://pulsenet-45is.onrender.com/accounts/profile/", { headers: {
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+            }, })
             .then((res) => res.json())
             .then((data) => {
                 const coords = data?.user?.location?.coordinates;

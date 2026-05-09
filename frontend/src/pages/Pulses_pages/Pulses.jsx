@@ -129,7 +129,12 @@ export default function Pulses() {
                 max_price: maxPrice,
             });
 
-            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/list-all-pulses/?${params}`);
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/list-all-pulses/?${params}`,
+                {
+                    headers: {
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                    },
+                });
             if (!res.ok) throw new Error("Failed to load pulses");
 
             const data = await res.json();

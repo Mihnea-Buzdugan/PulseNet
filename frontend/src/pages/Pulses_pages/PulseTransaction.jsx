@@ -90,7 +90,9 @@ export default function PulseTransaction() {
             try {
                 const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/pulse/${pulseId}/`, {
                     method: "GET",
-                    
+                    headers: {
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                    },
                 });
                 const data = await res.json();
                 if (mounted && data.success) {
@@ -148,7 +150,9 @@ export default function PulseTransaction() {
 
                 const res = await fetch("https://pulsenet-45is.onrender.com/accounts/user/", {
                     method: "GET",
-                    
+                    headers: {
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                    },
                 });
                 if (!mounted) return;
                 if (res.ok) {

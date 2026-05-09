@@ -28,7 +28,9 @@ export default function SearchUsers() {
         try {
             const res = await fetch(
                 `https://pulsenet-45is.onrender.com/accounts/search-users/?q=${encodeURIComponent(query)}`,
-                { credentials: "include" }
+                {headers: {
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                    }, }
             );
 
             const data = await res.json();

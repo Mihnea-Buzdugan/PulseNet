@@ -283,13 +283,17 @@ const Admin = () => {
             try {
                 if (activeTab === 'reports' && reports.length === 0) {
                     const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/admin_alert_reports/`, {
-                        
+                        headers: {
+                            "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                        },
                     });
                     const data = await res.json();
                     if (data.reports) setReports(data.reports);
                 } else if (activeTab === 'flagged' && flaggedData.pulses.length === 0) {
                     const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/flagged_posts/`, {
-                        
+                        headers: {
+                            "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                        },
                     });
                     const data = await res.json();
                     if (data.success) setFlaggedData(data.flagged);
@@ -300,7 +304,9 @@ const Admin = () => {
                     feedbackData.user_contacts.length === 0
                 ) {
                     const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/feedbacks/`, {
-                        
+                        headers: {
+                            "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                        },
                     });
                     const data = await res.json();
 
@@ -339,7 +345,9 @@ const Admin = () => {
             try {
                 const res = await fetch(
                     `https://pulsenet-45is.onrender.com/accounts/search-users/?q=${encodeURIComponent(query)}`,
-                    { credentials: "include" }
+                    { headers: {
+                            "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                        }, }
                 );
                 const data = await res.json();
                 setResults(data.users || []);

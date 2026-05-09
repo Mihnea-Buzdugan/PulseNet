@@ -142,7 +142,9 @@ export default function UrgentRequests() {
                 max_price: maxPrice,
             });
 
-            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/list-all-requests/?${params}`);
+            const res = await fetch(`https://pulsenet-45is.onrender.com/accounts/list-all-requests/?${params}`, {headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                },});
             if (!res.ok) throw new Error("Failed to load requests");
 
             const data = await res.json();
