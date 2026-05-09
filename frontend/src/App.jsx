@@ -389,7 +389,9 @@ function App() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const fetchUser = () => {
-        fetch('https://pulsenet-45is.onrender.com/accounts/user/', { credentials: 'include' })
+        fetch('https://pulsenet-45is.onrender.com/accounts/user/', { headers: {
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+            }, })
             .then(response => {
                 if (!response.ok) throw new Error("Unauthorized");
                 return response.json();
