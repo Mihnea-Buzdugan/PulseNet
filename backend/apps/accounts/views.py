@@ -509,7 +509,6 @@ def delete_profile_picture(request):
 
 @login_required
 @require_POST
-@csrf_protect
 @check_hate_speech
 def add_pulse(request):
     try:
