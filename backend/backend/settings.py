@@ -29,32 +29,34 @@ CORS_ALLOWED_ORIGINS = [
 
 # --- FIX: CROSS-DOMAIN COOKIE SETTINGS ---
 CSRF_COOKIE_NAME = "csrftoken"
-CSRF_COOKIE_SECURE = True       # Must be True for cross-origin (SameSite=None)
+# Must be True for cross-origin (SameSite=None), but allows HTTP for local testing if DEBUG is True
+CSRF_COOKIE_SECURE = True if not DEBUG else False
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = "None"   # Changed from "Lax" to allow Netlify -> Render
+CSRF_COOKIE_SAMESITE = "None" if not DEBUG else "Lax"
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "https://localhost:5173",
-    "https://pulsenet-fiicode.netlify.app", # Removed the trailing slash
+    "https://pulsenet-fiicode.netlify.app",
+    "https://pulsenet-45is.onrender.com", # <-- FIX 1: Allows you to log into the Render admin panel!
 ]
 
 SESSION_COOKIE_NAME = "session"
-SESSION_COOKIE_SECURE = True    # Must be True for cross-origin
+SESSION_COOKIE_SECURE = True if not DEBUG else False
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "None" # Changed from "Lax" to allow Netlify -> Render
+SESSION_COOKIE_SAMESITE = "None" if not DEBUG else "Lax"
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 INSTALLED_APPS = [
     "django_extensions",
-    "cloudinary_storage",  # ADDED: Must be above standard apps
+    "cloudinary_storage",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "cloudinary",          # ADDED
+    "cloudinary",
     "django.contrib.gis",
     "corsheaders",
     "apps.accounts",
@@ -180,12 +182,12 @@ CLOUDINARY_STORAGE = {
     'CLOUDINARY_URL': os.environ.get('CLOUDINARY_URL')
 }
 
-# This modern dictionary handles BOTH Whitenoise for static files and Cloudinary for media
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # FIX 2: Removed "Manifest" to prevent 500 errors if collectstatic isn't perfect
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
