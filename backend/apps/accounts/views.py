@@ -233,7 +233,7 @@ def user(request):
     else:
         return JsonResponse({'message': 'Method not allowed'}, status=405)
 
-@csrf_exempt
+
 @login_required
 def profile(request):
     if request.method == "GET":
@@ -307,7 +307,7 @@ def profile(request):
 
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-@csrf_exempt
+
 @login_required
 @require_http_methods(["PUT"])
 def become_verified(request):
@@ -343,7 +343,7 @@ def become_verified(request):
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
-@csrf_exempt
+
 @login_required
 @require_http_methods(["PUT"])
 def update_profile(request):
@@ -417,7 +417,7 @@ def update_profile(request):
 
 @login_required
 @require_POST
-@csrf_exempt
+@csrf_protect
 def upload_profile_picture(request):
     user = request.user
 
@@ -483,7 +483,7 @@ def upload_profile_picture(request):
 
 @login_required
 @require_POST
-@csrf_exempt
+@csrf_protect
 def delete_profile_picture(request):
     user = request.user
 
@@ -506,9 +506,10 @@ def delete_profile_picture(request):
         }
     })
 
-@csrf_exempt
+
 @login_required
 @require_POST
+@csrf_protect
 @check_hate_speech
 def add_pulse(request):
     try:
@@ -2254,7 +2255,7 @@ def list_alerts(request):
 
     return JsonResponse({"success": True, "alerts": data})
 
-@csrf_exempt
+
 @login_required
 @check_hate_speech
 def create_alert(request):
@@ -2933,7 +2934,7 @@ def get_request_by_id(request, request_id):
         }, status=400)
 
 
-@csrf_exempt
+
 @login_required
 @require_POST
 @check_hate_speech
@@ -3209,7 +3210,7 @@ def get_request_comments(request, request_id):
             "error": "Invalid request method"
         }, status=405)
 
-@csrf_exempt
+
 @login_required
 @csrf_exempt
 def create_request_offer(request):
@@ -3460,7 +3461,7 @@ def get_my_offers(request):
 
         return JsonResponse(data, safe=False)
 
-@csrf_exempt
+
 @require_http_methods(["POST"])
 @login_required
 def create_contact_post(request):
