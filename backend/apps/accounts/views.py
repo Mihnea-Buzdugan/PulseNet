@@ -233,7 +233,7 @@ def user(request):
     else:
         return JsonResponse({'message': 'Method not allowed'}, status=405)
 
-
+@csrf_exempt
 @login_required
 def profile(request):
     if request.method == "GET":
