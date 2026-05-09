@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth import get_user_model, login as django_login,logout as django_logout
 from django.core.exceptions import ValidationError
 import json
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import get_user_model
@@ -75,25 +76,27 @@ def sign_up(request):
         try:
             user = User.objects.create_user(
                 email=email,
+                username=username,
                 password=password,
                 first_name=first_name,
                 last_name=last_name,
-                username=username,
-                is_private=False,
             )
         except ValidationError as e:
             return JsonResponse({'message': str(e)}, status=400)
 
-        django_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-        request.session.set_expiry(3600 * 6)
+        # ✅ Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
 
         return JsonResponse({
-            'message': 'User created and logged in successfully.',
+            'message': 'User created successfully.',
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
             'user': {
+                'id': user.id,
                 'email': user.email,
+                'username': user.username,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
-                'username': user.username,
             }
         }, status=201)
 
@@ -102,39 +105,25 @@ def sign_up(request):
 
 def user_login(request):
     if request.method == 'POST':
-        csrf_token = get_token(request)
-        print("CSRF Token received:", csrf_token)
+        data = json.loads(request.body)
+        email = data.get('email')
+        password = data.get('password')
 
-        try:
-            data = json.loads(request.body)
-            email = data.get('email')
-            password = data.get('password')
+        user = authenticate(request, email=email, password=password)
 
-            if not email or not password:
-                return JsonResponse({'message': 'Email and Password are required'}, status=400)
+        if user is not None:
+            refresh = RefreshToken.for_user(user)
 
-            user = authenticate(request, username=email, password=password)
-
-            if user is not None:
-                django_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                request.session.set_expiry(3600 * 6)
-
-                user_data = {
+            return JsonResponse({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': {
                     'id': user.id,
                     'email': user.email,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'is_superuser': user.is_superuser
                 }
-                return JsonResponse({'message': 'User login successful', 'user': user_data}, status=200)
-            else:
-                return JsonResponse({'message': 'Invalid credentials'}, status=400)
+            })
 
-        except json.JSONDecodeError:
-            return JsonResponse({'message': 'Invalid JSON'}, status=400)
-
-    return JsonResponse({'message': 'Method Not Allowed'}, status=405)
-
+        return JsonResponse({'message': 'Invalid credentials'}, status=400)
 
 
 def google_login(request):
