@@ -182,10 +182,8 @@ function Navbar() {
             await fetch(`https://pulsenet-45is.onrender.com/accounts/delete_notification/${id}/`, {
                 method: "DELETE",
                 headers: {
-
-"Authorization": `Bearer ${localStorage.getItem("access_token")}`, is ok?
-
-},
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                },
             });
 
             setNotifications(prev => prev.filter(n => n.id !== id));
@@ -203,8 +201,9 @@ function Navbar() {
         try {
             await fetch(url, {
                 method: "POST",
-                credentials: "include",
-                headers: { "X-CSRFToken": csrf },
+                headers: {
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                },
             });
 
             setSearchResults(prev => prev.map(u => {
