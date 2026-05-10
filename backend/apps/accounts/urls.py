@@ -90,6 +90,8 @@ urlpatterns = [
     path('special-incidents/create/', views.create_special_incident, name='create_special_incident'),
     path("special-incidents/", views.get_special_incidents, name="get_special_incidents"),
     path("special-incidents/<int:incident_id>/", views.get_special_incident_detail, name="get_special_incident_detail"),
+    path("crisis-events/<int:crisis_event_id>/pulses/", views.get_crisis_pulses, name="get_crisis_pulses"),
+    path("crisis-events/", views.get_crisis_events, name="get_crisis_events"),
     #Admin urls
     path('admin_alert_reports/', views.admin_alert_reports, name='admin_reports'),
     path('ban-user/<int:user_id>/', views.ban_user, name='ban_user'),
@@ -106,4 +108,5 @@ urlpatterns = [
     path("contact/create/", views.create_contact_post, name='create_contact_post'),
     path("resolve-rental-signal/<int:id>/", views.resolve_rental_signal, name='resolve_rental_signal'),
     path('create-crisis-event/', views.create_crisis_event, name='create_crisis_event'),
+    path("delete-crisis-event/<int:crisis_event_id>/", views.delete_crisis_event, name="delete_crisis_event"),
 ]

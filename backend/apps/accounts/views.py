@@ -2974,6 +2974,7 @@ def assign_incident_to_cluster(incident: SpecialIncident):
     _maybe_trigger_crisis(cluster)
     return cluster
 
+
 @login_required
 @require_http_methods(["GET"])
 def get_crisis_events(request):
@@ -2982,24 +2983,155 @@ def get_crisis_events(request):
         .filter(is_active=True)
         .select_related("cluster", "incident_type")
     )
-    data = [
-        {
+
+    data = []
+    for e in events:
+        if e.cluster:
+            center_lat = e.cluster.center.y if e.cluster.center else None
+            center_lng = e.cluster.center.x if e.cluster.center else None
+            radius_m = e.cluster.radius_m
+            report_count = getattr(e.cluster, 'report_count', 0)
+            unique_users = len(e.cluster.unique_users) if getattr(e.cluster, 'unique_users', None) else 0
+        else:
+            center_lat = e.center.y if e.center else None
+            center_lng = e.center.x if e.center else None
+            radius_m = (e.radius * 1000) if e.radius else 0
+            report_count = 0
+            unique_users = 0
+
+        data.append({
             "id": e.id,
             "incident_type": {
-                "label": e.incident_type.name  if e.incident_type else None,
-                "value": e.incident_type.slug  if e.incident_type else None,
-            },
-            "center_lat":   e.cluster.center.y,
-            "center_lng":   e.cluster.center.x,
-            "radius_m":     e.cluster.radius_m,
-            "report_count": e.cluster.report_count,
-            "unique_users": len(e.cluster.unique_users),
-            "triggered_at": e.triggered_at.isoformat(),
-        }
-        for e in events
-    ]
+                "label": e.incident_type.name if hasattr(e.incident_type, 'name') else getattr(e.incident_type, 'label',
+                                                                                               None),
+                "value": e.incident_type.slug if hasattr(e.incident_type, 'slug') else getattr(e.incident_type, 'value',
+                                                                                               None),
+            } if e.incident_type else None,
+            "center_lat": center_lat,
+            "center_lng": center_lng,
+            "radius_m": radius_m,
+            "report_count": report_count,
+            "unique_users": unique_users,
+            "triggered_at": e.triggered_at.isoformat() if e.triggered_at else None,
+        })
+
     return JsonResponse(data, safe=False)
 
+
+@login_required
+@staff_member_required
+@require_http_methods(["DELETE"])
+def delete_crisis_event(request, crisis_event_id):
+    crisis = get_object_or_404(CrisisEvent, id=crisis_event_id)
+
+    try:
+        data = {
+            "id": crisis.id,
+            "incident_type": str(crisis.incident_type),
+        }
+
+        crisis.delete()
+
+        return JsonResponse({
+            "success": True,
+            "message": "Crisis event deleted successfully.",
+            "data": data
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": f"A apărut o eroare la ștergere: {str(e)}"
+        }, status=500)
+
+@login_required
+@require_http_methods(["GET"])
+def get_crisis_pulses(request, crisis_event_id):
+    crisis = get_object_or_404(CrisisEvent, id=crisis_event_id, is_active=True)
+
+    if not crisis.center:
+        return JsonResponse({"success": False, "error": "Crisis center not set."}, status=400)
+
+    user_location = request.user.location
+
+    base_qs = (
+        Pulse.objects
+        .filter(emergency_categories__isnull=False, is_approved=True, is_available=True)
+        .exclude(emergency_categories="")
+        .select_related("user")
+        .prefetch_related("images")
+    )
+
+    radius_deg = (crisis.radius / 111320) if crisis.mode == "local" else (10 / 111.32)
+
+    local_pulses = (
+        base_qs
+        .filter(location__dwithin=(crisis.center, radius_deg))
+        .annotate(distance=GisDistance("location", crisis.center))
+        .order_by("distance")
+    )
+
+    global_pulses = []
+    user_in_crisis_zone = False
+
+    if crisis.mode == "global" and user_location:
+        from django.contrib.gis.db.models.functions import Distance as GisDistanceFn
+        from django.contrib.gis.measure import D
+
+        user_in_crisis_zone = (
+            CrisisEvent.objects
+            .filter(id=crisis.id)
+            .annotate(dist=GisDistanceFn("center", user_location))
+            .filter(dist__lte=D(km=10))
+            .exists()
+        )
+
+        global_pulses = (
+            base_qs
+            .filter(location__dwithin=(crisis.center, 10 / 111.32))
+            .annotate(distance=GisDistance("location", crisis.center))
+            .order_by("distance")
+        )
+
+    def serialize_pulse(p, scope):
+        images = list(p.images.all())
+        image_url = request.build_absolute_uri(images[0].image.url) if images else None
+        return {
+            "id": p.id,
+            "user": p.user.username,
+            "title": p.title,
+            "description": p.description,
+            "emergency_category": p.emergency_categories,
+            "emergency_category_display": p.get_emergency_categories_display(),
+            "phone_number": p.phone_number,
+            "timestamp": p.created_at.isoformat(),
+            "lat": p.location.y if p.location else None,
+            "lng": p.location.x if p.location else None,
+            "image": image_url,
+            "distance": round(p.distance.km, 2),
+            "scope": scope,
+        }
+
+    local_data = [serialize_pulse(p, "local") for p in local_pulses]
+    global_data = [serialize_pulse(p, "global") for p in global_pulses]
+
+    seen_ids = set()
+    all_pulses = []
+    for p in local_data + global_data:
+        if p["id"] not in seen_ids:
+            seen_ids.add(p["id"])
+            all_pulses.append(p)
+
+    return JsonResponse({
+        "success": True,
+        "crisis_event_id": crisis_event_id,
+        "mode": crisis.mode,
+        "user_in_crisis_zone": user_in_crisis_zone if crisis.mode == "global" else True,
+        "total": len(all_pulses),
+        "local_count": len(local_data),
+        "global_count": len(global_data),
+        "pulses": all_pulses,
+    })
 
 @staff_member_required
 @require_POST

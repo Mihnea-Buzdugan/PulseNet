@@ -76,6 +76,7 @@ class UrgentRequestAdmin(admin.ModelAdmin):
     form = LocationAdminForm
     exclude = ('location',)
 
+
 admin.site.register([
     Follow, Friendship, PendingFollow, PulseImage,
     Group_Conversation, DirectConversation, FavoritePulse,

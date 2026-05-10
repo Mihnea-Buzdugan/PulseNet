@@ -113,6 +113,21 @@ class Pulse(models.Model):
         related_name="pulses"
     )
 
+    EMERGENCY_CATEGORIES = [
+        ("medical_help", "Medical Help"),
+        ("water_needed", "Water Needed"),
+        ("shelter_needed", "Shelter Needed"),
+        ("sos", "SOS"),
+        ("fire", "fire"),
+        ("road_blocked", "Road Blocked"),
+        ("evacuation_info", "Evacuation Info"),
+    ]
+
+    emergency_categories = models.CharField(
+        max_length=50,
+        choices=EMERGENCY_CATEGORIES,
+        null=True,
+    )
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 
