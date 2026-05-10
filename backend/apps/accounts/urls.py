@@ -99,7 +99,6 @@ urlpatterns = [
     path("contact/create/", views.create_contact_post, name='create_contact_post'),
     path("resolve-rental-signal/<int:id>/", views.resolve_rental_signal, name='resolve_rental_signal'),
 
-    path("redact-document/", views.redact_document, name="redact_document"),
     path("documents/", views.documents_list, name="documents_list"),
 
     #Special Incidents
