@@ -44,8 +44,6 @@ from .tasks import update_user_embedding, process_alert_text_embedding, get_mode
     run_hero_search_task, process_pet_match_task, update_user_trust_score_task, reverse_geocode_location
 from sentence_transformers import util as st_util
 
-from .utils import find_and_notify_matches
-
 
 def generate_password(length=12):
     alphabet = string.ascii_letters + string.digits + string.punctuation
