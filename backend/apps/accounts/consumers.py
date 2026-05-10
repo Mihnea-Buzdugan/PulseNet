@@ -249,6 +249,36 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    async def send_document_match_notification(self, event):
+        """Handler for document matching alerts."""
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "document_match",
+                    "notification_id": event.get("notification_id"),
+                    "title": event.get("title"),
+                    "message": event.get("message"),
+                    "metadata": event.get("metadata", {}),
+                    "is_read": False,
+                }
+            )
+        )
+
+    async def send_crisis_notification(self, event):
+        """Handler for document matching alerts."""
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "crisis_alert",
+                    "notification_id": event.get("notification_id"),
+                    "title": event.get("title"),
+                    "message": event.get("message"),
+                    "metadata": event.get("metadata", {}),
+                    "is_read": False,
+                }
+            )
+        )
+
     async def send_signal_resolved(self, event):
         """Handler for signal resolution notifications."""
         await self.send(

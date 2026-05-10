@@ -323,7 +323,184 @@
     background-color: #f1f5f9;
 }
 
+.modalOverlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
 
+.modalBox{
+    background:white;
+    padding:25px;
+    border-radius:18px;
+    width:400px;
+    max-width:90%;
+}
+
+.incidentTypeRow{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    width:100%;
+}
+
+.customSelectWrapper{
+    flex:1;
+    position:relative;
+}
+
+.customSelectBtn{
+    width:100%;
+    min-height:52px;
+    border-radius:14px;
+    padding:0 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border:1px solid #dcdcdc;
+    background:white;
+    cursor:pointer;
+    font-size:15px;
+    transition:0.2s ease;
+}
+
+.customSelectBtn:hover{
+    border-color:#bcbcbc;
+}
+
+.manageIncidentBtn{
+    min-width:52px;
+    height:52px;
+    border:none;
+    border-radius:14px;
+    background:#111827;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:0.2s ease;
+}
+
+.manageIncidentBtn:hover{
+    transform:scale(1.03);
+    opacity:0.92;
+}
+
+.modalOverlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    padding:20px;
+}
+
+.modalBox{
+    width:100%;
+    max-width:480px;
+    background:white;
+    border-radius:22px;
+    padding:24px;
+    box-shadow:0 10px 35px rgba(0,0,0,0.2);
+    animation:fadeIn 0.2s ease;
+}
+
+.modalHeader{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.closeModalBtn{
+    border:none;
+    background:#f3f4f6;
+    width:36px;
+    height:36px;
+    border-radius:10px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.incidentList{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    max-height:280px;
+    overflow-y:auto;
+}
+
+.incidentItem{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px;
+    border:1px solid #ececec;
+    border-radius:14px;
+    background:#fafafa;
+}
+
+.deleteIncidentBtn{
+    width:36px;
+    height:36px;
+    border:none;
+    border-radius:10px;
+    background:#fee2e2;
+    color:#dc2626;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.createIncidentSection{
+    margin-top:20px;
+}
+
+.modalInput{
+    width:100%;
+    min-height:50px;
+    border:1px solid #ddd;
+    border-radius:14px;
+    padding:0 14px;
+    font-size:15px;
+}
+
+.modalActions{
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+}
+
+.cancelBtn{
+    flex:1;
+    min-height:48px;
+    border:none;
+    border-radius:14px;
+    background:#e5e7eb;
+    cursor:pointer;
+    font-weight:600;
+}
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
 
 @media (max-width: 640px) {
     .container {

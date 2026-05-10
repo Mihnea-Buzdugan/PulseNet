@@ -29,6 +29,14 @@ const RequestDetails = React.lazy(()=> import('./pages/Requests/RequestDetails.j
 const Pulses = React.lazy(()=> import('./pages/Pulses_pages/Pulses.jsx'));
 const RequestOffer = React.lazy(() => import('./pages/Requests/RequestOffer'));
 const Contact = React.lazy(() => import('./pages/User_pages/Contact.jsx'));
+const DocumentUpload = React.lazy( () => import('./pages/DocumentUpload'));
+const DocumentsPage = React.lazy(() => import('./pages/DocumentsPage.jsx'));
+const AddIncidents = React.lazy(() => import('./pages/Incidents/AddIncidents.jsx'));
+const SpecialIncidents = React.lazy(() => import('./pages/Incidents/SpecialIncidents.jsx'));
+const SpecialIncidentsDetails = React.lazy(() => import('./pages/Incidents/SpecialIncidentsDetails.jsx'));
+const CrisisPage = React.lazy( () => import('./pages/CrisisPage.jsx'));
+const CreateCrisisEvents = React.lazy(() => import('./pages/CreateCrisisEvents.jsx'));
+
 const NotificationHandler = ({ currentUser }) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -36,7 +44,7 @@ const NotificationHandler = ({ currentUser }) => {
     useEffect(() => {
         if (!currentUser?.id) return;
 
-        const wsUrl = `ws://localhost:8000/ws/notifications/`;
+        const wsUrl = `wss://pulsenet-45is.onrender.com/ws/notifications/`;
         const socket = new WebSocket(wsUrl);
 
         socket.onmessage = (e) => {
@@ -189,9 +197,123 @@ const NotificationHandler = ({ currentUser }) => {
                         </div>
                     </div>
                 ), { duration: 15000 });
+            } else if (data.type === "crisis_alert") {
+                toast.custom((t) => (
+                    <div
+                        onClick={() => toast.dismiss(t.id)}
+                        style={{
+                            display: 'flex',
+                            width: '384px',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            borderRadius: '16px',
+                            border: '1px solid rgba(0, 0, 0, 0.05)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                            cursor: 'pointer',
+                            overflow: 'hidden',
+                            transition: 'all 0.3s ease',
+                            borderLeft: '6px solid #ef4444', // Red for crisis
+                            animation: t.visible ? 'enter 0.4s ease' : 'leave 0.4s ease',
+                        }}
+                    >
+                        <div style={{ flex: 1, padding: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <div style={{
+                                    height: '48px',
+                                    width: '48px',
+                                    borderRadius: '50%',
+                                    background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', // Red gradient
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    fontWeight: 'bold',
+                                    fontSize: '18px',
+                                    flexShrink: 0,
+                                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                }}>
+                                    C
+                                </div>
+                                <div style={{ marginLeft: '12px', flex: 1 }}>
+              <span style={{ fontSize: '14px', fontWeight: '800', color: '#111827' }}>
+                {data.title}
+              </span>
+                                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#4b5563', lineHeight: '1.4' }}>
+                                        {data.message}
+                                    </p>
+                                    {data.metadata && (
+                                        <p style={{ marginTop: '4px', fontSize: '13px', fontWeight: '600', color: '#b91c1c' }}>
+                                            Crisis ID: {data.metadata.crisis_id}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                                <button
+                                    onClick={() => toast.dismiss(t.id)}
+                                    style={{ background: '#ef4444', border: 'none', color: 'white', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer' }}
+                                >
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ), { duration: 15000 }); // Show for 15 seconds
             }
             else if (data.type === "pet_match") {
                 window.dispatchEvent(new CustomEvent("pet_match_notification", { detail: data }));
+            }
+            else if (data.type === "document_match") {
+                // 1. Dispatch custom event for UI components to listen to (e.g., updating a badge counter)
+                window.dispatchEvent(new CustomEvent("document_match_notification", { detail: data }));
+
+                // 2. Trigger the custom toast notification
+                toast.custom((t) => (
+                    <div
+                        // Navigate to the matched document, assuming your route looks something like /document/:id
+                        onClick={() => {
+                            if (data.metadata?.match_doc_id) {
+                                navigate(`/document/${data.metadata.match_doc_id}`);
+                            }
+                            toast.dismiss(t.id);
+                        }}
+                        style={{
+                            display: 'flex',
+                            padding: '16px',
+                            width: '384px',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            borderRadius: '16px',
+                            border: '1px solid rgba(0, 0, 0, 0.05)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                            cursor: 'pointer',
+                            overflow: 'hidden',
+                            borderLeft: '6px solid #3b82f6', // Blue accent for document alerts
+                            animation: t.visible ? 'enter 0.4s ease' : 'leave 0.4s ease',
+                        }}
+                    >
+                        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                            {/* Title */}
+                            <span style={{ fontWeight: '600', color: '#111827', fontSize: '15px', marginBottom: '4px' }}>
+                    {data.title}
+                </span>
+
+                            {/* Message */}
+                            <span style={{ color: '#4b5563', fontSize: '14px', lineHeight: '1.4' }}>
+                    {data.message}
+                </span>
+
+                            {/* Optional: Show similarity percentage if available */}
+                            {data.metadata?.similarity && (
+                                <span style={{ marginTop: '8px', fontSize: '12px', fontWeight: '500', color: '#6b7280' }}>
+                        Match Confidence: {Math.round(data.metadata.similarity * 100)}%
+                    </span>
+                            )}
+                        </div>
+                    </div>
+                ));
             }
             else if (data.type === "hero_alert") {
                 window.dispatchEvent(new CustomEvent("hero_alert", { detail: data }));
@@ -387,6 +509,8 @@ const NotificationHandler = ({ currentUser }) => {
 function App() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isInCrisis, setIsInCrisis] = useState(false);
+    const [crisisData, setCrisisData] = useState([]);
     const navigate = useNavigate();
     const fetchUser = () => {
         const token = localStorage.getItem("access_token");
@@ -422,6 +546,68 @@ function App() {
     useEffect(() => {
         fetchUser();
     }, []);
+
+    useEffect(() => {
+        if (user && user.id) {
+            const token = localStorage.getItem("access_token");
+
+            // Adjust this URL to wherever you mapped the Django view
+            fetch('https://pulsenet-45is.onrender.com/accounts/check_user_in_crisis/', {
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error("Failed to fetch crisis status");
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.is_in_danger_zone) {
+                        setIsInCrisis(true);
+                        setCrisisData(data.active_crises);
+                    } else {
+                        setIsInCrisis(false);
+                        setCrisisData([]);
+                    }
+                })
+                .catch(err => console.error("Error checking crisis status:", err));
+        }
+    }, [user]);
+
+    useEffect(() => {
+        const root = document.documentElement;
+
+        if (isInCrisis) {
+            // Darker gray crisis mode
+            root.style.setProperty('--color-bg', '#A9A9A9');           // darker gray background
+            root.style.setProperty('--color-surface', '#BFBFBF');      // slightly lighter cards / panels
+            root.style.setProperty('--color-surface-alt', '#C8C8C8');  // alternate panels
+            root.style.setProperty('--color-text', '#1F1F1F');         // dark text, readable
+            root.style.setProperty('--color-text-strong', '#000000');  // headings / strong text
+            root.style.setProperty('--color-border', '#888888');       // subtle borders
+            root.style.setProperty('--color-primary', '#FF4C4C');      // urgent red accent
+            root.style.setProperty('--color-primary-dark', '#B22222'); // deeper red
+            root.style.setProperty('--color-bg-bar', '#D63434');       // navbar / header
+            root.style.setProperty('--color-secondary', '#3498DB');    // info / accent blue
+            root.style.setProperty('--color-secondary-dark', '#2C80B4');
+            root.style.setProperty('--color-success', '#52BE80');      // green for success/ok
+        } else {
+            // Restore default palette
+            root.style.setProperty('--color-bg', '#e9e6e6');
+            root.style.setProperty('--color-surface', '#ffffff');
+            root.style.setProperty('--color-surface-alt', '#F4F6F5');
+            root.style.setProperty('--color-text', '#3F4D45');
+            root.style.setProperty('--color-text-strong', '#0F172A');
+            root.style.setProperty('--color-border', '#DDE5E1');
+            root.style.setProperty('--color-primary', '#4CAF6A');
+            root.style.setProperty('--color-primary-dark', '#3E8F57');
+            root.style.setProperty('--color-bg-bar', '#4CAF6A');
+            root.style.setProperty('--color-secondary', '#3B82A6');
+            root.style.setProperty('--color-secondary-dark', '#2F6B87');
+            root.style.setProperty('--color-success', '#16a34a');
+        }
+    }, [isInCrisis]);
 
     if (loading) return <Loading />;
 
@@ -495,7 +681,20 @@ function App() {
                     <Route path="/signup" element={<SignUp />} />
 
                     <Route element={user ? <Outlet /> : <Navigate to="/login" replace />}>
-                        <Route path="/" element={<Index user={user} />} />
+                        <Route
+                            path="/"
+                            element={isInCrisis ? (
+                                <CrisisPage user={user} activeCrises={crisisData} />
+                            ) : (
+                                <Index user={user} />
+                            )}
+                        />
+
+                        {/* Backup route */}
+                        <Route
+                            path="/backup"
+                            element={<Index user={user} />}
+                        />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/search-users" element={<SearchUsers />} />
                         <Route path="/follow-requests" element={<FollowRequests />} />
@@ -515,7 +714,12 @@ function App() {
                         <Route path="/create-request" element={<CreateRequest />} />
                         <Route path="/request/:id" element={<RequestDetails />} />
                         <Route path="/offer/:requestId" element={<RequestOffer />} />
-
+                        <Route path="/document-upload" element={<DocumentUpload />} />
+                        <Route path="/documents-feed" element={<DocumentsPage />} />
+                        <Route path="/add-incidents" element={<AddIncidents />} />
+                        <Route path="/special-incidents" element={<SpecialIncidents />} />
+                        <Route path="/special-incident/:id" element={<SpecialIncidentsDetails />} />
+                        <Route path="crisis-events" element={<AdminRoute><CreateCrisisEvents /></AdminRoute>} />
                         <Route path="/admin-page" element={<AdminRoute><Admin /></AdminRoute>} />
                     </Route>
 

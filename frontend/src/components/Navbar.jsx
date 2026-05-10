@@ -60,20 +60,30 @@ function Navbar() {
 
 
     const fetchData = async () => {
-        if (!isAuthenticated) return;
+        const token = localStorage.getItem("access_token");
+
+        // Guard: Only proceed if authenticated AND token exists
+        if (!isAuthenticated || !token) {
+            return;
+        }
+
+        const headers = { "Authorization": `Bearer ${token}` };
+
         try {
+            const [userRes, notifRes] = await Promise.all([
+                fetch('http://localhost:8000/accounts/user/', { headers }),
+                fetch('http://localhost:8000/accounts/notifications/', { headers })
+            ]);
 
-            const userRes = await fetch('https://pulsenet-45is.onrender.com/accounts/user/', {headers: {
-                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
-                }, });
+            // Check if the server actually returned a 200 OK
+            if (!userRes.ok || !notifRes.ok) {
+                throw new Error("Failed to fetch user or notifications");
+            }
+
             const userData = await userRes.json();
-            setUser(userData);
-
-
-            const notifRes = await fetch('https://pulsenet-45is.onrender.com/accounts/notifications/', { headers: {
-                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
-                }, });
             const notifData = await notifRes.json();
+
+            setUser(userData);
             setNotifications(notifData.notifications || []);
         } catch (err) {
             console.error("Navbar data fetch error:", err);
@@ -104,7 +114,7 @@ function Navbar() {
         const timeout = setTimeout(async () => {
             try {
                 const res = await fetch(
-                    `https://pulsenet-45is.onrender.com/accounts/search-users/?q=${encodeURIComponent(query)}`,
+                    `http://localhost:8000/accounts/search-users/?q=${encodeURIComponent(query)}`,
                     { headers: {
                             "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                         }, }
@@ -138,7 +148,7 @@ function Navbar() {
 
 
     const handleLogout = async () => {
-        await fetch('https://pulsenet-45is.onrender.com/accounts/logout/', { method: 'POST', headers: {
+        await fetch('http://localhost:8000/accounts/logout/', { method: 'POST', headers: {
                 "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
             }, });
         localStorage.removeItem('auth-token');
@@ -157,13 +167,13 @@ function Navbar() {
         if (nextState && unreadNotifCount > 0) {
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
             try {
-                await fetch('https://pulsenet-45is.onrender.com/accounts/notifications/mark-read/', {
+                await fetch('http://localhost:8000/accounts/notifications/mark-read/', {
                     method: 'POST',
                     headers: {
 
-"Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
 
-},
+                    },
                 });
             } catch (err) {
                 console.error("Failed to mark notifications read", err);
@@ -187,10 +197,10 @@ function Navbar() {
 
     const deleteNotification = async (id) => {
         try {
-            await fetch(`https://pulsenet-45is.onrender.com/accounts/delete_notification/${id}/`, {
+            await fetch(`http://localhost:8000/accounts/delete_notification/${id}/`, {
                 method: "DELETE",
                 headers: {
-                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
             });
 
@@ -204,13 +214,13 @@ function Navbar() {
     const handleUserAction = async (e, targetUser, action) => {
         e.stopPropagation();
         const csrf = getCookie("csrftoken");
-        const url = `https://pulsenet-45is.onrender.com/accounts/${action}/${targetUser.id}/`;
+        const url = `http://localhost:8000/accounts/${action}/${targetUser.id}/`;
 
         try {
             await fetch(url, {
                 method: "POST",
                 headers: {
-                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
             });
 
@@ -230,14 +240,14 @@ function Navbar() {
     };
 
     const openChat = (e, userId) => {
-        e.stopPropagation();
+        e.stopPropagation()
         navigate(`/direct-chat/${userId}`);
         setShowSearchDropdown(false);
         setQuery("");
     };
 
     const navItems = isAuthenticated
-        ? ['Home', 'Alerts', 'Profile', 'Add Pulse', 'Logout']
+        ? ['Home', 'Alerts', 'Profile', 'Add Pulse', 'Incidents', 'Documents', 'Logout']
         : ['Home', 'Login'];
 
     const renderNavItem = (item, index) => {
@@ -248,6 +258,9 @@ function Navbar() {
             Home: () => navigate('/'),
             Alerts: () => navigate('/alerts'),
             "Add Pulse": () => navigate('/add-pulse'),
+            "Incidents": () => navigate('/add-incidents'),
+            "Documents": () => navigate('/documents-feed'),
+
         };
 
         return (

@@ -6,7 +6,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.utils.crypto  import get_random_string
 from django.db.models import F
 from pgvector.django import VectorField
-
+from django.contrib.gis.db.models import PointField
 
 # Create your models here.
 from django.utils import timezone
@@ -40,6 +40,21 @@ class User(AbstractUser):
         max_length=20,
         choices=ONLINE_STATUS_CHOICES,
         default="offline",
+    )
+
+    CRISIS_STATUS_CHOICES = [
+        ("safe", "I'm Safe"),
+        ("need_help", "Need Help"),
+        ("injured", "Injured"),
+        ("available_to_help", "Available to Help"),
+    ]
+
+    crisis_status = models.CharField(
+        max_length=30,
+        choices=CRISIS_STATUS_CHOICES,
+        null=True,
+        blank=True,
+        default=None,
     )
 
     quiet_hours_start = models.TimeField(null=True, blank=True)
@@ -133,6 +148,22 @@ class Pulse(models.Model):
         max_length=20,
         choices=PULSE_TYPE_CHOICES
     )
+    EMERGENCY_CATEGORIES = [
+        ("medical_help", "Medical Help"),
+        ("water_needed", "Water Needed"),
+        ("shelter_needed", "Shelter Needed"),
+        ("sos", "SOS"),
+        ("fire", "fire"),
+        ("road_blocked", "Road Blocked"),
+        ("evacuation_info", "Evacuation Info"),
+    ]
+
+    emergency_categories = models.CharField(
+        max_length=50,
+        choices=EMERGENCY_CATEGORIES,
+        blank=True
+    )
+
     location = models.PointField(srid=4326, null=True, blank=True)
 
     address = models.CharField(max_length=150, blank=True, null=True)
@@ -629,6 +660,8 @@ class Notification(models.Model):
         ("chat_message", "Chat Message"),
         ("hero_alert", "Hero Alert"),
         ("pet_match", "Pet Match Found"),
+        ("document_alert", "Document Alert"),
+        ("crisis_alert", "Crisis Alert"),
     )
 
     user = models.ForeignKey(
@@ -840,3 +873,218 @@ class Contact(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} - {self.created_at.strftime('%d-%m-%Y')}"
+
+
+class PersonalDocument(models.Model):
+    DOC_TYPES = [
+        ('PASSPORT', 'Passport'),
+        ('ID', 'ID Card'),
+        ('LICENSE', 'Driver License'),
+        ('UNKNOWN', 'Unknown')
+    ]
+
+    STATUS_CHOICES = [
+        ('LOST', 'Lost'),
+        ('FOUND', 'Found'),
+    ]
+
+    # Added status and user relation
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='FOUND'
+    )
+
+    doc_type = models.CharField(
+        max_length=20,
+        choices=DOC_TYPES,
+        default='UNKNOWN'
+    )
+
+    extracted_data = models.JSONField(default=dict)
+    redacted_image = models.ImageField(upload_to='redacted/')
+
+    # Helpful for tracking if the OCR/Blurring script finished
+    is_processed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.status} - {self.doc_type} ({self.created_at.strftime('%Y-%m-%d')})"
+
+class IncidentType(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(
+        unique=True,
+        null=True,
+        blank=True
+    )
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class SpecialIncident(models.Model):
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="special_incidents"
+    )
+
+    incident_type = models.ForeignKey(
+        IncidentType,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="incidents"
+    )
+
+    title = models.CharField(max_length=150)
+
+    description = models.TextField()
+
+    embedding = VectorField(
+        dimensions=512,
+        null=True,
+        blank=True
+    )
+
+    duplicate_check_embedding = VectorField(
+        dimensions=512,
+        null=True,
+        blank=True
+    )
+
+    is_approved = models.BooleanField(default=True)
+
+    is_flagged = models.BooleanField(default=False)
+
+    toxicity_score = models.FloatField(default=0.0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    location = PointField(
+        srid=4326,
+        null=True,
+        blank=True
+    )
+
+    address = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True
+    )
+
+    confirm_count = models.PositiveIntegerField(default=0)
+
+    report_count = models.PositiveIntegerField(default=0)
+
+    views_count = models.PositiveIntegerField(default=0)
+
+    viewed_users = ArrayField(
+        models.IntegerField(),
+        default=list,
+        blank=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    severity_level = models.CharField(
+        max_length=20,
+        choices=[
+            ("low", "Low"),
+            ("medium", "Medium"),
+            ("high", "High"),
+            ("critical", "Critical"),
+        ],
+        default="medium"
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+        indexes = [
+            models.Index(fields=['location']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} ({self.incident_type})"
+
+    @property
+    def is_verified(self):
+        return self.confirm_count > 10
+
+class SpecialIncidentImage(models.Model):
+    special_incident = models.ForeignKey(
+        SpecialIncident,
+        on_delete=models.CASCADE,
+        related_name="images"
+    )
+    image = models.ImageField(upload_to="special_incidents_images/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+
+class IncidentCluster(models.Model):
+    incident_type       = models.ForeignKey("IncidentType", on_delete=models.CASCADE)
+    center              = models.PointField(srid=4326, geography=True)
+    radius_m            = models.FloatField(default=1000)
+    report_count        = models.PositiveIntegerField(default=0)
+    unique_users        = ArrayField(models.IntegerField(), default=list)
+    incident_ids        = ArrayField(models.IntegerField(), default=list)
+    updated_at          = models.DateTimeField(auto_now=True)
+    created_at          = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["center"]),  # spatial index
+        ]
+
+class CrisisEvent(models.Model):
+    cluster = models.OneToOneField(
+        IncidentCluster,
+        on_delete=models.CASCADE,
+        related_name="crisis_event",
+        null=True,
+        blank=True,
+    )
+    incident_type = models.ForeignKey(
+        IncidentType,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="crisis_events"
+    )
+    triggered_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    center = models.PointField(srid=4326, geography=True, null=True)
+    radius = models.FloatField(null=True)
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(blank=True)
+    MODE_CHOICES = [
+        ('local', 'Local'),
+        ('global', 'Global'),
+    ]
+    mode = models.CharField(max_length=10, choices=MODE_CHOICES, default='local')
+    class Meta:
+        ordering = ["-triggered_at"]
+
+    def __str__(self):
+        return f"Crisis: {self.incident_type} @ cluster {self.cluster_id}"
+
+    def resolve(self, notes=""):
+        from django.utils import timezone
+        self.is_active   = False
+        self.resolved_at = timezone.now()
+        if notes:
+            self.notes = notes
+        self.save()

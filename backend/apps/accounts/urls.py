@@ -98,4 +98,22 @@ urlpatterns = [
     path("delete-user-contact/<int:id>/", views.delete_user_contact, name='delete_user_contact'),
     path("contact/create/", views.create_contact_post, name='create_contact_post'),
     path("resolve-rental-signal/<int:id>/", views.resolve_rental_signal, name='resolve_rental_signal'),
+
+    path("redact-document/", views.redact_document, name="redact_document"),
+    path("documents/", views.documents_list, name="documents_list"),
+
+    #Special Incidents
+    path("get-incident-types/",views.get_incident_types,name="incident_types"),
+    path( "incident-types/create/",views.create_incident_type,name="create_incident_type"),
+    path("incident-types/delete/<int:incident_type_id>/",views.delete_incident_type,name="delete_incident_type"),
+    path('special-incidents/create/', views.create_special_incident, name='create_special_incident'),
+    path("special-incidents/", views.get_special_incidents, name="get_special_incidents"),
+    path("special-incidents/<int:incident_id>/", views.get_special_incident_detail, name="get_special_incident_detail"),
+
+    path("check_user_in_crisis/", views.check_user_in_crisis, name="check_user_in_crisis"),
+    path("users/me/crisis-status/", views.update_user_crisis_status, name="update_user_crisis_status"),
+    path('create-crisis-event/', views.create_crisis_event, name='create_crisis_event'),
+    path("crisis-events/<int:crisis_event_id>/pulses/", views.get_crisis_pulses, name="get_crisis_pulses"),
+    path("crisis-events/", views.get_crisis_events, name="get_crisis_events"),
+    path("delete-crisis-event/<int:crisis_event_id>/", views.delete_crisis_event, name="delete_crisis_event"),
 ]
