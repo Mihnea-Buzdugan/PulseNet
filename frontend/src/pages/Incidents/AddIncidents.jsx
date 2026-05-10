@@ -58,7 +58,7 @@ export default function AddIncidents() {
         })
             .then((res) => res.json())
             .then((data) => {
-                setIsAdmin(data.is_superuser);
+                setIsAdmin(data.user.is_superuser);
             })
     }, []);
 
