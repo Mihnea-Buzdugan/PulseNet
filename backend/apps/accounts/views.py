@@ -7,6 +7,8 @@ from django.middleware.csrf import get_token
 from django.utils.dateparse import parse_datetime, parse_date
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie, csrf_protect
 import os
+from django.db.models import F
+from django.contrib.gis.db.models import Collect
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -23,23 +25,28 @@ from django.views.decorators.http import require_http_methods, require_POST, req
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from django.contrib.auth.decorators import login_required
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from math import ceil
 from .decorators import api_login_required, check_hate_speech
 from .models import PendingFollow, Pulse, Friendship, Follow, PulseImage, FavoritePulse, PulseRental, Alert, AlertImage, \
     PulseComment, PulseRating, Notification, UrgentRequest, UrgentRequestImage, AlertConfirm, AlertReport, \
-    RequestComment, UrgentRequestOffer, AlertComment, PulseRentalSignal, PulseFeedback, UrgentRequestFeedback, Contact
+    RequestComment, UrgentRequestOffer, AlertComment, PulseRentalSignal, PulseFeedback, UrgentRequestFeedback, Contact, \
+    IncidentType, SpecialIncident, SpecialIncidentImage, PersonalDocument, IncidentCluster, CrisisEvent
 import secrets
 import string
 from django.contrib.auth.hashers import make_password
 from django.db import models
 from decimal import Decimal, InvalidOperation
-from django.contrib.gis.db.models.functions import Distance as GisDistance
+from django.contrib.gis.db.models.functions import Distance as GisDistance, Centroid, Distance
 from django.core.cache import cache
 import requests
 from .tasks import update_user_embedding, process_alert_text_embedding, get_model as _get_st_model, \
     run_hero_search_task, process_pet_match_task, update_user_trust_score_task, reverse_geocode_location
 from sentence_transformers import util as st_util
+
+from .utils import find_and_notify_matches
+
+
 def generate_password(length=12):
     alphabet = string.ascii_letters + string.digits + string.punctuation
     return ''.join(secrets.choice(alphabet) for _ in range(length))
@@ -225,7 +232,7 @@ def user(request):
     else:
         return JsonResponse({'message': 'Method not allowed'}, status=405)
 
-
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile(request):
     if request.method == "GET":
@@ -1344,6 +1351,7 @@ def create_pulse_rental(request):
         "proposed_total": proposed_total
     })
 
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_rentals(request):
     if request.method == "GET":
@@ -1595,7 +1603,7 @@ def request_rental_feedback(request, rental_id):
         "created": feedback_created,
     }, status=201 if feedback_created else 200)
 
-
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_rental_proposals(request):
     if request.method == "GET":
@@ -2638,7 +2646,7 @@ def get_current_weather(request):
     except Exception as e:
         return JsonResponse({"error": "Failed to fetch weather data."}, status=500)
 
-
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_notifications(request):
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')[:20]
@@ -2661,7 +2669,7 @@ def get_notifications(request):
 
     return JsonResponse({"notifications": data}, safe=False)
 
-
+@api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def mark_notifications_read(request):
     Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
@@ -3294,6 +3302,7 @@ def create_request_offer(request):
         "total_price": str(proposed_total)
     })
 
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_request_offers(request):
     """Gets all offers made ON the current user's UrgentRequests."""
@@ -3415,7 +3424,7 @@ def modify_offer_status(request, offer_id):
 
     return JsonResponse({"error": "Invalid method"}, status=405)
 
-
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_my_offers(request):
     """Gets all offers made BY the current user on others' UrgentRequests."""
@@ -3771,6 +3780,7 @@ def delete_user_contact(request, id):
         return JsonResponse({"error": "Not found"}, status=404)
 
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def resolve_rental_signal(request, id):
@@ -3826,3 +3836,1632 @@ def resolve_rental_signal(request, id):
         return JsonResponse({"error": "Rental Signal not found."}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+
+
+
+"""
+Document redaction and field extraction for Romanian ID cards / passports.
+
+Dependencies:
+    pip install easyocr facenet-pytorch opencv-python-headless numpy torch djangorestframework
+
+No cloud APIs, no system binaries. Runs fully offline.
+"""
+
+"""
+Document redaction and field extraction for Romanian ID cards / passports.
+
+Dependencies:
+    pip install easyocr facenet-pytorch opencv-python-headless numpy torch djangorestframework
+
+No cloud APIs, no system binaries. Runs fully offline.
+"""
+
+import re
+import unicodedata
+from uuid import uuid4
+
+import cv2
+import numpy as np
+import easyocr
+from facenet_pytorch import MTCNN
+
+from django.http import JsonResponse
+from django.core.files.base import ContentFile
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+# from .models import PersonalDocument
+
+
+# ---------------------------------------------------------------------------
+# Module-level singletons  (created once at import time, reused per request)
+# ---------------------------------------------------------------------------
+
+_ocr_reader = easyocr.Reader(["ro", "en"], gpu=False, verbose=False)
+_face_det   = MTCNN(keep_all=False, post_process=False, device="cpu")
+
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
+DOC_HINTS = {
+    "PASSPORT": {"pasaport", "passport", "mrz"},
+    "LICENSE":  {"permis", "conducere", "driving", "license"},
+    "ID":       {"carte", "identitate", "cnp", "domiciliu", "id"},
+}
+
+NAME_KEYWORDS   = {"nume", "prenume", "name", "surname", "given"}
+GENDER_KEYWORDS = {"sex", "gender", "gen"}
+
+# Fallback relative zones (x1r, y1r, x2r, y2r) when OCR anchors are absent
+ID_TEMPLATE = {
+    "photo": (0.02, 0.10, 0.32, 0.65),
+    "name":  (0.34, 0.18, 0.92, 0.42),
+    "sex":   (0.34, 0.08, 0.68, 0.20),
+}
+
+_SENSITIVE_KEYWORDS = {
+    "cnp", "CNP", "domiciliu", "adresa", "serie", "seria", "nr", "numar",
+    "nastere", "expir", "mrz", "valabilitate", "emis", "emitere",
+}
+_DATE_RE        = re.compile(r"\d{2}[./-]\d{2}[./-]\d{2,4}")
+_LONG_DIGITS_RE = re.compile(r"\d{5,}")
+
+# ---------------------------------------------------------------------------
+# OCR / face detector globals
+# ---------------------------------------------------------------------------
+# These are assumed to be initialized elsewhere in your project.
+# Example:
+# _ocr_reader = easyocr.Reader(["ro", "en"])
+# _face_det = MTCNN()
+
+# ---------------------------------------------------------------------------
+# Fuzzy label patterns
+# ---------------------------------------------------------------------------
+
+_LABEL_PATTERNS = [
+    ("last_name",  re.compile(r"^(nume|nom|surname|lastname)")),
+    ("first_name", re.compile(r"^(prenu|prenom|given|firstname)")),
+    ("gender",     re.compile(r"^(sex|gen)")),
+    ("address",    re.compile(r"^(domicili|adres|address)")),
+]
+
+_LABEL_PREFIXES = (
+    "nume", "nom", "prenu", "prenom",
+    "sex", "gen",
+    "domicili", "adres", "address",
+    "surname", "given", "firstname", "lastname",
+    "name", "first", "last",
+)
+
+def _is_labelish(norm_text: str) -> bool:
+    return any(norm_text.startswith(p) for p in _LABEL_PREFIXES)
+
+def _label_type(norm_text: str) -> str | None:
+    """
+    Return the semantic label type for a normalised OCR token, or None.
+    Handles OCR-merged multilingual labels like "numelnomlast name".
+    """
+    for field_key, pat in _LABEL_PATTERNS:
+        if pat.match(norm_text):
+            return field_key
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Image preprocessing
+# ---------------------------------------------------------------------------
+
+def preprocess_for_ocr(image: np.ndarray) -> np.ndarray:
+    """
+    Improve OCR accuracy on real-world ID card photos before EasyOCR sees them.
+    """
+    # 1. Upscale
+    h, w = image.shape[:2]
+    if max(h, w) < 1500:
+        image = cv2.resize(image, (w * 2, h * 2), interpolation=cv2.INTER_CUBIC)
+
+    # 2. CLAHE in LAB colour space
+    lab  = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    l     = clahe.apply(l)
+    image = cv2.cvtColor(cv2.merge([l, a, b]), cv2.COLOR_LAB2BGR)
+
+    # 3. Unsharp mask (gentle)
+    blur  = cv2.GaussianBlur(image, (0, 0), 3)
+    image = cv2.addWeighted(image, 1.5, blur, -0.5, 0)
+
+    return image
+
+
+# ---------------------------------------------------------------------------
+# Text helpers
+# ---------------------------------------------------------------------------
+
+def normalize_text(text: str) -> str:
+    """Lowercase, strip diacritics, strip punctuation EXCEPT hyphens."""
+    text = (text or "").lower()
+    text = unicodedata.normalize("NFD", text)
+    # Keep words, spaces, and hyphens. Destroy everything else.
+    text = re.sub(r"[^\w\s\-]", "", text)
+    return "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+
+
+def looks_like_name_word(text: str) -> bool:
+    if looks_sensitive(text):
+        return False
+    t = normalize_text(text).strip()
+    if len(t) < 2 or any(ch.isdigit() for ch in t):
+        return False
+    # Safely allow letters, hyphens, and spaces
+    return all(ch.isalpha() or ch in "- " for ch in t)
+
+
+def detect_document_type(full_text: str) -> str:
+    text = normalize_text(full_text)
+    scores = {
+        doc_type: sum(1 for hint in hints if hint in text)
+        for doc_type, hints in DOC_HINTS.items()
+    }
+    best = max(scores, key=scores.get)
+    return best if scores[best] > 0 else "ID"
+
+
+def _clean_value(raw: str) -> str:
+    return re.sub(r"^[\s:;,|]+|[\s:;,|]+$", "", raw)
+
+
+# ---------------------------------------------------------------------------
+# Geometry helpers
+# ---------------------------------------------------------------------------
+
+def expand_box(x1, y1, x2, y2, img_w, img_h, pad=12):
+    return (
+        max(0, x1 - pad),
+        max(0, y1 - pad),
+        min(img_w - 1, x2 + pad),
+        min(img_h - 1, y2 + pad),
+    )
+
+
+def rel_box(image, x1r, y1r, x2r, y2r, pad=0):
+    img_h, img_w = image.shape[:2]
+    return expand_box(
+        int(img_w * x1r), int(img_h * y1r),
+        int(img_w * x2r), int(img_h * y2r),
+        img_w, img_h, pad=pad,
+    )
+
+
+def merge_boxes(boxes, gap=20):
+    """Merge overlapping or nearby axis-aligned bounding boxes."""
+    if not boxes:
+        return []
+    boxes  = sorted(boxes, key=lambda b: (b[1], b[0]))
+    merged = [list(boxes[0])]
+    for box in boxes[1:]:
+        x1, y1, x2, y2 = box
+        last  = merged[-1]
+        close = not (
+            x1 > last[2] + gap
+            or x2 < last[0] - gap
+            or y1 > last[3] + gap
+            or y2 < last[1] - gap
+        )
+        if close:
+            last[0] = min(last[0], x1)
+            last[1] = min(last[1], y1)
+            last[2] = max(last[2], x2)
+            last[3] = max(last[3], y2)
+        else:
+            merged.append([x1, y1, x2, y2])
+    return [tuple(b) for b in merged]
+
+
+def boxes_same_line(box_a, box_b, tolerance: float = 0.55) -> bool:
+    """
+    True when two word boxes share the same text baseline.
+    """
+    ay_mid = (box_a[1] + box_a[3]) / 2
+    by_mid = (box_b[1] + box_b[3]) / 2
+    thresh = min(box_a[3] - box_a[1], box_b[3] - box_b[1]) * tolerance
+    return abs(ay_mid - by_mid) <= thresh
+
+
+# ---------------------------------------------------------------------------
+# OCR
+# ---------------------------------------------------------------------------
+
+def extract_ocr_boxes(image: np.ndarray):
+    """
+    Run OCR and return structured word data + two text representations.
+    """
+    rgb     = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = _ocr_reader.readtext(rgb, detail=1, paragraph=False)
+
+    words     = []
+    raw_words = []
+
+    for (bbox, text, conf) in results:
+        text = (text or "").strip()
+        if not text or conf < 0.40:
+            continue
+
+        xs = [int(p[0]) for p in bbox]
+        ys = [int(p[1]) for p in bbox]
+        box = (min(xs), min(ys), max(xs), max(ys))
+
+        entry = {"text": text, "norm": normalize_text(text), "box": box, "conf": conf}
+        words.append(entry)
+        raw_words.append((text, box))
+
+    full_text = _reconstruct_lines(raw_words)
+    return words, full_text, raw_words
+
+
+def _reconstruct_lines(raw_words: list) -> str:
+    """
+    Group words into lines by vertical proximity, then join within each line
+    left-to-right, and join lines with newlines.
+    """
+    if not raw_words:
+        return ""
+
+    sorted_words = sorted(raw_words, key=lambda w: (w[1][1], w[1][0]))
+
+    lines   = []
+    current = [sorted_words[0]]
+
+    for word in sorted_words[1:]:
+        if boxes_same_line(current[-1][1], word[1]):
+            current.append(word)
+        else:
+            lines.append(current)
+            current = [word]
+    lines.append(current)
+
+    return "\n".join(
+        " ".join(w[0] for w in sorted(line, key=lambda w: w[1][0]))
+        for line in lines
+    )
+
+
+# ---------------------------------------------------------------------------
+# Word classification helpers
+# ---------------------------------------------------------------------------
+
+def looks_sensitive(text: str) -> bool:
+    t = normalize_text(text)
+    if any(k in t for k in _SENSITIVE_KEYWORDS):
+        return True
+    if _LONG_DIGITS_RE.search(t):
+        return True
+    if _DATE_RE.search(t):
+        return True
+    return False
+
+
+
+def looks_like_gender_word(text: str) -> bool:
+    t = normalize_text(text).replace(" ", "")
+    return t in {"m", "f", "masculin", "feminin", "mf", "fm"}
+
+
+def _tokens_from_line(line: str) -> list[str]:
+    return re.findall(r"[A-Za-zÀ-ÿ'-]+", line or "")
+
+
+def _extract_name_tokens_from_lines(lines: list[str]) -> list[str]:
+    """
+    Find the first label line and return the following name-like tokens
+    from the same line or the next 1-2 lines.
+    """
+    for i, line in enumerate(lines):
+        tokens = _tokens_from_line(line)
+        if not tokens:
+            continue
+
+        norm_tokens = [normalize_text(t) for t in tokens]
+        label_idx = None
+
+        for idx, nt in enumerate(norm_tokens):
+            if _is_labelish(nt):
+                label_idx = idx
+                break
+
+        if label_idx is None:
+            continue
+
+        collected = [
+            t for t in tokens[label_idx + 1:]
+            if looks_like_name_word(t) and not _is_labelish(normalize_text(t))
+        ]
+
+        if len(collected) < 2:
+            for j in range(i + 1, min(i + 3, len(lines))):
+                more = [
+                    t for t in _tokens_from_line(lines[j])
+                    if looks_like_name_word(t) and not _is_labelish(normalize_text(t))
+                ]
+                collected.extend(more)
+                if len(collected) >= 2:
+                    break
+
+        if collected:
+            return collected
+
+    return []
+
+
+# ---------------------------------------------------------------------------
+# Face detection
+# ---------------------------------------------------------------------------
+
+def detect_face_box(image: np.ndarray):
+    img_h, img_w = image.shape[:2]
+    rgb          = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    boxes, probs = _face_det.detect(rgb)
+
+    if boxes is None or len(boxes) == 0:
+        return None
+
+    best_idx = int(np.argmax(probs))
+    x1, y1, x2, y2 = (int(v) for v in boxes[best_idx])
+    return expand_box(x1, y1, x2, y2, img_w, img_h, pad=30)
+
+
+# ---------------------------------------------------------------------------
+# Spatial name extraction
+# ---------------------------------------------------------------------------
+
+def extract_names_spatially(full_text: str, raw_words: list) -> tuple[str | None, str | None]:
+    """
+    Prefer line-based parsing first, then fall back to spatial extraction.
+    """
+    lines = [ln.strip() for ln in (full_text or "").split("\n") if ln.strip()]
+
+    # Best-effort line-based parsing
+    tokens = _extract_name_tokens_from_lines(lines)
+    if tokens:
+        last_name = tokens[0]
+        first_name = " ".join(tokens[1:]) if len(tokens) > 1 else None
+        return last_name, first_name
+
+    # Fallback: spatial approach
+    found: dict[str, str | None] = {"last_name": None, "first_name": None}
+
+    for text, box in raw_words:
+        norm  = normalize_text(text)
+        ltype = _label_type(norm)
+
+        if ltype not in ("last_name", "first_name"):
+            continue
+        if found[ltype] is not None:
+            continue
+
+        tokens = _collect_tokens_right_of(box, raw_words)
+        if not tokens:
+            tokens = _collect_tokens_below(box, raw_words)
+
+        if tokens:
+            found[ltype] = " ".join(t for _, t in tokens)
+
+    return found["last_name"], found["first_name"]
+
+
+def _collect_tokens_right_of(label_box, raw_words: list) -> list:
+    """
+    Return (x, text) pairs for words on the same line as label_box that
+    start to the right of the label's right edge.
+    """
+    tokens = []
+    for other_text, other_box in raw_words:
+        other_norm = normalize_text(other_text)
+        if _is_labelish(other_norm):
+            continue
+        if not boxes_same_line(label_box, other_box):
+            continue
+        if other_box[0] <= label_box[2]:
+            continue
+        if looks_like_name_word(other_text):
+            tokens.append((other_box[0], other_text))
+    tokens.sort()
+    return tokens
+
+
+def _collect_tokens_below(label_box, raw_words: list) -> list:
+    """
+    Return (x, text) pairs for name tokens on the line(s) immediately below
+    label_box.
+    """
+    lx1, ly1, lx2, ly2 = label_box
+    label_h     = max(ly2 - ly1, 1)
+    label_w     = max(lx2 - lx1, 1)
+    min_y       = ly2
+    max_y       = ly2 + label_h * 2
+    min_overlap = label_w * 0.30
+
+    tokens = []
+    for other_text, other_box in raw_words:
+        other_norm = normalize_text(other_text)
+        if _is_labelish(other_norm):
+            continue
+
+        ox1, oy1, ox2, oy2 = other_box
+
+        if not (min_y <= oy1 <= max_y):
+            continue
+
+        overlap = min(lx2, ox2) - max(lx1, ox1)
+        if overlap < min_overlap:
+            continue
+
+        if looks_like_name_word(other_text):
+            tokens.append((ox1, other_text))
+
+    tokens.sort()
+    return tokens
+
+
+# ---------------------------------------------------------------------------
+# Keep-box computation
+# ---------------------------------------------------------------------------
+
+def keep_only_name_gender_photo(image: np.ndarray, word_list: list) -> list:
+    img_h, img_w = image.shape[:2]
+    keep_boxes   = []
+
+    # 1. Face / photo region
+    face_box = detect_face_box(image)
+    keep_boxes.append(face_box if face_box else rel_box(image, *ID_TEMPLATE["photo"], pad=10))
+
+    # 2. Spatial zones from OCR anchors
+    anchor_name   = [wd for wd in word_list if _label_type(wd["norm"]) in ("last_name", "first_name")]
+    anchor_gender = [wd for wd in word_list if _label_type(wd["norm"]) == "gender"]
+
+    if anchor_name:
+        nz_y1 = min(wd["box"][1] for wd in anchor_name) - 15
+        nz_x1 = min(wd["box"][0] for wd in anchor_name) - 20
+        nz_y2 = min(
+            (wd["box"][1] for wd in anchor_gender),
+            default=nz_y1 + int(img_h * 0.35),
+        )
+        name_zone = (max(0, nz_x1), max(0, nz_y1), img_w, nz_y2)
+    else:
+        name_zone = rel_box(image, *ID_TEMPLATE["name"])
+
+    if anchor_gender:
+        gz_y1 = min(wd["box"][1] for wd in anchor_gender) - 15
+        gz_x1 = min(wd["box"][0] for wd in anchor_gender) - 20
+        gz_y2 = gz_y1 + int(img_h * 0.15)
+        gender_zone = (max(0, gz_x1), max(0, gz_y1), img_w, gz_y2)
+    else:
+        gender_zone = rel_box(image, *ID_TEMPLATE["sex"])
+
+    # 3. Filter words by zone + semantic class
+    found_valid_name   = False
+    found_valid_gender = False
+
+    for wd in word_list:
+        bx = wd["box"]
+        cx = (bx[0] + bx[2]) / 2
+        cy = (bx[1] + bx[3]) / 2
+
+        if _label_type(wd["norm"]) in ("last_name", "first_name", "gender"):
+            keep_boxes.append(expand_box(*bx, img_w, img_h, pad=12))
+            continue
+
+        in_name   = name_zone[0] <= cx <= name_zone[2] and name_zone[1] <= cy <= name_zone[3]
+        in_gender = gender_zone[0] <= cx <= gender_zone[2] and gender_zone[1] <= cy <= gender_zone[3]
+
+        if in_name and looks_like_name_word(wd["text"]):
+            keep_boxes.append(expand_box(*bx, img_w, img_h, pad=14))
+            found_valid_name = True
+        elif in_gender and looks_like_gender_word(wd["text"]):
+            keep_boxes.append(expand_box(*bx, img_w, img_h, pad=12))
+            found_valid_gender = True
+
+    # 4. Fallbacks
+    if not found_valid_name and not anchor_name:
+        keep_boxes.append(rel_box(image, *ID_TEMPLATE["name"], pad=5))
+    if not found_valid_gender and not anchor_gender:
+        keep_boxes.append(rel_box(image, *ID_TEMPLATE["sex"], pad=5))
+
+    return merge_boxes(keep_boxes, gap=20)
+
+
+# ---------------------------------------------------------------------------
+# Redaction
+# ---------------------------------------------------------------------------
+
+def redact_image(image: np.ndarray, keep_boxes: list) -> np.ndarray:
+    img_h, img_w = image.shape[:2]
+
+    k = int(max(img_w, img_h) * 0.08)
+    k = k if k % 2 == 1 else k + 1
+    k = max(k, 3)
+    blurred = cv2.GaussianBlur(image, (k, k), 0)
+
+    sf        = 0.015
+    small_w   = max(2, int(img_w * sf))
+    small_h   = max(2, int(img_h * sf))
+    tiny      = cv2.resize(image, (small_w, small_h), interpolation=cv2.INTER_LINEAR)
+    pixelated = cv2.resize(tiny,  (img_w, img_h),     interpolation=cv2.INTER_NEAREST)
+
+    redacted_bg = cv2.addWeighted(blurred, 0.7, pixelated, 0.3, 0)
+
+    mask = np.zeros((img_h, img_w), dtype=np.uint8)
+    for (x1, y1, x2, y2) in keep_boxes:
+        cv2.rectangle(mask, (x1, y1), (x2, y2), 255, thickness=-1)
+
+    dk   = max(3, int(min(img_w, img_h) * 0.012))
+    mask = cv2.dilate(mask, np.ones((dk, dk), np.uint8), iterations=2)
+
+    fk   = max(5, int(min(img_w, img_h) * 0.008))
+    fk   = fk if fk % 2 == 1 else fk + 1
+    mask = cv2.GaussianBlur(mask, (fk, fk), 0)
+
+    mask_3d = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR).astype(np.float32) / 255.0
+    result  = (
+        image.astype(np.float32)         * mask_3d
+        + redacted_bg.astype(np.float32) * (1.0 - mask_3d)
+    ).astype(np.uint8)
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Field extraction
+# ---------------------------------------------------------------------------
+
+def extract_id_data(full_text: str, raw_words: list) -> dict:
+    """
+    Extract structured fields from Romanian ID / passport OCR text.
+    """
+    data: dict = {
+        "cnp":            None,
+        "series":         None,
+        "number":         None,
+        "last_name":      None,
+        "first_name":     None,
+        "gender":         None,
+        "validity_start": None,
+        "validity_end":   None,
+        "address":        None,
+        "mrz":            None,
+    }
+
+    text = re.sub(r"[ \t]+", " ", full_text or "")
+    flat = text.replace("\n", " ")
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+
+    # CNP
+    m = re.search(r"\b([1-9]\d{12})\b", flat)
+    if m:
+        data["cnp"] = m.group(1)
+
+    # Series + number from explicit OCR text
+    m = re.search(
+        r"seria\s*[:\.]?\s*([A-Z]{2})\s+nr[^\d]*(\d{5,8})\b",
+        flat, re.IGNORECASE,
+    )
+    if m:
+        data["series"] = m.group(1).upper()
+        data["number"] = m.group(2)
+
+    # Fallback: series+number from compact MRZ-like text
+    if not data["series"] or not data["number"]:
+        m = re.search(r"\b([A-Z]{2})(\d{6})<", flat)
+        if m:
+            data["series"] = data["series"] or m.group(1)
+            data["number"] = data["number"] or m.group(2)
+
+    # Validity dates
+    DATE_PAT = r"(\d{2}\.\d{2}\.\d{2,4})"
+    m = re.search(rf"{DATE_PAT}\s*[-—~_/]\s*{DATE_PAT}", flat)
+    if m:
+        data["validity_start"] = m.group(1)
+        data["validity_end"]   = m.group(2)
+
+    # Gender
+    m = re.search(r"\bsex\b[^MF]{0,20}([MF])\b", flat, re.IGNORECASE)
+    if m:
+        data["gender"] = m.group(1).upper()
+    if not data["gender"]:
+        m = re.search(r"\bROU\s+([MF])\b", flat, re.IGNORECASE)
+        if m:
+            data["gender"] = m.group(1).upper()
+
+    # MRZ-like line
+    mrz_candidates = []
+    for line in lines:
+        compact = re.sub(r"\s+", "", line).upper()
+        if len(compact) >= 20 and "<" in compact and re.fullmatch(r"[A-Z0-9<]+", compact):
+            if sum(ch.isdigit() for ch in compact) >= 5:
+                mrz_candidates.append(compact)
+
+    if mrz_candidates:
+        data["mrz"] = "\n".join(mrz_candidates[-2:]) if len(mrz_candidates) >= 2 else mrz_candidates[0]
+
+    # Names
+    data["last_name"], data["first_name"] = extract_names_spatially(full_text, raw_words)
+
+    # Address
+    stop_kws = {"emis", "valabil", "idrou", "cnp", "sex", "seria"}
+
+    for i, line in enumerate(lines):
+        if re.search(r"\bdomicili", line, re.IGNORECASE) and not data["address"]:
+            after = re.split(r"\bdomicili\w*\b", line, maxsplit=1, flags=re.IGNORECASE)
+            if len(after) > 1:
+                same_line = _clean_value(after[1])
+                if same_line and len(same_line) >= 3:
+                    data["address"] = same_line
+                    continue
+
+            parts = []
+            for j in range(i + 1, min(i + 5, len(lines))):
+                if any(sw in lines[j].lower() for sw in stop_kws):
+                    break
+                c = _clean_value(lines[j])
+                if c:
+                    parts.append(c)
+            if parts:
+                data["address"] = ", ".join(parts)
+
+    return data
+
+
+# ---------------------------------------------------------------------------
+# Django API view
+# ---------------------------------------------------------------------------
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def redact_document(request):
+    if "image" not in request.FILES:
+        return JsonResponse({"error": "Missing image file"}, status=400)
+
+    status_val = request.POST.get("status", "found").upper()
+
+    file_bytes = np.frombuffer(request.FILES["image"].read(), np.uint8)
+    image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+
+    if image is None:
+        return JsonResponse({"error": "Invalid image"}, status=400)
+
+    processed = preprocess_for_ocr(image)
+    words, full_text, raw_words = extract_ocr_boxes(processed)
+
+    ph, pw = processed.shape[:2]
+    oh, ow = image.shape[:2]
+    scale_x = ow / pw
+    scale_y = oh / ph
+
+    doc_type = detect_document_type(full_text)
+    extracted = extract_id_data(full_text, raw_words)
+    keep_boxes = keep_only_name_gender_photo(processed, words)
+
+    if (scale_x, scale_y) != (1.0, 1.0):
+        keep_boxes = [
+            (int(x1 * scale_x), int(y1 * scale_y), int(x2 * scale_x), int(y2 * scale_y))
+            for (x1, y1, x2, y2) in keep_boxes
+        ]
+
+    redacted = redact_image(image, keep_boxes)
+
+    ok, buffer = cv2.imencode(".jpg", redacted, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
+    if not ok:
+        return JsonResponse({"error": "Failed to encode image"}, status=500)
+
+    doc = PersonalDocument.objects.create(
+        user=request.user,
+        status=status_val,
+        doc_type=doc_type,
+        extracted_data={
+            "raw_text": full_text,
+            "words_count": len(words),
+            "parsed_data": extracted,
+        },
+    )
+
+    filename = f"{uuid4().hex}.jpg"
+    doc.redacted_image.save(filename, ContentFile(buffer.tobytes()), save=True)
+
+    try:
+        find_and_notify_matches(doc)
+    except Exception as e:
+        print(f"Matching error: {e}")
+
+    return JsonResponse({
+        "id": doc.id,
+        "status": doc.status,
+        "document_type": doc_type,
+        "parsed_data": extracted,
+        "redacted_image_url": request.build_absolute_uri(doc.redacted_image.url),
+        "message": f"Document marked as {status_val} and processed successfully",
+    })
+
+from django.db.models import Q, CharField
+from django.db.models.functions import Cast
+
+@api_view(["GET"])
+def documents_list(request):
+    search = request.GET.get("search", "").strip()
+    status = request.GET.get("status", "").strip()
+
+    documents = PersonalDocument.objects.all().order_by("-created_at")
+
+    if status in ["LOST", "FOUND"]:
+        documents = documents.filter(status=status)
+
+    if search:
+        documents = documents.annotate(
+            extracted_data_text=Cast("extracted_data", CharField())
+        ).filter(
+            Q(doc_type__icontains=search) |
+            Q(extracted_data_text__icontains=search)
+        )
+
+    data = []
+    for doc in documents:
+        data.append({
+            "id": doc.id,
+            "doc_type": doc.doc_type,
+            "status": doc.status,
+            "extracted_data": doc.extracted_data,
+            "redacted_image": request.build_absolute_uri(doc.redacted_image.url) if doc.redacted_image else "",
+            "is_processed": doc.is_processed,
+            "created_at": doc.created_at.isoformat(),
+        })
+
+    return JsonResponse({"documents": data})
+
+
+
+from django.utils.text import slugify
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_incident_type(request):
+    if not request.user.is_staff:
+        return JsonResponse(
+            {"error": "Admin only."},
+            status=403
+        )
+
+    try:
+        data = json.loads(request.body)
+
+        name = data.get("label")
+
+        if not name:
+            return JsonResponse(
+                {"error": "Name required."},
+                status=400
+            )
+
+        slug = slugify(name)
+
+        incident_type, created = IncidentType.objects.get_or_create(
+            slug=slug,
+            defaults={
+                "name": name
+            }
+        )
+
+        if not created:
+            return JsonResponse(
+                {"error": "Incident type already exists."},
+                status=400
+            )
+
+        return JsonResponse({
+            "message": "Incident type created.",
+            "id": incident_type.id,
+            "name": incident_type.name,
+            "slug": incident_type.slug
+        })
+
+    except Exception as e:
+
+        return JsonResponse(
+            {"error": str(e)},
+            status=500
+        )
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_incident_type(request, incident_type_id):
+
+    if request.method != "DELETE":
+        return JsonResponse(
+            {"error": "DELETE method required."},
+            status=405
+        )
+
+    if not request.user.is_staff:
+        return JsonResponse(
+            {"error": "Admin only."},
+            status=403
+        )
+    try:
+        incident_type = IncidentType.objects.get(id=incident_type_id)
+        incident_type.delete()
+        return JsonResponse({
+            "message": "Incident type deleted."
+        })
+    except IncidentType.DoesNotExist:
+        return JsonResponse(
+            {"error": "Incident type not found."},
+            status=404
+        )
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_incident_types(request):
+    incident_types = IncidentType.objects.filter(
+        is_active=True
+    )
+    data = [
+        {
+            "id": i.id,
+            "value": i.slug,
+            "label": i.name
+        }
+        for i in incident_types
+    ]
+    return JsonResponse(data, safe=False)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_special_incident(request):
+    try:
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        incident_type_value = request.POST.get("incident_type")
+        location_data = request.POST.get("location")
+
+        if not title or not description:
+            return JsonResponse({"error": "Titlul și descrierea sunt obligatorii."}, status=400)
+
+        incident_type = None
+        if incident_type_value:
+            incident_type = IncidentType.objects.filter(slug=incident_type_value).first()
+
+        point = None
+        if location_data:
+            try:
+                loc_json = json.loads(location_data)
+                coords = loc_json.get("coordinates")
+                if coords and len(coords) == 2:
+                    point = Point(x=coords[0], y=coords[1], srid=4326)
+            except json.JSONDecodeError:
+                return JsonResponse({"error": "Format de locație invalid."}, status=400)
+
+        incident = SpecialIncident.objects.create(
+            user=request.user,
+            incident_type=incident_type,
+            title=title,
+            description=description,
+            location=point
+        )
+
+        images = request.FILES.getlist('images')
+        for image_file in images:
+            SpecialIncidentImage.objects.create(special_incident=incident, image=image_file)
+
+        return JsonResponse({
+            "message": "Incident creat cu succes!",
+            "incident_id": incident.id
+        }, status=201)
+
+    except Exception as e:
+        return JsonResponse({"error": f"A apărut o eroare: {str(e)}"}, status=500)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_special_incidents(request):
+    lat = request.GET.get("lat")
+    lng = request.GET.get("lng")
+
+    if lat and lng:
+        ref_location = Point(float(lng), float(lat), srid=4326)
+    else:
+        ref_location = request.user.location
+
+    if not ref_location:
+        return JsonResponse({"success": False, "error": "Location required"}, status=400)
+
+    radius_km = request.user.visibility_radius
+
+    incidents = (
+        SpecialIncident.objects
+        .filter(location__dwithin=(ref_location, radius_km / 111.32))
+        .select_related('user', 'incident_type')
+        .prefetch_related('images')
+        .annotate(distance=GisDistance("location", ref_location))
+        .order_by("distance")
+    )
+
+    data = []
+    for incident in incidents:
+        data.append({
+            "id": incident.id,
+            "title": incident.title,
+            "description": incident.description,
+            "incident_type": {
+                "id": incident.incident_type.id if incident.incident_type else None,
+                "label": incident.incident_type.name if incident.incident_type else None,
+                "value": incident.incident_type.slug if incident.incident_type else None,
+            },
+            "distance": round(incident.distance.km, 2) if hasattr(incident, 'distance') else None,
+            "location": {
+                "lat": incident.location.y if incident.location else None,
+                "lng": incident.location.x if incident.location else None,
+            },
+            "user": {
+                "id": incident.user.id,
+                "username": incident.user.username,
+            },
+            "images": [
+                request.build_absolute_uri(img.image.url)
+                for img in incident.images.all()
+            ],
+            "created_at": incident.created_at.isoformat(),
+        })
+
+    return JsonResponse(data, safe=False)
+
+
+CRISIS_THRESHOLD = 1
+BASE_RADIUS_M    = 1000
+
+def _maybe_trigger_crisis(cluster):
+    CRISIS_THRESHOLD = 1
+    from asgiref.sync import async_to_sync
+    from channels.layers import get_channel_layer
+    from django.contrib.gis.measure import D
+
+    if len(cluster.unique_users) < CRISIS_THRESHOLD:
+        return
+
+    # Avoid duplicate crises for the same cluster
+    already_exists = CrisisEvent.objects.filter(cluster=cluster).exists()
+    if already_exists:
+        return
+
+    # Create the crisis event
+    crisis = CrisisEvent.objects.create(
+        cluster=cluster,
+        incident_type=cluster.incident_type,
+        center=cluster.center,
+        radius=cluster.radius_m,
+    )
+
+    channel_layer = get_channel_layer()
+
+    # Fetch User objects for cluster.unique_users IDs
+    cluster_user_objs = User.objects.filter(id__in=cluster.unique_users)
+
+    # Find nearby users (excluding those already in cluster)
+    nearby_users = User.objects.filter(
+        location__distance_lte=(cluster.center, D(m=cluster.radius_m))
+    ).exclude(id__in=cluster.unique_users)
+
+    # Merge both querysets
+    users_to_notify = list(cluster_user_objs) + list(nearby_users)
+
+    for user in users_to_notify:
+        notif = Notification.objects.create(
+            user=user,
+            sender=None,
+            type="crisis_alert",
+            title="New Crisis Alert!",
+            message=f"A new crisis has been detected: {cluster.incident_type}. Please check it.",
+            metadata={
+                "crisis_id": crisis.id,
+                "cluster_id": cluster.id,
+                "center": {"lat": cluster.center.y, "lng": cluster.center.x},
+                "radius_m": cluster.radius_m,
+            },
+        )
+
+        async_to_sync(channel_layer.group_send)(
+            f"user_notifications_{user.id}",
+            {
+                "type": "send_crisis_notification",
+                "notification_id": notif.id,
+                "title": notif.title,
+                "message": notif.message,
+                "metadata": notif.metadata,
+            }
+        )
+
+from django.contrib.gis.measure import D
+def assign_incident_to_cluster(incident: SpecialIncident):
+    if not incident.location or not incident.incident_type:
+        return None
+
+    new_point = incident.location
+
+    candidates = (
+        IncidentCluster.objects
+        .filter(incident_type=incident.incident_type)
+        .annotate(dist=Distance("center", new_point))
+        .filter(dist__lte=D(m=BASE_RADIUS_M + 200))
+        .order_by("dist")
+    )
+
+    best_cluster = None
+    best_dist_m  = None
+
+    for cluster in candidates:
+        dist_m = cluster.dist.m
+        if dist_m <= cluster.radius_m + 200:
+            best_cluster = cluster
+            best_dist_m  = dist_m
+            break
+
+    if best_cluster:
+        cluster = best_cluster
+
+        if best_dist_m > cluster.radius_m:
+            cluster.radius_m = best_dist_m + 50
+
+        if incident.id not in cluster.incident_ids:
+            cluster.incident_ids.append(incident.id)
+        if incident.user_id not in cluster.unique_users:
+            cluster.unique_users.append(incident.user_id)
+
+        cluster.report_count = len(cluster.incident_ids)
+
+        centroid = (
+            SpecialIncident.objects
+            .filter(id__in=cluster.incident_ids, location__isnull=False)
+            .aggregate(centroid=Centroid(Collect("location")))
+        )
+        if centroid["centroid"]:
+            cluster.center = centroid["centroid"]
+
+        cluster.save()
+        _maybe_trigger_crisis(cluster)
+        return cluster
+
+    cluster = IncidentCluster.objects.create(
+        incident_type = incident.incident_type,
+        center        = new_point,
+        radius_m      = BASE_RADIUS_M,
+        report_count  = 1,
+        unique_users  = [incident.user_id],
+        incident_ids  = [incident.id],
+    )
+    _maybe_trigger_crisis(cluster)
+    return cluster
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_crisis_events(request):
+    events = (
+        CrisisEvent.objects
+        .filter(is_active=True)
+        .select_related("cluster", "incident_type")
+    )
+    data = []
+    for e in events:
+        if e.cluster:
+            center_lat = e.cluster.center.y if e.cluster.center else None
+            center_lng = e.cluster.center.x if e.cluster.center else None
+            radius_m = e.cluster.radius_m
+            report_count = getattr(e.cluster, 'report_count', 0)
+            unique_users = len(e.cluster.unique_users) if getattr(e.cluster, 'unique_users', None) else 0
+        else:
+            center_lat = e.center.y if e.center else None
+            center_lng = e.center.x if e.center else None
+            radius_m = (e.radius * 1000) if e.radius else 0
+            report_count = 0
+            unique_users = 0
+
+        data.append({
+            "id": e.id,
+            "incident_type": {
+                "label": e.incident_type.name if hasattr(e.incident_type, 'name') else getattr(e.incident_type, 'label',
+                                                                                               None),
+                "value": e.incident_type.slug if hasattr(e.incident_type, 'slug') else getattr(e.incident_type, 'value',
+                                                                                               None),
+            } if e.incident_type else None,
+            "center_lat": center_lat,
+            "center_lng": center_lng,
+            "radius_m": radius_m,
+            "report_count": report_count,
+            "unique_users": unique_users,
+            "triggered_at": e.triggered_at.isoformat() if e.triggered_at else None,
+        })
+    return JsonResponse(data, safe=False)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_incident_clusters(request):
+    clusters = IncidentCluster.objects.select_related("incident_type").all()
+    data = [
+        {
+            "id":            c.id,
+            "incident_type": {
+                "label": c.incident_type.name,
+                "value": c.incident_type.slug,
+            },
+            "center_lat":    c.center.y,   # Point.y = latitude
+            "center_lng":    c.center.x,   # Point.x = longitude
+            "radius_m":      c.radius_m,
+            "report_count":  c.report_count,
+            "unique_users":  len(c.unique_users),
+            "crisis_mode":   c.crisis_mode,
+            "crisis_triggered_at": c.crisis_triggered_at.isoformat() if c.crisis_triggered_at else None,
+        }
+        for c in clusters
+    ]
+    return JsonResponse(data, safe=False)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_special_incident_detail(request, incident_id):
+    try:
+        incident = SpecialIncident.objects.select_related(
+            'user', 'incident_type'
+        ).prefetch_related('images').get(id=incident_id)
+
+        data = {
+            "id": incident.id,
+            "title": incident.title,
+            "description": incident.description,
+            "incident_type": {
+                "id": incident.incident_type.id if incident.incident_type else None,
+                "label": incident.incident_type.name if incident.incident_type else "Unknown",
+                "value": incident.incident_type.slug if incident.incident_type else None,
+            },
+            "location": {
+                "lat": incident.location.y if incident.location else None,
+                "lng": incident.location.x if incident.location else None,
+            },
+            "user": {
+                "id": incident.user.id,
+                "username": incident.user.username,
+            },
+            "images": [
+                request.build_absolute_uri(img.image.url)
+                for img in incident.images.all()
+            ],
+            "created_at": incident.created_at.isoformat(),
+        }
+
+        return JsonResponse({"success": True, "incident": data})
+
+    except SpecialIncident.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Incident not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def check_user_in_crisis(request):
+    current_user = request.user
+
+    if not current_user.location:
+        return Response(
+            {"error": "User location is not set."},
+            status=400
+        )
+
+    active_crises = (
+        CrisisEvent.objects
+        .select_related("incident_type", "cluster")
+        .filter(is_active=True)
+        .annotate(distance_to_user=Distance("center", current_user.location))
+        .filter(distance_to_user__lte=F("radius"))
+    )
+
+    if not active_crises.exists():
+        return Response({
+            "is_in_danger_zone": False,
+            "current_user_crisis_status": current_user.crisis_status,
+            "active_crises": []
+        })
+
+    crisis_data = []
+
+    for crisis in active_crises:
+        cluster = crisis.cluster
+        incident_ids = cluster.incident_ids if cluster else []
+
+        incidents = list(
+            SpecialIncident.objects
+            .select_related("incident_type", "user")
+            .filter(id__in=incident_ids)
+            .order_by("-created_at")
+        )
+
+        users_in_zone = (
+            User.objects
+            .select_related()
+            .filter(location__isnull=False)
+            .annotate(distance_to_crisis=Distance("location", crisis.center))
+            .filter(distance_to_crisis__lte=crisis.radius)
+        )
+
+        crisis_data.append({
+            "crisis_id": crisis.id,
+            "incident_type": {
+                "id": crisis.incident_type.id if crisis.incident_type else None,
+                "name": crisis.incident_type.name if crisis.incident_type else None,
+                "slug": crisis.incident_type.slug if crisis.incident_type else None,
+            },
+            "triggered_at": crisis.triggered_at,
+            "resolved_at": crisis.resolved_at,
+            "radius": crisis.radius,
+            "notes": crisis.notes,
+            "is_active": crisis.is_active,
+            "distance_from_center_meters": round(crisis.distance_to_user.m, 2),
+            "center": {
+                "lat": crisis.center.y,
+                "lng": crisis.center.x,
+            },
+            "users_in_zone": [
+                {
+                    "id": user.id,
+                    "username": user.username,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "email": user.email,
+                    "crisis_status": user.crisis_status,
+                    "online_status": user.online_status,
+                    "is_verified": user.is_verified,
+                    "distance_from_crisis_meters": round(user.distance_to_crisis.m, 2),
+                    "location": {
+                        "lat": user.location.y,
+                        "lng": user.location.x,
+                    },
+                }
+                for user in users_in_zone
+                if user.id != current_user.id
+            ],
+            "cluster": {
+                "id": cluster.id if cluster else None,
+                "report_count": cluster.report_count if cluster else 0,
+                "incident_ids": incident_ids,
+                "incidents": [
+                    {
+                        "id": incident.id,
+                        "title": incident.title,
+                        "description": incident.description,
+                        "severity_level": incident.severity_level,
+                        "is_verified": incident.is_verified,
+                        "confirm_count": incident.confirm_count,
+                        "report_count": incident.report_count,
+                        "created_at": incident.created_at,
+                        "address": incident.address,
+                        "location": {
+                            "lat": incident.location.y if incident.location else None,
+                            "lng": incident.location.x if incident.location else None,
+                        },
+                        "incident_type": {
+                            "id": incident.incident_type.id if incident.incident_type else None,
+                            "name": incident.incident_type.name if incident.incident_type else None,
+                            "slug": incident.incident_type.slug if incident.incident_type else None,
+                        },
+                    }
+                    for incident in incidents
+                ],
+            }
+        })
+
+    return Response({
+        "is_in_danger_zone": True,
+        "current_user_crisis_status": current_user.crisis_status,
+        "active_crises": crisis_data
+    })
+
+VALID_CRISIS_STATUSES = ["safe", "need_help", "injured", "available_to_help"]
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def update_user_crisis_status(request):
+    current_user = request.user
+    status_value = request.data.get("crisis_status")
+
+    if status_value is not None and status_value not in VALID_CRISIS_STATUSES:
+        return Response(
+            {"error": f"Invalid crisis status. Must be one of {VALID_CRISIS_STATUSES}"},
+            status=400
+        )
+
+    current_user.crisis_status = status_value
+    current_user.save(update_fields=["crisis_status"])
+
+    return Response({
+        "success": True,
+        "crisis_status": current_user.crisis_status
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_crisis_event(request):
+    try:
+        # Use DRF's request.data
+        data = request.data
+        lat = data.get('lat')
+        lng = data.get('lng')
+        radius = data.get('radius', 5)
+        incident_type_id = data.get('incident_type')
+        notes = data.get('notes', '')
+        mode = data.get('mode', 'local')
+
+        # Convert to Point
+        center = Point(float(lng), float(lat)) if lat is not None and lng is not None else None
+
+        incident_type = get_object_or_404(IncidentType, id=incident_type_id)
+
+        # Create the crisis event
+        crisis_event = CrisisEvent.objects.create(
+            incident_type=incident_type,
+            center=center,
+            radius=radius * 1000,  # meters
+            notes=notes,
+            is_active=True,
+            mode=mode,
+        )
+
+        # Find all nearby users within the crisis radius
+        nearby_users = User.objects.filter(
+            location__distance_lte=(center, D(m=crisis_event.radius))
+        )
+
+        channel_layer = get_channel_layer()
+
+        # Notify each nearby user
+        for user in nearby_users:
+            notif = Notification.objects.create(
+                user=user,
+                sender=None,  # system-generated
+                type="crisis_alert",
+                title="New Crisis Alert!",
+                message=f"A new crisis has been detected: {incident_type}. Please check it.",
+                metadata={
+                    "crisis_id": crisis_event.id,
+                    "center": {"lat": center.y, "lng": center.x} if center else None,
+                    "radius_m": crisis_event.radius,
+                },
+            )
+
+            # Send WebSocket alert
+            async_to_sync(channel_layer.group_send)(
+                f"user_notifications_{user.id}",
+                {
+                    "type": "send_crisis_notification",
+                    "notification_id": notif.id,
+                    "title": notif.title,
+                    "message": notif.message,
+                    "metadata": notif.metadata,
+                }
+            )
+
+        return JsonResponse({"success": True, "crisis_event_id": crisis_event.id}, status=201)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_crisis_pulses(request, crisis_event_id):
+    crisis = get_object_or_404(CrisisEvent, id=crisis_event_id, is_active=True)
+
+    if not crisis.center:
+        return JsonResponse({"success": False, "error": "Crisis center not set."}, status=400)
+
+    user_location = request.user.location
+
+    base_qs = (
+        Pulse.objects
+        .filter(emergency_categories__isnull=False, is_approved=True, is_available=True)
+        .exclude(emergency_categories="")
+        .select_related("user")
+        .prefetch_related("images")
+    )
+
+    radius_deg = (crisis.radius / 111320) if crisis.mode == "local" else (10 / 111.32)
+
+    local_pulses = (
+        base_qs
+        .filter(location__dwithin=(crisis.center, radius_deg))
+        .annotate(distance=GisDistance("location", crisis.center))
+        .order_by("distance")
+    )
+
+    global_pulses = []
+    user_in_crisis_zone = False
+
+    if crisis.mode == "global" and user_location:
+        from django.contrib.gis.db.models.functions import Distance as GisDistanceFn
+        from django.contrib.gis.measure import D
+
+        user_in_crisis_zone = (
+            CrisisEvent.objects
+            .filter(id=crisis.id)
+            .annotate(dist=GisDistanceFn("center", user_location))
+            .filter(dist__lte=D(km=10))
+            .exists()
+        )
+
+        global_pulses = (
+            base_qs
+            .filter(location__dwithin=(crisis.center, 10 / 111.32))
+            .annotate(distance=GisDistance("location", crisis.center))
+            .order_by("distance")
+        )
+
+    def serialize_pulse(p, scope):
+        images = list(p.images.all())
+        image_url = request.build_absolute_uri(images[0].image.url) if images else None
+        return {
+            "id": p.id,
+            "user": p.user.username,
+            "title": p.title,
+            "description": p.description,
+            "emergency_category": p.emergency_categories,
+            "emergency_category_display": p.get_emergency_categories_display(),
+            "phone_number": p.phone_number,
+            "timestamp": p.created_at.isoformat(),
+            "lat": p.location.y if p.location else None,
+            "lng": p.location.x if p.location else None,
+            "image": image_url,
+            "distance": round(p.distance.km, 2),
+            "scope": scope,
+        }
+
+    local_data = [serialize_pulse(p, "local") for p in local_pulses]
+    global_data = [serialize_pulse(p, "global") for p in global_pulses]
+
+    seen_ids = set()
+    all_pulses = []
+    for p in local_data + global_data:
+        if p["id"] not in seen_ids:
+            seen_ids.add(p["id"])
+            all_pulses.append(p)
+
+    return JsonResponse({
+        "success": True,
+        "crisis_event_id": crisis_event_id,
+        "mode": crisis.mode,
+        "user_in_crisis_zone": user_in_crisis_zone if crisis.mode == "global" else True,
+        "total": len(all_pulses),
+        "local_count": len(local_data),
+        "global_count": len(global_data),
+        "pulses": all_pulses,
+    })
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_crisis_event(request, crisis_event_id):
+    crisis = get_object_or_404(CrisisEvent, id=crisis_event_id)
+
+    try:
+        data = {
+            "id": crisis.id,
+            "incident_type": str(crisis.incident_type),
+        }
+
+        crisis.delete()
+
+        return JsonResponse({
+            "success": True,
+            "message": "Crisis event deleted successfully.",
+            "data": data
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": f"A apărut o eroare la ștergere: {str(e)}"
+        }, status=500)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_crisis_pulses(request, crisis_event_id):
+    crisis = get_object_or_404(CrisisEvent, id=crisis_event_id, is_active=True)
+
+    if not crisis.center:
+        return JsonResponse({"success": False, "error": "Crisis center not set."}, status=400)
+
+    user_location = request.user.location
+
+    base_qs = (
+        Pulse.objects
+        .filter(emergency_categories__isnull=False, is_approved=True, is_available=True)
+        .exclude(emergency_categories="")
+        .select_related("user")
+        .prefetch_related("images")
+    )
+
+    radius_deg = (crisis.radius / 111320) if crisis.mode == "local" else (10 / 111.32)
+
+    local_pulses = (
+        base_qs
+        .filter(location__dwithin=(crisis.center, radius_deg))
+        .annotate(distance=GisDistance("location", crisis.center))
+        .order_by("distance")
+    )
+
+    global_pulses = []
+    user_in_crisis_zone = False
+
+    if crisis.mode == "global" and user_location:
+        from django.contrib.gis.db.models.functions import Distance as GisDistanceFn
+        from django.contrib.gis.measure import D
+
+        user_in_crisis_zone = (
+            CrisisEvent.objects
+            .filter(id=crisis.id)
+            .annotate(dist=GisDistanceFn("center", user_location))
+            .filter(dist__lte=D(km=10))
+            .exists()
+        )
+
+        global_pulses = (
+            base_qs
+            .filter(location__dwithin=(crisis.center, 10 / 111.32))
+            .annotate(distance=GisDistance("location", crisis.center))
+            .order_by("distance")
+        )
+
+    def serialize_pulse(p, scope):
+        images = list(p.images.all())
+        image_url = request.build_absolute_uri(images[0].image.url) if images else None
+        return {
+            "id": p.id,
+            "user": p.user.username,
+            "title": p.title,
+            "description": p.description,
+            "emergency_category": p.emergency_categories,
+            "emergency_category_display": p.get_emergency_categories_display(),
+            "phone_number": p.phone_number,
+            "timestamp": p.created_at.isoformat(),
+            "lat": p.location.y if p.location else None,
+            "lng": p.location.x if p.location else None,
+            "image": image_url,
+            "distance": round(p.distance.km, 2),
+            "scope": scope,
+        }
+
+    local_data = [serialize_pulse(p, "local") for p in local_pulses]
+    global_data = [serialize_pulse(p, "global") for p in global_pulses]
+
+    seen_ids = set()
+    all_pulses = []
+    for p in local_data + global_data:
+        if p["id"] not in seen_ids:
+            seen_ids.add(p["id"])
+            all_pulses.append(p)
+
+    return JsonResponse({
+        "success": True,
+        "crisis_event_id": crisis_event_id,
+        "mode": crisis.mode,
+        "user_in_crisis_zone": user_in_crisis_zone if crisis.mode == "global" else True,
+        "total": len(all_pulses),
+        "local_count": len(local_data),
+        "global_count": len(global_data),
+        "pulses": all_pulses,
+    })

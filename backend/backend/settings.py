@@ -6,14 +6,14 @@ from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
 import os
-
+import urllib.parse
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-change-me")
 
-DEBUG = os.environ.get("DEBUG", "False") == "True"
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 # =========================================================
 # DOMAINS
@@ -229,13 +229,18 @@ ASGI_APPLICATION = "backend.asgi.application"
 # WEBSOCKETS / CHANNELS
 # =========================================================
 
-REDIS_URL = os.environ.get("REDIS_URL")
+REDIS_URL = os.environ.get("REDIS_URL", "")
+url = urllib.parse.urlparse(REDIS_URL)
 
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [REDIS_URL],
+            "hosts": [{
+                "address": REDIS_URL,
+                # If using rediss://, this ensures SSL is handled correctly
+                "ssl_cert_reqs": None
+            }],
         },
     },
 }

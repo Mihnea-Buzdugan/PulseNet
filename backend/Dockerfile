@@ -33,4 +33,4 @@ RUN python manage.py collectstatic --no-input
 EXPOSE 10000
 
 # Run migrations, then start the Daphne server
-CMD python manage.py migrate --noinput && daphne -b 0.0.0.0 -p $PORT backend.asgi:application
+CMD daphne -b 0.0.0.0 -p $PORT backend.asgi:application

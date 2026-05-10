@@ -286,14 +286,13 @@ export default function Profile() {
                 console.warn("Unknown feedback item type:", feedbackItem);
                 return;
             }
-            const csrfToken = getCookie("csrftoken");
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
-                
+
                 body: JSON.stringify(payload),
             });
 
@@ -354,7 +353,7 @@ export default function Profile() {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
             },
-            
+
         })
             .then((response) => response.json())
             .then((data) => {
@@ -388,7 +387,7 @@ export default function Profile() {
 
                 const offersRes = await fetch("https://pulsenet-45is.onrender.com/accounts/pulse_rentals/", {
                     method: "GET",
-                    
+
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
@@ -405,7 +404,7 @@ export default function Profile() {
 
                 const proposalsRes = await fetch("https://pulsenet-45is.onrender.com/accounts/pulse_own_proposals/", {
                     method: "GET",
-                    
+
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
@@ -435,7 +434,7 @@ export default function Profile() {
 
                 const resReceived = await fetch("https://pulsenet-45is.onrender.com/accounts/request-offers/received/", {
                     method: "GET",
-                    
+
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
@@ -446,7 +445,7 @@ export default function Profile() {
 
                 const resSent = await fetch("https://pulsenet-45is.onrender.com/accounts/own-request-offers/", {
                     method: "GET",
-                    
+
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${localStorage.getItem("access_token")}`,

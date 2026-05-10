@@ -60,20 +60,30 @@ function Navbar() {
 
 
     const fetchData = async () => {
-        if (!isAuthenticated) return;
+        const token = localStorage.getItem("access_token");
+
+        // Guard: Only proceed if authenticated AND token exists
+        if (!isAuthenticated || !token) {
+            return;
+        }
+
+        const headers = { "Authorization": `Bearer ${token}` };
+
         try {
+            const [userRes, notifRes] = await Promise.all([
+                fetch('https://pulsenet-45is.onrender.com/accounts/user/', { headers }),
+                fetch('https://pulsenet-45is.onrender.com/accounts/notifications/', { headers })
+            ]);
 
-            const userRes = await fetch('https://pulsenet-45is.onrender.com/accounts/user/', {headers: {
-                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
-                }, });
+            // Check if the server actually returned a 200 OK
+            if (!userRes.ok || !notifRes.ok) {
+                throw new Error("Failed to fetch user or notifications");
+            }
+
             const userData = await userRes.json();
-            setUser(userData);
-
-
-            const notifRes = await fetch('https://pulsenet-45is.onrender.com/accounts/notifications/', { headers: {
-                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
-                }, });
             const notifData = await notifRes.json();
+
+            setUser(userData);
             setNotifications(notifData.notifications || []);
         } catch (err) {
             console.error("Navbar data fetch error:", err);
@@ -230,7 +240,7 @@ function Navbar() {
     };
 
     const openChat = (e, userId) => {
-        e.stopPropagation();
+        e.stopPropagation()
         navigate(`/direct-chat/${userId}`);
         setShowSearchDropdown(false);
         setQuery("");

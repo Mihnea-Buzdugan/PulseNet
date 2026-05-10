@@ -7,7 +7,8 @@ from .models import (
     Group_Conversation, DirectConversation, FavoritePulse,
     PulseRental, Alert, AlertImage, PulseComment,
     PulseRating, Notification, UrgentRequest, AlertReport, AlertConfirm, UrgentRequestImage, RequestComment,
-    UrgentRequestOffer, DirectMessage, Group_Message, AlertComment, PulseRentalSignal, PulseFeedback, UrgentRequestFeedback, Contact
+    UrgentRequestOffer, DirectMessage, Group_Message, AlertComment, PulseRentalSignal, PulseFeedback,
+    UrgentRequestFeedback, Contact, PersonalDocument, IncidentType, SpecialIncident, CrisisEvent
 )
 
 class LocationAdminForm(forms.ModelForm):
@@ -39,7 +40,7 @@ class CustomUserAdmin(UserAdmin):
                 'profile_picture', 'biography', 'lat', 'lng', 'trust_score',
                 'visibility_radius', 'quiet_hours_start', 'quiet_hours_end',
                 'online_status',
-                'banned_until', 'public_key','is_verified', 'is_private',
+                'banned_until', 'public_key','is_verified', 'is_private', 'crisis_status',
             )
         }),
     )
@@ -53,7 +54,14 @@ class CustomUserAdmin(UserAdmin):
 @admin.register(Pulse)
 class PulseAdmin(admin.ModelAdmin):
     form = LocationAdminForm
-    list_display = ('title', 'user', 'pulse_type', 'price', 'address','created_at')
+    list_display = ('title', 'user', 'pulse_type', 'price', 'address','created_at', 'emergency_categories')
+    exclude = ('location',)
+
+@admin.register(SpecialIncident)
+class SpecialIncidentAdmin(admin.ModelAdmin):
+    form = LocationAdminForm
+    list_display = ('title', 'user', 'incident_type', 'is_active', 'created_at')
+    readonly_fields = ('created_at',)
     exclude = ('location',)
 
 @admin.register(Alert)
@@ -73,5 +81,5 @@ admin.site.register([
     Group_Conversation, DirectConversation, FavoritePulse,
     PulseRental, AlertImage, PulseComment, DirectMessage, Group_Message,
     PulseRating, Notification, AlertReport, AlertConfirm, UrgentRequestImage, RequestComment, UrgentRequestOffer, AlertComment, PulseRentalSignal,
-    PulseFeedback, UrgentRequestFeedback, Contact
+    PulseFeedback, UrgentRequestFeedback, Contact, PersonalDocument, IncidentType, CrisisEvent
 ])
