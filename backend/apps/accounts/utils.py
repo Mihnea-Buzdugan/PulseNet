@@ -216,7 +216,7 @@ def calculate_trust_score(user):
     return round(score, 2)
 
 
-from difflib import SequenceMatcher
+
 from .models import PersonalDocument, Notification
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -224,124 +224,6 @@ from asgiref.sync import async_to_sync
 
 # Make sure to import your Notification and PersonalDocument models here
 
-from difflib import SequenceMatcher
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-
-# Assuming PersonalDocument and Notification are imported here
-
-def find_and_notify_matches(new_doc):
-    """
-    Searches for similarity between the new document and existing
-    documents with the opposite status, based on specific parsed fields.
-    """
-
-    def build_comparison_string(extracted_data):
-        """
-        Extracts specific fields from parsed_data and builds a single
-        lowercase string for comparison, ignoring nulls/empty values.
-        """
-        parsed = extracted_data.get("parsed_data", {})
-        if not isinstance(parsed, dict):
-            return ""
-
-        fields_to_compare = [
-            parsed.get("first_name"),
-            parsed.get("last_name"),
-            parsed.get("cnp"),
-            parsed.get("address")
-        ]
-
-        # Filter out None values and empty strings, then join
-        valid_fields = [str(f).strip().lower() for f in fields_to_compare if f]
-        return " ".join(valid_fields)
-
-    # 1. Determine target status (Found searches Lost, Lost searches Found)
-    target_status = "FOUND" if new_doc.status == "LOST" else "LOST"
-
-    # 2. Get all documents of the opposite status (excluding own uploads)
-    potential_matches = PersonalDocument.objects.filter(status=target_status).exclude(user=new_doc.user)
-
-    # 3. Build the targeted comparison string for the newly uploaded document
-    new_compare_string = build_comparison_string(new_doc.extracted_data)
-
-    # If the OCR failed to parse any of our target fields, there's nothing to compare
-    if not new_compare_string:
-        return
-
-    # Threshold for a match (0.6 is 60% similarity - good for noisy OCR)
-    SIMILARITY_THRESHOLD = 0.6
-
-    # Initialize the channel layer
-    channel_layer = get_channel_layer()
-
-    for match in potential_matches:
-        existing_compare_string = build_comparison_string(match.extracted_data)
-
-        # Skip if the existing document doesn't have any parsed fields either
-        if not existing_compare_string:
-            continue
-
-        # Calculate similarity ratio based ONLY on the parsed fields
-        similarity = SequenceMatcher(None, new_compare_string, existing_compare_string).ratio()
-
-        print(f"Comparing '{new_compare_string}' with '{existing_compare_string}' -> Similarity: {similarity}")
-
-
-        if similarity >= SIMILARITY_THRESHOLD:
-            # --- 1. Notification for the user who just uploaded ---
-            uploader_notif = Notification.objects.create(
-                user=new_doc.user,
-                sender=match.user,
-                type="document_alert",
-                title="Possible Match Found!",
-                message=f"We found a document that looks like a match for your {new_doc.status.lower()} report.",
-                metadata={
-                    "match_doc_id": match.id,
-                    "similarity": round(similarity, 2),
-                    "match_status": match.status
-                }
-            )
-
-            # Send WebSocket alert to the uploader
-            async_to_sync(channel_layer.group_send)(
-                f"user_notifications_{new_doc.user.id}",
-                {
-                    "type": "send_document_match_notification",  # Matches the method in consumer
-                    "notification_id": uploader_notif.id,
-                    "title": uploader_notif.title,
-                    "message": uploader_notif.message,
-                    "metadata": uploader_notif.metadata,
-                }
-            )
-
-            # --- 2. Notification for the owner of the existing document ---
-            existing_owner_notif = Notification.objects.create(
-                user=match.user,
-                sender=new_doc.user,
-                type="document_alert",
-                title="Someone found/lost a matching document!",
-                message=f"A new {new_doc.status.lower()} document matches your previous report.",
-                metadata={
-                    "match_doc_id": new_doc.id,
-                    "similarity": round(similarity, 2),
-                    "match_status": new_doc.status
-                }
-            )
-
-            # Send WebSocket alert to the existing document owner
-            async_to_sync(channel_layer.group_send)(
-                f"user_notifications_{match.user.id}",
-                {
-                    "type": "send_document_match_notification",  # Matches the method in consumer
-                    "notification_id": existing_owner_notif.id,
-                    "title": existing_owner_notif.title,
-                    "message": existing_owner_notif.message,
-                    "metadata": existing_owner_notif.metadata,
-                }
-            )
-
-            # Break after first match or continue to find multiple?
-            # Usually, one match is enough to alert, but you can remove 'break' to find all.
-            break

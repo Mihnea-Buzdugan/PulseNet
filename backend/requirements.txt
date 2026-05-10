@@ -75,6 +75,3 @@ django-cloudinary-storage
 djangorestframework
 djangorestframework-simplejwt
 pyjwt
-easyocr
-facenet-pytorch
-opencv-python-headless
