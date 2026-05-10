@@ -71,8 +71,8 @@ function Navbar() {
 
         try {
             const [userRes, notifRes] = await Promise.all([
-                fetch('https://pulsenet-45is.onrender.com/accounts/user/', { headers }),
-                fetch('https://pulsenet-45is.onrender.com/accounts/notifications/', { headers })
+                fetch('http://localhost:8000/accounts/user/', { headers }),
+                fetch('http://localhost:8000/accounts/notifications/', { headers })
             ]);
 
             // Check if the server actually returned a 200 OK
@@ -114,7 +114,7 @@ function Navbar() {
         const timeout = setTimeout(async () => {
             try {
                 const res = await fetch(
-                    `https://pulsenet-45is.onrender.com/accounts/search-users/?q=${encodeURIComponent(query)}`,
+                    `http://localhost:8000/accounts/search-users/?q=${encodeURIComponent(query)}`,
                     { headers: {
                             "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                         }, }
@@ -148,7 +148,7 @@ function Navbar() {
 
 
     const handleLogout = async () => {
-        await fetch('https://pulsenet-45is.onrender.com/accounts/logout/', { method: 'POST', headers: {
+        await fetch('http://localhost:8000/accounts/logout/', { method: 'POST', headers: {
                 "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
             }, });
         localStorage.removeItem('auth-token');
@@ -167,13 +167,13 @@ function Navbar() {
         if (nextState && unreadNotifCount > 0) {
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
             try {
-                await fetch('https://pulsenet-45is.onrender.com/accounts/notifications/mark-read/', {
+                await fetch('http://localhost:8000/accounts/notifications/mark-read/', {
                     method: 'POST',
                     headers: {
 
-"Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
 
-},
+                    },
                 });
             } catch (err) {
                 console.error("Failed to mark notifications read", err);
@@ -197,10 +197,10 @@ function Navbar() {
 
     const deleteNotification = async (id) => {
         try {
-            await fetch(`https://pulsenet-45is.onrender.com/accounts/delete_notification/${id}/`, {
+            await fetch(`http://localhost:8000/accounts/delete_notification/${id}/`, {
                 method: "DELETE",
                 headers: {
-                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
             });
 
@@ -214,13 +214,13 @@ function Navbar() {
     const handleUserAction = async (e, targetUser, action) => {
         e.stopPropagation();
         const csrf = getCookie("csrftoken");
-        const url = `https://pulsenet-45is.onrender.com/accounts/${action}/${targetUser.id}/`;
+        const url = `http://localhost:8000/accounts/${action}/${targetUser.id}/`;
 
         try {
             await fetch(url, {
                 method: "POST",
                 headers: {
-                "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                 },
             });
 
@@ -247,7 +247,7 @@ function Navbar() {
     };
 
     const navItems = isAuthenticated
-        ? ['Home', 'Alerts', 'Profile', 'Add Pulse', 'Logout']
+        ? ['Home', 'Alerts', 'Profile', 'Add Pulse', 'Incidents', 'Documents', 'Logout']
         : ['Home', 'Login'];
 
     const renderNavItem = (item, index) => {
@@ -258,6 +258,9 @@ function Navbar() {
             Home: () => navigate('/'),
             Alerts: () => navigate('/alerts'),
             "Add Pulse": () => navigate('/add-pulse'),
+            "Incidents": () => navigate('/add-incidents'),
+            "Documents": () => navigate('/documents-feed'),
+
         };
 
         return (

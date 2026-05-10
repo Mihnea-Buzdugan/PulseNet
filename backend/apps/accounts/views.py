@@ -3825,6 +3825,7 @@ def resolve_rental_signal(request, id):
         )
 
 
+
         signal.delete()
 
         return JsonResponse({
