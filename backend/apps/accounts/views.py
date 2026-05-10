@@ -2738,7 +2738,6 @@ def delete_incident_type(request, incident_type_id):
             status=404
         )
 
-@csrf_exempt
 @login_required
 @require_http_methods(["GET"])
 def get_incident_types(request):
@@ -3000,6 +2999,39 @@ def get_crisis_events(request):
         for e in events
     ]
     return JsonResponse(data, safe=False)
+
+
+@staff_member_required
+@require_POST
+@login_required
+def create_crisis_event(request):
+    try:
+        data = json.loads(request.body)
+        lat = data.get('lat')
+        lng = data.get('lng')
+        radius = data.get('radius', 5)
+        incident_type_id = data.get('incident_type')
+        notes = data.get('notes', '')
+        mode = data.get('mode', 'local')
+
+        from django.contrib.gis.geos import Point
+        center = Point(float(lng), float(lat)) if lat and lng else None
+
+        incident_type = get_object_or_404(IncidentType, id=incident_type_id)
+
+        crisis_event = CrisisEvent.objects.create(
+            incident_type=incident_type,
+            center=center,
+            radius=radius * 1000,
+            notes=notes,
+            is_active=True,
+            mode=mode,
+        )
+
+        return JsonResponse({"success": True, "crisis_event_id": crisis_event.id}, status=201)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
 
 @login_required
 def get_notifications(request):

@@ -758,7 +758,9 @@ class CrisisEvent(models.Model):
     cluster       = models.OneToOneField(
         IncidentCluster,
         on_delete=models.CASCADE,
-        related_name="crisis_event"
+        related_name="crisis_event",
+        null=True,
+        blank=True,
     )
     incident_type = models.ForeignKey(
         IncidentType,
@@ -768,10 +770,15 @@ class CrisisEvent(models.Model):
     )
     triggered_at = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
-    center = models.PointField(srid=4326, geography=True)
-    radius = models.FloatField()
+    center = models.PointField(srid=4326, geography=True, null=True)
+    radius = models.FloatField(null=True)
     is_active = models.BooleanField(default=True)
-    notes         = models.TextField(blank=True)  # admin can add context
+    notes = models.TextField(blank=True)
+    MODE_CHOICES = [
+        ('local', 'Local'),
+        ('global', 'Global'),
+    ]
+    mode = models.CharField(max_length=10, choices=MODE_CHOICES, default='local')
     class Meta:
         ordering = ["-triggered_at"]
 
@@ -792,6 +799,21 @@ class Notification(models.Model):
         ("chat_message", "Chat Message"),
         ("hero_alert", "Hero Alert"),
         ("pet_match", "Pet Match Found"),
+    )
+
+    CRISIS_STATUS_CHOICES = [
+        ("safe", "I'm Safe"),
+        ("need_help", "Need Help"),
+        ("injured", "Injured"),
+        ("available_to_help", "Available to Help"),
+    ]
+
+    crisis_status = models.CharField(
+        max_length=30,
+        choices=CRISIS_STATUS_CHOICES,
+        null=True,
+        blank=True,
+        default=None,
     )
 
     user = models.ForeignKey(

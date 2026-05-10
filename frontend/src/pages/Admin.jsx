@@ -519,6 +519,13 @@ const Admin = () => {
                     >
                         Community Feedbacks
                     </button>
+                    <button
+                        className={activeTab === 'crisis' ? styles.activeTab : styles.tab}
+                        onClick={() => navigate('/crisis-events')}
+                    >
+                        Crisis Management
+                    </button>
+
                 </div>
             </header>
 

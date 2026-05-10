@@ -32,6 +32,7 @@ const Contact = React.lazy(() => import('./pages/User_pages/Contact.jsx'));
 const AddIncidents = React.lazy(() => import('./pages/Incidents/AddIncidents.jsx'));
 const SpecialIncidents = React.lazy(() => import('./pages/Incidents/SpecialIncidents.jsx'));
 const SpecialIncidentsDetails = React.lazy(() => import('./pages/Incidents/SpecialIncidentsDetails.jsx'));
+const CreateCrisisEvents = React.lazy(() => import('./pages/CreateCrisisEvents.jsx'));
 const NotificationHandler = ({ currentUser }) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -506,7 +507,7 @@ function App() {
                         <Route path="/add-incidents" element={<AddIncidents />} />
                         <Route path="special-incidents" element={<SpecialIncidents />} />
                         <Route path="special-incident/:id" element={<SpecialIncidentsDetails />} />
-
+                        <Route path="crisis-events" element={<AdminRoute><CreateCrisisEvents /></AdminRoute>} />
                         <Route path="/admin-page" element={<AdminRoute><Admin /></AdminRoute>} />
                     </Route>
 
