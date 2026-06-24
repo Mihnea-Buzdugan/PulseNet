@@ -349,10 +349,6 @@ export default function Profile() {
         const csrfToken = getCookie("csrftoken");
         fetch("https://localhost/accounts/profile/", {
             method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrfToken,
-            },
             credentials: "include",
         })
             .then((response) => response.json())
@@ -388,10 +384,6 @@ export default function Profile() {
                 const offersRes = await fetch("https://localhost/accounts/pulse_rentals/", {
                     method: "GET",
                     credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
-                    },
                 });
 
                 if (offersRes.ok) {
@@ -405,10 +397,6 @@ export default function Profile() {
                 const proposalsRes = await fetch("https://localhost/accounts/pulse_own_proposals/", {
                     method: "GET",
                     credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
-                    },
                 });
 
                 if (proposalsRes.ok) {
@@ -435,10 +423,7 @@ export default function Profile() {
                 const resReceived = await fetch("https://localhost/accounts/request-offers/received/", {
                     method: "GET",
                     credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
-                    },});
+                    });
                 const dataReceived = await resReceived.json();
                 setReceivedRequestOffers(dataReceived);
 
@@ -446,10 +431,7 @@ export default function Profile() {
                 const resSent = await fetch("https://localhost/accounts/own-request-offers/", {
                     method: "GET",
                     credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
-                    },});
+                    });
                 const dataSent = await resSent.json();
                 setSentRequestOffers(dataSent);
             } catch (err) {
@@ -596,7 +578,7 @@ export default function Profile() {
     const handleDeleteProfilePicture = async () => {
         try {
             const response = await fetch("https://localhost/accounts/delete_profile_picture/", {
-                method: "POST",
+                method: "DELETE",
                 credentials: "include",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
             });
@@ -708,7 +690,7 @@ export default function Profile() {
             const res = await fetch(
                 `https://localhost/accounts/update_pulse/${editingPulse.id}/`,
                 {
-                    method: "POST",
+                    method: "PATCH",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },
                     credentials: "include",
                     body: formData,

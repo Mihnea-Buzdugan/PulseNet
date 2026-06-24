@@ -3,33 +3,30 @@ from . import views
 
 urlpatterns = [
     # Auth & Tokens
-    path('csrf-token/', views.csrf_token, name='csrf_token'),
-    path('user_login/', views.user_login, name='login'),
-    path('logout/', views.logout, name='logout'),
-    path('user/', views.user, name='user'),
-    path('signup/', views.sign_up, name='signup'),
-    path('google_login/', views.google_login, name='google_login'),
+    path('csrf-token/', views.CSRFTokenView.as_view(), name='csrf_token'),
+    path('user_login/', views.LoginView.as_view(), name='login'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
+    path('signup/', views.SignUpView.as_view(), name='signup'),
+    path('google_login/', views.GoogleLoginView.as_view(), name='google_login'),
 
     # User Profile Data
-    path('user/', views.user, name='user'),
-    path('profile/', views.profile, name='profile'),
-    path('update_profile/', views.update_profile, name='update_profile'),
-    path('update_location/', views.update_location, name='update_location'),
-    path('become_verified/', views.become_verified, name='become_verified'),
+    path('user/', views.UserView.as_view(), name='user'),
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('update_profile/', views.ProfileView.as_view(), name='update_profile'),
+    path('update_location/', views.UpdateLocationView.as_view(), name='update_location'),
+    path('become_verified/', views.BecomeVerifiedView.as_view(), name='become_verified'),
 
     # Profile Pictures
-    path('upload_profile_picture/', views.upload_profile_picture, name='upload_profile_picture'),
-    path('delete_profile_picture/', views.delete_profile_picture, name='delete_profile_picture'),
+    path('upload_profile_picture/', views.ProfilePictureView.as_view(), name='upload_profile_picture'),
+    path('delete_profile_picture/', views.ProfilePictureView.as_view(), name='delete_profile_picture'),
 
     # --- UNIFIED PULSE SYSTEM ---
-    path('add_pulse/', views.add_pulse, name='add_pulse'),
-    path("list-all-pulses/", views.list_all_pulses, name="list_all_pulses"),
-    path("update_pulse/<int:pulse_id>/", views.update_pulse, name="update_pulse"),
-    path('remove_pulse/<int:pulse_id>/', views.remove_pulse, name='remove_pulse'),
-    path('get_latest_pulses/', views.get_latest_pulses, name='get_latest_pulses'),
-    path("get_nearest_pulses/", views.get_nearest_pulses, name="get_nearest_pulses"),
-    path('get_best_pulses/', views.get_best_pulses, name="get_best_pulses"),
-    path('pulse/<int:pulse_id>/', views.get_pulse_by_id, name='get_pulse_by_id'),
+    path('add_pulse/', views.AddPulseAPIView.as_view(), name='add_pulse'),
+    path("list-all-pulses/", views.PulseList.as_view(), name="list_all_pulses"),
+    path("update_pulse/<int:pulse_id>/", views.PulseDetailView.as_view(), name="update_pulse"),
+    path('remove_pulse/<int:pulse_id>/', views.PulseDetailView.as_view(), name='remove_pulse'),
+    path("get_nearest_pulses/", views.NearestPulses.as_view(), name="get_nearest_pulses"),
+    path('pulse/<int:pulse_id>/', views.PulseDetailRetrieve.as_view(), name='get_pulse_by_id'),
     path('pulse/comments/<int:pulse_id>/', views.get_pulse_comments, name='get_pulse_comments'),
     path('pulse/ratings/<int:pulse_id>/', views.add_pulse_rating, name='add_pulse_rating'),
     path("create_pulse_rental/", views.create_pulse_rental, name="create_pulse_rental"),
@@ -38,7 +35,7 @@ urlpatterns = [
     path("signal_pulse_rental/", views.signal_pulse_rental, name="signal_pulse_rental"),
     path("pulse_rental_feedback/<int:rental_id>/", views.pulse_rental_feedback, name="pulse_rental_feedback"),
     path("pulse_own_proposals/", views.get_rental_proposals, name="get_rental_proposals"),
-    path('favorites/', views.get_favorite_pulses, name="get_favorite_pulses"),
+    path('favorites/', views.FavoritePulses.as_view(), name="get_favorite_pulses"),
     path('add_to_favorites/<int:pulse_id>/', views.add_pulse_to_favorites, name='add_to_favorites'),
     path('delete_from_favorites/<int:pulse_id>/', views.delete_pulse_from_favorites, name='delete_from_favorites'),
 

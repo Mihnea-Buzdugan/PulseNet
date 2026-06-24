@@ -14,6 +14,8 @@ from django.core.exceptions import ValidationError
 import json
 from django.utils import timezone
 from datetime import timedelta
+from datetime import time
+from django.utils.dateparse import parse_time
 from django.contrib.auth import get_user_model
 from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from google.auth.transport.requests import Request
@@ -41,210 +43,302 @@ def generate_password(length=12):
     alphabet = string.ascii_letters + string.digits + string.punctuation
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
+from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.utils.decorators import method_decorator
 
-@ensure_csrf_cookie
-def csrf_token(request):
-    csrf_token = get_token(request)
-    return JsonResponse({'csrf_token': csrf_token})
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class CSRFTokenView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
 
-@csrf_protect
-def sign_up(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError:
-            return JsonResponse({'message': 'Invalid JSON data'}, status=400)
+    def get(self, request):
+        return Response({
+            "csrf_token": get_token(request)
+        })
 
-        email = data.get('email')
-        username = data.get('username')
-        password = data.get('password')
-        first_name = data.get('first_name')
-        last_name = data.get('last_name')
+
+class SignUpView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+
+
+    def post(self, request):
+        data = request.data
+
+        email = data.get("email")
+        username = data.get("username")
+        password = data.get("password")
+        first_name = data.get("first_name")
+        last_name = data.get("last_name")
 
         User = get_user_model()
 
         if User.objects.filter(email=email).exists():
-            return JsonResponse({'message': 'Email is already in use.'}, status=400)
+            return Response(
+                {"message": "Email is already in use."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if User.objects.filter(username=username).exists():
-            return JsonResponse({'message': 'Username is already in use.'}, status=400)
+            return Response(
+                {"message": "Username is already in use."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             user = User.objects.create_user(
                 email=email,
+                username=username,
                 password=password,
                 first_name=first_name,
                 last_name=last_name,
-                username=username,
                 is_private=False,
             )
         except ValidationError as e:
-            return JsonResponse({'message': str(e)}, status=400)
+            return Response(
+                {"message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        django_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        django_login(
+            request,
+            user,
+            backend="django.contrib.auth.backends.ModelBackend",
+        )
+
         request.session.set_expiry(3600 * 6)
 
-        return JsonResponse({
-            'message': 'User created and logged in successfully.',
-            'user': {
-                'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'username': user.username,
-            }
-        }, status=201)
+        return Response(
+            {
+                "message": "User created and logged in successfully.",
+                "user": {
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "username": user.username,
+                },
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
-    return JsonResponse({'message': 'Method not allowed'}, status=405)
 
-@csrf_protect
-def user_login(request):
-    if request.method == 'POST':
-        csrf_token = get_token(request)
-        print("CSRF Token received:", csrf_token)
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+
+
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        if not email or not password:
+            return Response(
+                {"message": "Email and Password are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = authenticate(
+            request,
+            username=email,  # assuming your auth backend uses email as username
+            password=password,
+        )
+
+        if user is None:
+            return Response(
+                {"message": "Invalid credentials"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        django_login(
+            request,
+            user,
+            backend="django.contrib.auth.backends.ModelBackend",
+        )
+
+        request.session.set_expiry(3600 * 6)
+
+        return Response(
+            {
+                "message": "User login successful",
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "is_superuser": user.is_superuser,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+
+
+class GoogleLoginView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+
+
+    def post(self, request):
+        google_client_id = os.environ.get("client_id_Google")
+
+        google_token = request.data.get("google_token")
+
+        if not google_token:
+            return Response(
+                {"message": "Invalid Google token"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
-            data = json.loads(request.body)
-            email = data.get('email')
-            password = data.get('password')
+            id_info = id_token.verify_oauth2_token(
+                google_token,
+                Request(),
+                google_client_id,
+            )
 
-            if not email or not password:
-                return JsonResponse({'message': 'Email and Password are required'}, status=400)
+            google_email = id_info.get("email")
+            full_given = id_info.get("given_name", "").strip()
 
-            user = authenticate(request, username=email, password=password)
+            parts = full_given.split()
 
-            if user is not None:
-                django_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                request.session.set_expiry(3600 * 6)
-
-                user_data = {
-                    'id': user.id,
-                    'email': user.email,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'is_superuser': user.is_superuser
-                }
-                return JsonResponse({'message': 'User login successful', 'user': user_data}, status=200)
+            if parts:
+                last_name = parts[0]
+                first_name = " ".join(parts[1:]) if len(parts) > 1 else ""
             else:
-                return JsonResponse({'message': 'Invalid credentials'}, status=400)
+                first_name = ""
+                last_name = ""
 
-        except json.JSONDecodeError:
-            return JsonResponse({'message': 'Invalid JSON'}, status=400)
+            User = get_user_model()
 
-    return JsonResponse({'message': 'Method Not Allowed'}, status=405)
+            user = User.objects.filter(email=google_email).first()
 
+            if not user:
+                user = User.objects.create_user(
+                    username=google_email,
+                    email=google_email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    password=make_password(generate_password()),
+                    is_private=False,
+                )
 
-@csrf_protect
-def google_login(request):
-    GOOGLE_CLIENT_ID = os.environ.get('client_id_Google')
+            django_login(
+                request,
+                user,
+                backend="django.contrib.auth.backends.ModelBackend",
+            )
 
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-        except json.decoder.JSONDecodeError:
-            return JsonResponse({'message': 'Invalid JSON'}, status=400)
+            request.session.set_expiry(6 * 3600)
 
-        google_token = data.get('google_token')
-        if google_token:
-            try:
+            return Response(
+                {
+                    "message": "User logged in with Google successfully",
+                    "user": {
+                        "email": user.email,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                        "is_superuser": user.is_superuser,
+                    },
+                },
+                status=status.HTTP_200_OK,
+            )
 
-                id_info = id_token.verify_oauth2_token(google_token, Request(), GOOGLE_CLIENT_ID)
-                google_email = id_info.get('email')
-                full_given = id_info.get('given_name', '').strip()
-                parts = full_given.split()
-                raw_password = generate_password()
-                hashed_password = make_password(raw_password)
-                User = get_user_model()
-                if parts:
-
-                    last_name = parts[0]
-
-                    first_name = ' '.join(parts[1:]) if len(parts) > 1 else ''
-                else:
-
-                    last_name = ''
-                    first_name = ''
-
-                if google_email:
-
-                    user = User.objects.filter(email=google_email).first()
-                    if not user:
-
-                        user = User.objects.create_user(
-                            username=google_email,
-                            email=google_email,
-                            first_name=first_name,
-                            last_name=last_name,
-                            password=hashed_password,
-                            is_private = False,
-                        )
-
-
-                    user.backend = 'django.contrib.auth.backends.ModelBackend'
-                    if user.is_superuser == False or user.is_superuser == True:
-
-                        django_login(request, user)
-                        request.session.set_expiry(6 * 3600)
-
-                        user_data = {
-                            'email': user.email,
-                            'first_name': user.first_name,
-                            'last_name': user.last_name,
-                            'is_superuser': user.is_superuser,
-                        }
-                        return JsonResponse({'message': 'User logged in with Google successfully', 'user': user_data}, status=200)
-                    else:
-                        return JsonResponse({'message': 'User is a superuser, cannot login with Google'}, status=400)
-            except ValueError as e:
-                return JsonResponse({'message': f'Invalid Google token: {str(e)}'}, status=400)
-
-        else:
-            return JsonResponse({'message': 'Invalid Google token'}, status=400)
-    else:
-        return JsonResponse({'message': 'Method not allowed'}, status=405)
+        except ValueError as e:
+            return Response(
+                {"message": f"Invalid Google token: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 
-@csrf_exempt
-def logout(request):
-    if request.method == "POST":
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
         django_logout(request)
-        return JsonResponse({'message': 'User logged out successfully'}, status=200)
-    else:
-        return JsonResponse({'message': 'Method not allowed'}, status=405)
+
+        return Response(
+            {"message": "User logged out successfully"},
+            status=status.HTTP_200_OK,
+        )
 
 
 
-
-@login_required
-def user(request):
-    if request.method == "GET":
-        user = request.user
-        return JsonResponse({'user':{
-            'id': user.id,
-            'email': user.email,
-            'username': user.username,
-            'firstName': user.first_name,
-            'lastName': user.last_name,
-            'is_superuser': user.is_superuser,
-            'profile_picture': user.profile_picture.url if user.profile_picture else None,
-            "is_banned": user.is_banned,
-            "banned_until": user.banned_until.isoformat() if user.banned_until else None,
-        }}, status=200)
-    else:
-        return JsonResponse({'message': 'Method not allowed'}, status=405)
+class UserView(APIView):
+    permission_classes = [IsAuthenticated]
 
 
-@login_required
-def profile(request):
-    if request.method == "GET":
+    def get(self, request):
         user = request.user
 
+        return Response(
+            {
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "username": user.username,
+                    "firstName": user.first_name,
+                    "lastName": user.last_name,
+                    "is_superuser": user.is_superuser,
+                    "profile_picture": (
+                        user.profile_picture.url
+                        if user.profile_picture
+                        else None
+                    ),
+                    "is_banned": user.is_banned,
+                    "banned_until": (
+                        user.banned_until.isoformat()
+                        if user.banned_until
+                        else None
+                    ),
+                }
+            },
+            status=status.HTTP_200_OK,
+        )
 
-        pulses = Pulse.objects.filter(user=user).prefetch_related('images')
-        pulses_data = []
-        for p in pulses:
-            pulses_data.append({
+
+def serialize_location(location):
+    return json.loads(location.geojson) if location else None
+
+
+def serialize_image_urls(request, images):
+    return [request.build_absolute_uri(img.image.url) for img in images]
+
+
+def parse_optional_time(value):
+    if value in (None, ""):
+        return None
+    if isinstance(value, time):
+        return value
+    parsed = parse_time(value)
+    if parsed is None:
+        raise ValidationError(f"Invalid time format: {value}")
+    return parsed
+
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+
+    def get(self, request):
+        user = request.user
+
+        pulses = Pulse.objects.filter(user=user).prefetch_related("images")
+        requests = UrgentRequest.objects.filter(user=user).prefetch_related("images")
+
+        pulses_data = [
+            {
                 "id": p.id,
                 "title": p.title,
                 "pulseType": p.pulse_type,
@@ -252,32 +346,33 @@ def profile(request):
                 "price": float(p.price),
                 "currencyType": p.currencyType,
                 "description": p.description,
-                "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
+                "images": serialize_image_urls(request, p.images.all()),
                 "phone_number": p.phone_number,
-                "location": json.loads(p.location.geojson) if p.location else None,
+                "location": serialize_location(p.location),
                 "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
-            })
+            }
+            for p in pulses
+        ]
 
-        requests = UrgentRequest.objects.filter(user=user).prefetch_related('images')
-        requests_data = []
-        for req in requests:
-            requests_data.append({
+        requests_data = [
+            {
                 "id": req.id,
                 "title": req.title,
                 "description": req.description,
                 "category": req.category,
                 "price": float(req.max_price) if req.max_price is not None else None,
                 "currencyType": req.currencyType,
-                "images": [request.build_absolute_uri(img.image.url) for img in req.images.all()],
-                "location": json.loads(req.location.geojson) if req.location else None,
+                "images": serialize_image_urls(request, req.images.all()),
+                "location": serialize_location(req.location),
                 "timestamp": req.created_at.strftime("%Y-%m-%d %H:%M"),
-            })
-
+            }
+            for req in requests
+        ]
 
         total_posts = (
-            pulses.count() +
-            Alert.objects.filter(user=user).count() +
-            UrgentRequest.objects.filter(user=user).count()
+            pulses.count()
+            + Alert.objects.filter(user=user).count()
+            + UrgentRequest.objects.filter(user=user).count()
         )
 
         user_data = {
@@ -288,7 +383,7 @@ def profile(request):
             "username": user.username,
             "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
             "biography": user.biography,
-            "location": json.loads(user.location.geojson) if user.location else None,
+            "location": serialize_location(user.location),
             "visibility_radius": user.visibility_radius,
             "quiet_hours_start": user.quiet_hours_start.strftime("%H:%M") if user.quiet_hours_start else None,
             "quiet_hours_end": user.quiet_hours_end.strftime("%H:%M") if user.quiet_hours_end else None,
@@ -304,351 +399,401 @@ def profile(request):
             "requests": requests_data,
         }
 
-        return JsonResponse({"user": user_data})
+        return Response({"user": user_data}, status=status.HTTP_200_OK)
 
-    return JsonResponse({"error": "Method not allowed"}, status=405)
+    def put(self, request):
+        try:
+            user = request.user
+            data = request.data
+
+            old_skills = list(user.skills) if user.skills else []
+
+            user.first_name = data.get("firstName", user.first_name)
+            user.last_name = data.get("lastName", user.last_name)
+            user.username = data.get("username", user.username)
+            user.email = data.get("email", user.email)
+            user.biography = data.get("biography", user.biography)
+            user.online_status = data.get("online_status", user.online_status)
+            user.visibility_radius = data.get("visibility_radius", user.visibility_radius)
+            user.is_private = data.get("is_private", user.is_private)
+            user.skills = data.get("skills", user.skills or [])
+
+            user.quiet_hours_start = parse_optional_time(data.get("quiet_hours_start"))
+            user.quiet_hours_end = parse_optional_time(data.get("quiet_hours_end"))
+
+            user.save()
+
+            if old_skills != user.skills:
+                update_user_embedding.delay(user.id)
+
+            pulses = Pulse.objects.filter(user=user).prefetch_related("images")
+            pulses_data = [
+                {
+                    "id": p.id,
+                    "title": p.title,
+                    "pulseType": p.pulse_type,
+                    "price": float(p.price),
+                    "currencyType": p.currencyType,
+                    "images": serialize_image_urls(request, p.images.all()),
+                }
+                for p in pulses
+            ]
+
+            return Response(
+                {
+                    "message": "Success",
+                    "user": {
+                        "id": user.id,
+                        "email": user.email,
+                        "firstName": user.first_name,
+                        "lastName": user.last_name,
+                        "username": user.username,
+                        "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
+                        "biography": user.biography,
+                        "location": serialize_location(user.location),
+                        "visibility_radius": user.visibility_radius,
+                        "quiet_hours_start": user.quiet_hours_start.strftime("%H:%M") if user.quiet_hours_start else None,
+                        "quiet_hours_end": user.quiet_hours_end.strftime("%H:%M") if user.quiet_hours_end else None,
+                        "trustScore": user.trust_score,
+                        "trustLevel": user.trust_level,
+                        "isVerified": user.is_verified,
+                        "onlineStatus": user.online_status,
+                        "is_private": user.is_private,
+                        "skills": user.skills or [],
+                        "pulses": pulses_data,
+                    },
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except ValidationError as e:
+            errors = getattr(e, "message_dict", None) or getattr(e, "messages", None) or str(e)
+            return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@login_required
-@require_http_methods(["PUT"])
-def become_verified(request):
-    try:
+class BecomeVerifiedView(APIView):
+    permission_classes = [IsAuthenticated]
+
+
+    def put(self, request):
+        try:
+            user = request.user
+
+            account_age = timezone.now() - user.date_joined
+
+            total_posts = (
+                Pulse.objects.filter(user=user).count()
+                + Alert.objects.filter(user=user).count()
+                + UrgentRequest.objects.filter(user=user).count()
+            )
+
+            if total_posts <= 15:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "Not enough posts to become verified.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if user.trust_score < 200:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "Trust level not high enough.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if account_age < timedelta(days=90):
+                return Response(
+                    {
+                        "success": False,
+                        "error": "Account is too new to become verified.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user.is_verified = True
+            user.save(update_fields=["is_verified"])
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "You are now a verified neighbour!",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+
+class ProfilePictureView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
         user = request.user
 
-        account_age = timezone.now() - user.date_joined
+        if "profile_picture" not in request.FILES:
+            return Response(
+                {"error": "No file provided."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        total_posts = (
-                Pulse.objects.filter(user=user).count() +
-                Alert.objects.filter(user=user).count() +
-                UrgentRequest.objects.filter(user=user).count()
-        )
+        file = request.FILES["profile_picture"]
 
+        if not file.content_type.startswith("image/"):
+            return Response(
+                {"error": "File must be an image."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        if total_posts <= 15:
-            return JsonResponse({"success": False, "error": "Not enough posts to become verified."}, status=400)
+        max_size = 20 * 1024 * 1024
+        if file.size > max_size:
+            return Response(
+                {"error": "Image must be smaller than 20MB."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        if user.trust_score < 200:
-            return JsonResponse({"success": False, "error": "Trust level not high enough."}, status=400)
+        if user.profile_picture:
+            user.profile_picture.delete(save=False)
 
-
-        if not (account_age >= timedelta(days=90)):
-            return JsonResponse({"success": False, "error": "Account is too new to become verified."}, status=400)
-
-
-        user.is_verified = True
-        user.save(update_fields=["is_verified"])
-
-        return JsonResponse({"success": True, "message": "You are now a verified neighbour!"})
-
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=500)
-
-
-
-@login_required
-@require_http_methods(["PUT"])
-def update_profile(request):
-    try:
-
-        data = json.loads(request.body)
-        user = request.user
-
-        old_skills = list(user.skills) if user.skills else []
-
-        user.first_name = data.get('firstName', user.first_name)
-        user.last_name = data.get('lastName', user.last_name)
-        user.username = data.get('username', user.username)
-        user.email = data.get('email', user.email)
-        user.biography = data.get('biography', user.biography)
-        user.online_status = data.get("online_status", user.online_status)
-        user.quiet_hours_start = data.get("quiet_hours_start") or None
-        user.quiet_hours_end = data.get("quiet_hours_end") or None
-        user.visibility_radius = data.get('visibility_radius', user.visibility_radius)
-        user.is_private = data.get('is_private', user.is_private)
-        user.skills = data.get('skills', [])
-
+        user.profile_picture = file
         user.save()
 
-        if old_skills != user.skills:
-            update_user_embedding.delay(user.id)
-
-        pulses = Pulse.objects.filter(user=user).prefetch_related('images')
+        pulses = Pulse.objects.filter(user=user).prefetch_related("images")
         pulses_data = [
             {
                 "id": p.id,
                 "title": p.title,
                 "pulseType": p.pulse_type,
-                "price": float(p.price),
-                "currencyType": p.currencyType,
-                "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
-            } for p in pulses
+                "images": [
+                    request.build_absolute_uri(img.image.url)
+                    for img in p.images.all()
+                ],
+            }
+            for p in pulses
         ]
 
-        return JsonResponse({
-            "message": "Success",
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "firstName": user.first_name,
-                "lastName": user.last_name,
-                "username": user.username,
-                "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
-                "biography": user.biography,
-                "location": json.loads(user.location.geojson) if user.location else None,
-                "visibility_radius": user.visibility_radius,
-                "quiet_hours_start": user.quiet_hours_start,
-                "quiet_hours_end": user.quiet_hours_end,
-                "trustScore": user.trust_score,
-                "trustLevel": user.trust_level,
-                "isVerified": user.is_verified,
-                "onlineStatus": user.online_status,
-                "is_private": user.is_private,
-                "skills": user.skills or [],
-                "pulses": pulses_data,
-            }
-        }, status=200)
-
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON format"}, status=400)
-    except ValidationError as e:
-        errors = getattr(e, 'message_dict', None) or e.messages
-        return JsonResponse({"error": errors}, status=400)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-
-@login_required
-@require_POST
-@csrf_protect
-def upload_profile_picture(request):
-    user = request.user
-
-    if "profile_picture" not in request.FILES:
-        return JsonResponse(
-            {"error": "No file provided."},
-            status=400
+        return Response(
+            {
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "firstName": user.first_name,
+                    "lastName": user.last_name,
+                    "username": user.username,
+                    "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
+                    "biography": user.biography,
+                    "location": json.loads(user.location.geojson) if user.location else None,
+                    "visibility_radius": user.visibility_radius,
+                    "quiet_hours_start": user.quiet_hours_start,
+                    "quiet_hours_end": user.quiet_hours_end,
+                    "trustScore": user.trust_score,
+                    "trustLevel": user.trust_level,
+                    "isVerified": user.is_verified,
+                    "onlineStatus": user.online_status,
+                    "pulses": pulses_data,
+                }
+            },
+            status=status.HTTP_200_OK,
         )
 
-    file = request.FILES["profile_picture"]
+    def delete(self, request):
+        user = request.user
 
+        if not user.profile_picture:
+            return Response(
+                {"error": "No profile picture to delete."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-    if not file.content_type.startswith("image/"):
-        return JsonResponse(
-            {"error": "File must be an image."},
-            status=400
-        )
-
-    max_size = 20 * 1024 * 1024
-    if file.size > max_size:
-        return JsonResponse(
-            {"error": "Image must be smaller than 20MB."},
-            status=400
-        )
-
-
-    if user.profile_picture:
         user.profile_picture.delete(save=False)
+        user.profile_picture = None
+        user.save()
 
-    user.profile_picture = file
-    user.save()
-
-    pulses = Pulse.objects.filter(user=user).prefetch_related('images')
-    pulses_data = [
-        {
-            "id": p.id,
-            "title": p.title,
-            "pulseType": p.pulse_type,
-            "images": [request.build_absolute_uri(img.image.url) for img in p.images.all()],
-        } for p in pulses
-    ]
-
-    return JsonResponse({
-        "user": {
-            "id": user.id,
-                "email": user.email,
-                "firstName": user.first_name,
-                "lastName": user.last_name,
-                "username": user.username,
-                "profilePicture": request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
-                "biography": user.biography,
-                "location": json.loads(user.location.geojson) if user.location else None,
-                "visibility_radius": user.visibility_radius,
-                "quiet_hours_start": user.quiet_hours_start,
-                "quiet_hours_end": user.quiet_hours_end,
-                "trustScore": user.trust_score,
-                "trustLevel": user.trust_level,
-                "isVerified": user.is_verified,
-                "onlineStatus": user.online_status,
-                "pulses": pulses_data,
-        }
-    })
-
-@login_required
-@require_POST
-@csrf_protect
-def delete_profile_picture(request):
-    user = request.user
-
-    if not user.profile_picture:
-        return JsonResponse(
-            {"error": "No profile picture to delete."},
-            status=400
+        return Response(
+            {
+                "message": "Profile picture deleted successfully.",
+                "user": {
+                    "id": user.id,
+                    "profilePicture": None,
+                },
+            },
+            status=status.HTTP_200_OK,
         )
 
-    user.profile_picture.delete(save=False)
 
-    user.profile_picture = None
-    user.save()
+@method_decorator(csrf_protect, name="dispatch")
+@method_decorator(check_hate_speech, name="dispatch")
+class AddPulseAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["post"]
 
-    return JsonResponse({
-        "message": "Profile picture deleted successfully.",
-        "user": {
-            "id": user.id,
-            "profilePicture": None
-        }
-    })
+    def post(self, request, *args, **kwargs):
+        try:
+            data = request.data
 
+            should_flag = getattr(request, "needs_review", False)
+            ai_score = getattr(request, "toxicity_score", 0.0)
 
-@login_required
-@require_POST
-@csrf_protect
-@check_hate_speech
-def add_pulse(request):
-    try:
-        data = request.POST
+            lat = data.get("lat")
+            lng = data.get("lng")
+            location_point = None
+            if lat and lng:
+                location_point = Point(float(lng), float(lat), srid=4326)
 
-        should_flag = getattr(request, 'needs_review', False)
-        ai_score = getattr(request, 'toxicity_score', 0.0)
+            price = data.get("price", 0)
+            trust_required = int(price) > 1000
 
-        lat = data.get('lat')
-        lng = data.get('lng')
-        location_point = None
-        if lat and lng:
-            location_point = Point(float(lng), float(lat), srid=4326)
+            pulse = Pulse.objects.create(
+                user=request.user,
+                title=data.get("title"),
+                description=data.get("description", ""),
+                category=data.get("category", ""),
+                pulse_type=data.get("pulse_type"),
+                price=price,
+                trust_required=trust_required,
+                currencyType=data.get("currencyType", "RON"),
+                phone_number=data.get("phone_number", ""),
+                location=location_point,
+                is_available=str(data.get("is_available", "true")).lower() == "true",
+                is_flagged=should_flag,
+                is_approved=not should_flag,
+                toxicity_score=ai_score,
+            )
 
-        trust_required = False
-        price = data.get('price', 0)
-        if int(price) > 1000:
-            trust_required = True
+            if pulse.location:
+                reverse_geocode_location.delay("Pulse", pulse.id)
 
-        pulse = Pulse.objects.create(
-            user=request.user,
-            title=data.get('title'),
-            description=data.get('description', ''),
-            category=data.get('category', ''),
-            pulse_type=data.get('pulse_type'),
-            price=price,
-            trust_required=trust_required,
-            currencyType=data.get('currencyType', 'RON'),
-            phone_number=data.get('phone_number', ''),
-            location=location_point,
-            is_available=data.get('is_available', 'true').lower() == 'true',
+            images = request.FILES.getlist("images")
+            for img in images:
+                PulseImage.objects.create(pulse=pulse, image=img)
 
-            is_flagged=should_flag,
-            is_approved=not should_flag,
-            toxicity_score=ai_score,
-        )
-        if pulse.location:
-            reverse_geocode_location.delay("Pulse", pulse.id)
+            first_image = pulse.images.first()
+            image_url = request.build_absolute_uri(first_image.image.url) if first_image else None
 
-
-        images = request.FILES.getlist('images')
-        for img in images:
-            PulseImage.objects.create(pulse=pulse, image=img)
-
-        first_image = pulse.images.first()
-        image_url = request.build_absolute_uri(first_image.image.url) if first_image else None
-
-        broadcast_payload = {
-            "id": pulse.id,
-            "type": pulse.pulse_type,
-            "user": request.user.username,
-            "title": pulse.title,
-            "price": float(pulse.price),
-            "pulse_type": pulse.pulse_type,
-            "description": pulse.description,
-            "popularity_score": pulse.popularity_score if hasattr(pulse, 'popularity_score') else 0,
-            "total_reviews": pulse.total_reviews if hasattr(pulse, 'total_reviews') else 0,
-            "currency": pulse.currencyType,
-            "timestamp": pulse.created_at.isoformat(),
-            "distance": None,
-            "location": json.loads(pulse.location.geojson) if pulse.location else None,
-            "image": image_url,
-        }
-
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            "pulses_feed",
-            {"type": "pulse.message", "data": broadcast_payload}
-        )
-
-        update_user_trust_score_task.delay(request.user.id)
-
-        return JsonResponse({
-            "success": True,
-            "pulse": {
+            broadcast_payload = {
                 "id": pulse.id,
+                "type": pulse.pulse_type,
+                "user": request.user.username,
                 "title": pulse.title,
-                "pulseType": pulse.pulse_type,
+                "price": float(pulse.price),
+                "pulse_type": pulse.pulse_type,
+                "description": pulse.description,
+                "popularity_score": getattr(pulse, "popularity_score", 0),
+                "total_reviews": getattr(pulse, "total_reviews", 0),
+                "currency": pulse.currencyType,
+                "timestamp": pulse.created_at.isoformat(),
+                "distance": None,
                 "location": json.loads(pulse.location.geojson) if pulse.location else None,
-                "images": [request.build_absolute_uri(i.image.url) for i in pulse.images.all()]
+                "image": image_url,
             }
-        }, status=201)
 
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=400)
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "pulses_feed",
+                {"type": "pulse.message", "data": broadcast_payload}
+            )
+
+            update_user_trust_score_task.delay(request.user.id)
+
+            return Response(
+                {
+                    "success": True,
+                    "pulse": {
+                        "id": pulse.id,
+                        "title": pulse.title,
+                        "pulseType": pulse.pulse_type,
+                        "location": json.loads(pulse.location.geojson) if pulse.location else None,
+                        "images": [request.build_absolute_uri(i.image.url) for i in pulse.images.all()],
+                    },
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            return Response(
+                {"success": False, "error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 
-@login_required
-@require_http_methods(["POST"])
-def update_pulse(request, pulse_id):
-    try:
+class PulseDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def patch(self, request, pulse_id):
         pulse = get_object_or_404(Pulse, id=pulse_id)
-        if pulse.user != request.user:
-            return JsonResponse({"error": "Permission denied"}, status=403)
 
-        if request.content_type.startswith("application/json"):
-            data = json.loads(request.body or "{}")
-        else:
-            data = request.POST
+        if pulse.user != request.user:
+            return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+
         pulse.title = data.get("title", pulse.title)
-        pulse.pulse_type = data.get("category", pulse.pulse_type)
-        pulse.price = data.get("price", pulse.price)
+        pulse.pulse_type = data.get("pulseType", pulse.pulse_type)
         pulse.currencyType = data.get("currencyType", pulse.currencyType)
         pulse.description = data.get("description", pulse.description)
         pulse.phone_number = data.get("phone_number", pulse.phone_number)
 
+        # Safely coerce price
+        if "price" in data:
+            try:
+                pulse.price = float(data["price"]) if data["price"] not in (None, "") else None
+            except (TypeError, ValueError):
+                return Response({"error": "Invalid price value"}, status=status.HTTP_400_BAD_REQUEST)
+
         location_changed = False
-        loc = data.get("location") if hasattr(data, "get") else None
+        loc = data.get("location")
+
         if loc:
+            if isinstance(loc, str):
+                import json
+                try:
+                    loc = json.loads(loc)
+                except json.JSONDecodeError:
+                    return Response({"error": "Invalid location JSON"}, status=status.HTTP_400_BAD_REQUEST)
             coords = loc.get("coordinates")
             if coords and len(coords) == 2:
                 new_point = Point(coords[0], coords[1], srid=4326)
                 if pulse.location != new_point:
                     pulse.location = new_point
                     location_changed = True
-        elif loc is None and "location" in data:
+        elif "location" in data and not loc:
             if pulse.location is not None:
                 pulse.location = None
                 pulse.address = "Global / Online"
-                location_changed = False
 
-        pulse.full_clean()
-        pulse.save()
+        try:
+            pulse.save()
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         address_status = pulse.address
         if location_changed and pulse.location:
             reverse_geocode_location.delay("Pulse", pulse.id)
             address_status = "Changing the address..."
 
-        removed_images = request.POST.getlist("removed_images")
-        if removed_images:
-            for url in removed_images:
-                filename = url.split("/")[-1]
-                pulse.images.filter(image__icontains=filename).delete()
+        removed_images = request.data.getlist("removed_images") if hasattr(request.data, "getlist") else []
+        for url in removed_images:
+            filename = url.split("/")[-1]
+            pulse.images.filter(image__icontains=filename).delete()
 
-        uploaded_files = request.FILES.getlist("images")
-        for img in uploaded_files:
+        for img in request.FILES.getlist("images"):
             pulse.images.create(image=img)
 
         pulse_data = {
@@ -663,66 +808,70 @@ def update_pulse(request, pulse_id):
             "address": address_status,
             "location": {
                 "type": "Point",
-                "coordinates": [pulse.location.x, pulse.location.y]
+                "coordinates": [pulse.location.x, pulse.location.y],
             } if pulse.location else None,
             "images": [request.build_absolute_uri(img.image.url) for img in pulse.images.all()],
         }
 
-        return JsonResponse({"message": "Pulse updated", "pulse": pulse_data}, status=200)
+        return Response({"message": "Pulse updated", "pulse": pulse_data}, status=status.HTTP_200_OK)
 
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
-    except ValidationError as e:
-        errors = getattr(e, "message_dict", None) or e.messages
-        return JsonResponse({"error": errors}, status=400)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-
-
-@login_required
-@require_http_methods(["DELETE"])
-def remove_pulse(request, pulse_id):
-    try:
-        pulse = Pulse.objects.get(id=pulse_id, user=request.user)
+    def delete(self, request, pulse_id):
+        pulse = get_object_or_404(Pulse, id=pulse_id, user=request.user)
         pulse.delete()
-        return JsonResponse({"success": True})
-    except Pulse.DoesNotExist:
-        return JsonResponse({"success": False, "error": "Pulsul nu a fost găsit"}, status=404)
-    except Exception as e:
-        return JsonResponse(
-            {"success": False, "error": str(e)},
-            status=400
-        )
+        return Response({"success": True}, status=status.HTTP_200_OK)
 
 
-@csrf_protect
-@login_required
-@require_POST
-def update_location(request):
-    try:
-        data = json.loads(request.body)
-        lat = data.get("lat")
-        lng = data.get("lng")
+class UpdateLocationView(APIView):
+    permission_classes = [IsAuthenticated]
 
-        if lat is None or lng is None:
-            return JsonResponse(
-                {"success": False, "error": "lat/lng required"},
-                status=400
+
+    def post(self, request):
+        try:
+            lat = request.data.get("lat")
+            lng = request.data.get("lng")
+
+            if lat is None or lng is None:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "lat/lng required",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            request.user.location = Point(
+                float(lng),
+                float(lat),
+                srid=4326,
             )
 
-        request.user.location = Point(float(lng), float(lat), srid=4326)
-        request.user.save(update_fields=["location"])
+            request.user.save(update_fields=["location"])
 
-        return JsonResponse({
-            "success": True,
-            "is_superuser": request.user.is_superuser
-        })
+            return Response(
+                {
+                    "success": True,
+                    "is_superuser": request.user.is_superuser,
+                },
+                status=status.HTTP_200_OK,
+            )
 
-    except Exception as e:
-        return JsonResponse(
-            {"success": False, "error": str(e)},
-            status=400
-        )
+        except (TypeError, ValueError):
+            return Response(
+                {
+                    "success": False,
+                    "error": "Invalid coordinates",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": str(e),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 def get_base_pulse_queryset(user):
@@ -735,383 +884,470 @@ def get_base_pulse_queryset(user):
     return qs
 
 
-@require_GET
-def list_all_pulses(request):
-    page = int(request.GET.get("page", 1))
-    page_size = 15
+class PulseList(APIView):
+    permission_classes = []  # public endpoint
 
-    search = request.GET.get("search", "")
-    pulse_type = request.GET.get("pulse_type", "")
-    min_price = request.GET.get("min_price")
-    max_price = request.GET.get("max_price")
+    def get(self, request):
+        page = int(request.query_params.get("page", 1))
+        page_size = 15
 
-    qs = (
-        Pulse.objects
-        .select_related("user")
-        .prefetch_related("images")
-        .order_by("-created_at")
-    )
+        search = request.query_params.get("search", "")
+        pulse_type = request.query_params.get("pulse_type", "")
+        min_price = request.query_params.get("min_price")
+        max_price = request.query_params.get("max_price")
 
-    if search:
-        qs = qs.filter(
-            Q(title__icontains=search) |
-            Q(description__icontains=search)
-        )
-
-    if pulse_type:
-        qs = qs.filter(pulse_type=pulse_type)
-
-    if min_price:
-        qs = qs.filter(price__gte=min_price)
-
-    if max_price:
-        qs = qs.filter(price__lte=max_price)
-
-    total_count = qs.count()
-    total_pages = ceil(total_count / page_size)
-
-    start = (page - 1) * page_size
-    end = start + page_size
-
-    pulses = qs[start:end]
-
-    results = []
-    for pulse in pulses:
-        images_qs = [
-            request.build_absolute_uri(img.image.url)
-            for img in pulse.images.all()
-            if img.image
-        ]
-
-        images = images_qs if images_qs else None
-
-        location_data = None
-        if pulse.location:
-            location_data = {
-                "lat": pulse.location.y,
-                "lng": pulse.location.x,
-            }
-
-        results.append({
-            "id": pulse.id,
-            "user": pulse.user.username,
-            "title": pulse.title,
-            "description": pulse.description,
-            "pulse_type": pulse.pulse_type,
-            "category": pulse.pulse_type,
-            "currencyType": pulse.currencyType,
-            "price": str(pulse.price) if pulse.price else None,
-            "location": location_data,
-            "address": pulse.address,
-            "created_at": pulse.created_at.isoformat() if pulse.created_at else None,
-            "images": images,
-        })
-
-    return JsonResponse({
-        "results": results,
-        "page": page,
-        "total_pages": total_pages,
-        "has_next": page < total_pages,
-        "has_previous": page > 1,
-    })
-
-
-@csrf_protect
-@login_required
-@require_http_methods(["GET"])
-def get_latest_pulses(request):
-    page_number = request.GET.get('page', 1)
-    per_page = 15
-
-    lat = request.GET.get("lat")
-    lng = request.GET.get("lng")
-
-    if lat and lng:
-        ref_location = Point(float(lng), float(lat), srid=4326)
-        radius_km = request.user.visibility_radius or 1
-        pulses = (
-            Pulse.objects.select_related("user").prefetch_related("images")
-            .filter(location__dwithin=(ref_location, radius_km / 111.32))
-            .order_by("-created_at")
-        )
-    else:
-        pulses = get_base_pulse_queryset(request.user).order_by("-created_at")
-
-    paginator = Paginator(pulses, per_page)
-    page_obj = paginator.get_page(page_number)
-
-    final_data = []
-    for p in page_obj:
-        images = list(p.images.all())
-        image_url = request.build_absolute_uri(images[0].image.url) if images else None
-
-        final_data.append({
-            "id": p.id,
-            "type": p.pulse_type,
-            "user": p.user.username,
-            "user_avatar": request.build_absolute_uri(p.user.profile_picture.url) if p.user.profile_picture else None,
-            "name": p.title,
-            "description": p.description,
-            "popularity_score": p.popularity_score,
-            "total_reviews": p.total_reviews,
-            "price": float(p.price),
-            "pulse_type": p.pulse_type,
-            "currency": p.currencyType,
-            "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
-            "image": image_url,
-        })
-
-    return JsonResponse({
-        "success": True,
-        "pulses": final_data,
-        "has_next": page_obj.has_next(),
-    })
-
-
-@csrf_protect
-@login_required
-@require_http_methods(["GET"])
-def get_nearest_pulses(request):
-
-    lat = request.GET.get("lat")
-    lng = request.GET.get("lng")
-
-    if lat and lng:
-        ref_location = Point(float(lng), float(lat), srid=4326)
-    else:
-        ref_location = request.user.location
-
-    if not ref_location:
-        return JsonResponse({"success": False, "error": "Location required"}, status=400)
-
-    radius_km = request.user.visibility_radius
-    user = request.user
-    pulses = (
-        Pulse.objects
-        .exclude(user=user)
-        .filter(location__dwithin=(ref_location, radius_km / 111.32))
-        .select_related("user")
-        .prefetch_related("images")
-        .annotate(distance=GisDistance("location", ref_location))
-        .order_by("distance")[:10]
-    )
-
-    data = []
-    for p in pulses:
-        images = list(p.images.all())
-        image_url = request.build_absolute_uri(images[0].image.url) if images else None
-
-        data.append({
-            "id": p.id,
-            "type": p.pulse_type,
-            "user": p.user.username,
-            "name": p.title,
-            "price": float(p.price),
-            "pulse_type": p.pulse_type,
-            "description": p.description,
-            "popularity_score": p.popularity_score,
-            "total_reviews": p.total_reviews,
-            "currency": p.currencyType,
-            "timestamp": p.created_at.isoformat(),
-            "distance": round(p.distance.km, 2),
-            "lat": p.location.y if p.location else None,
-            "lng": p.location.x if p.location else None,
-            "image": image_url,
-        })
-
-    return JsonResponse({
-        "success": True,
-        "pulses": data
-    })
-
-
-@csrf_protect
-@login_required
-@require_http_methods(["GET"])
-def get_best_pulses(request):
-    page_number = request.GET.get('page', 1)
-    per_page = 15
-
-    pulses = get_base_pulse_queryset(request.user).order_by("-popularity_score")
-
-    paginator = Paginator(pulses, per_page)
-    page_obj = paginator.get_page(page_number)
-
-    final_data = []
-    for p in page_obj:
-        images = list(p.images.all())
-        image_url = request.build_absolute_uri(images[0].image.url) if images else None
-
-        final_data.append({
-            "id": p.id,
-            "type": p.pulse_type,
-            "user": p.user.username,
-            "user_avatar": request.build_absolute_uri(p.user.profile_picture.url) if p.user.profile_picture else None,
-            "name": p.title,
-            "price": float(p.price),
-            "pulse_type": p.pulse_type,
-            "description": p.description,
-            "popularity_score": p.popularity_score,
-            "total_reviews": p.total_reviews,
-            "currency": p.currencyType,
-            "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
-            "image": image_url,
-        })
-
-    return JsonResponse({
-        "success": True,
-        "pulses": final_data,
-        "has_next": page_obj.has_next(),
-    })
-
-@csrf_protect
-@login_required
-@require_http_methods(["GET"])
-def get_favorite_pulses(request):
-    page_number = request.GET.get("page", 1)
-    per_page = request.GET.get("per_page", 15)
-
-    search = request.GET.get("search", "").strip()
-    pulse_type = request.GET.get("type", "all")
-    sort = request.GET.get("sort", "recent")
-
-    try:
-        favorite_pulse_ids = FavoritePulse.objects.filter(
-            user=request.user
-        ).values_list("pulse_id", flat=True)
-
-        pulses = Pulse.objects.filter(id__in=favorite_pulse_ids).select_related("user").prefetch_related("images")
-
-
-        if search:
-            pulses = pulses.filter(title__icontains=search)
-        if pulse_type != "all":
-            pulses = pulses.filter(pulse_type=pulse_type)
-
-        if sort == "price_asc":
-            pulses = pulses.order_by("price")
-        elif sort == "price_desc":
-            pulses = pulses.order_by("-price")
-        else:
-            pulses = pulses.order_by("-created_at")
-
-        paginator = Paginator(pulses, per_page)
-        page_obj = paginator.get_page(page_number)
-
-        final_data = []
-        for p in page_obj:
-            final_data.append({
-                "id": p.id,
-                "type": p.pulse_type,
-                "user": p.user.username,
-                "user_avatar": request.build_absolute_uri(p.user.profile_picture.url)
-                if p.user.profile_picture else None,
-                "name": p.title,
-                "price": float(p.price),
-                "currency": p.currencyType,
-                "timestamp": p.created_at.strftime("%Y-%m-%d %H:%M"),
-                "image": request.build_absolute_uri(p.images.first().image.url)
-                if p.images.exists() else None,
-                "is_favorite": True
-            })
-
-        return JsonResponse({
-            "success": True,
-            "pulses": final_data,
-            "has_next": page_obj.has_next(),
-            "next_page": page_obj.next_page_number() if page_obj.has_next() else None
-        })
-
-    except Exception as e:
-        return JsonResponse({
-            "success": False,
-            "error": str(e)
-        }, status=400)
-
-
-@csrf_exempt
-@login_required
-@require_http_methods(["GET"])
-def get_pulse_by_id(request, pulse_id):
-    try:
-        pulse = (
+        qs = (
             Pulse.objects
             .select_related("user")
-            .prefetch_related("images", "rentals")
-            .get(id=pulse_id)
+            .prefetch_related("images")
+            .order_by("-created_at")
         )
 
-        coords = list(pulse.location.coords) if pulse.location else [27.5766, 47.1585]
+        if search:
+            qs = qs.filter(
+                Q(title__icontains=search)
+                | Q(description__icontains=search)
+            )
 
-        images = [
-            request.build_absolute_uri(img.image.url)
-            for img in pulse.images.all()
-        ]
+        if pulse_type:
+            qs = qs.filter(pulse_type=pulse_type)
 
-        unavailable_ranges = [
+        if min_price:
+            qs = qs.filter(price__gte=min_price)
+
+        if max_price:
+            qs = qs.filter(price__lte=max_price)
+
+        total_count = qs.count()
+        total_pages = ceil(total_count / page_size) if total_count else 1
+
+        start = (page - 1) * page_size
+        end = start + page_size
+
+        pulses = qs[start:end]
+
+        results = []
+
+        for pulse in pulses:
+            images = [
+                request.build_absolute_uri(img.image.url)
+                for img in pulse.images.all()
+                if img.image
+            ]
+
+            location_data = None
+
+            if pulse.location:
+                location_data = {
+                    "lat": pulse.location.y,
+                    "lng": pulse.location.x,
+                }
+
+            results.append(
+                {
+                    "id": pulse.id,
+                    "user": pulse.user.username,
+                    "title": pulse.title,
+                    "description": pulse.description,
+                    "pulse_type": pulse.pulse_type,
+                    "category": pulse.pulse_type,
+                    "currencyType": pulse.currencyType,
+                    "price": float(pulse.price)
+                    if pulse.price is not None
+                    else None,
+                    "location": location_data,
+                    "address": pulse.address,
+                    "created_at": (
+                        pulse.created_at.isoformat()
+                        if pulse.created_at
+                        else None
+                    ),
+                    "images": images or None,
+                }
+            )
+
+        return Response(
             {
-                "start": rental.start_date.isoformat(),
-                "end": rental.end_date.isoformat(),
-                "status": rental.status,
-                "renter_id": getattr(rental, "renter_id", None),
-            }
-            for rental in pulse.rentals.filter(status__in=["confirmed"])
-        ]
+                "results": results,
+                "page": page,
+                "total_pages": total_pages,
+                "has_next": page < total_pages,
+                "has_previous": page > 1,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+
+class NearestPulses(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        lat = request.query_params.get("lat")
+        lng = request.query_params.get("lng")
 
         try:
-            user_rating_obj = PulseRating.objects.get(pulse=pulse, user=request.user)
-            user_rating = user_rating_obj.rating
-        except PulseRating.DoesNotExist:
-            user_rating = None
+            if lat and lng:
+                ref_location = Point(
+                    float(lng),
+                    float(lat),
+                    srid=4326,
+                )
+            else:
+                ref_location = request.user.location
 
-        avg_rating = PulseRating.objects.filter(pulse=pulse).aggregate(avg=Avg("rating"))["avg"]
+            if not ref_location:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "Location required",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        if avg_rating is not None:
-            avg_rating = round(avg_rating, 1)
-        else:
-            avg_rating = "N/A"
-        has_trust_access = request.user.is_verified and request.user.trust_score > 200
+            radius_km = request.user.visibility_radius
 
-        data = {
-            "id": pulse.id,
-            "type": pulse.pulse_type,
-            "user": pulse.user.username,
-            "user_id": pulse.user.id,
-            "user_avatar": request.build_absolute_uri(pulse.user.profile_picture.url) if pulse.user.profile_picture else None,
-            "trustLevel": pulse.user.trust_level,
-            "trustRequired": pulse.trust_required,
-            "name": pulse.title,
-            "description": pulse.description,
-            "price": float(pulse.price),
-            "currency": pulse.currencyType,
-            "location": coords,
-            "address": pulse.address,
-            "timestamp": pulse.created_at.isoformat() if pulse.created_at else None,
-            "is_favorite": FavoritePulse.objects.filter(pulse=pulse, user=request.user).exists(),
-            "images": images,
-            "user_rating": user_rating,
-            "reserved_periods": unavailable_ranges,
-            "unavailable_ranges": unavailable_ranges,
-            "has_trust_access": has_trust_access,
-            "rating": avg_rating,
-        }
+            pulses = (
+                Pulse.objects
+                .exclude(user=request.user)
+                .filter(
+                    location__dwithin=(
+                        ref_location,
+                        radius_km / 111.32,
+                    )
+                )
+                .select_related("user")
+                .prefetch_related("images")
+                .annotate(
+                    distance=GisDistance(
+                        "location",
+                        ref_location,
+                    )
+                )
+                .order_by("distance")[:10]
+            )
 
-        return JsonResponse({
-            "success": True,
-            "pulse": data
-        })
+            data = []
 
-    except Pulse.DoesNotExist:
-        return JsonResponse({
-            "success": False,
-            "error": "Pulse not found"
-        }, status=404)
+            for pulse in pulses:
+                images = list(pulse.images.all())
 
-    except Exception as e:
-        return JsonResponse({
-            "success": False,
-            "error": str(e)
-        }, status=400)
+                image_url = (
+                    request.build_absolute_uri(
+                        images[0].image.url
+                    )
+                    if images
+                    else None
+                )
+
+                data.append(
+                    {
+                        "id": pulse.id,
+                        "type": pulse.pulse_type,
+                        "user": pulse.user.username,
+                        "name": pulse.title,
+                        "price": (
+                            float(pulse.price)
+                            if pulse.price is not None
+                            else None
+                        ),
+                        "pulse_type": pulse.pulse_type,
+                        "description": pulse.description,
+                        "popularity_score": pulse.popularity_score,
+                        "total_reviews": pulse.total_reviews,
+                        "currency": pulse.currencyType,
+                        "timestamp": (
+                            pulse.created_at.isoformat()
+                            if pulse.created_at
+                            else None
+                        ),
+                        "distance": round(
+                            pulse.distance.km,
+                            2,
+                        ),
+                        "lat": (
+                            pulse.location.y
+                            if pulse.location
+                            else None
+                        ),
+                        "lng": (
+                            pulse.location.x
+                            if pulse.location
+                            else None
+                        ),
+                        "image": image_url,
+                    }
+                )
+
+            return Response(
+                {
+                    "success": True,
+                    "pulses": data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except (TypeError, ValueError):
+            return Response(
+                {
+                    "success": False,
+                    "error": "Invalid coordinates",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+class FavoritePulses(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        page_number = request.query_params.get("page", 1)
+        per_page = request.query_params.get("per_page", 15)
+
+        search = request.query_params.get("search", "").strip()
+        pulse_type = request.query_params.get("type", "all")
+        sort = request.query_params.get("sort", "recent")
+
+        try:
+            favorite_pulse_ids = (
+                FavoritePulse.objects
+                .filter(user=request.user)
+                .values_list("pulse_id", flat=True)
+            )
+
+            pulses = (
+                Pulse.objects
+                .filter(id__in=favorite_pulse_ids)
+                .select_related("user")
+                .prefetch_related("images")
+            )
+
+            if search:
+                pulses = pulses.filter(title__icontains=search)
+
+            if pulse_type != "all":
+                pulses = pulses.filter(pulse_type=pulse_type)
+
+            if sort == "price_asc":
+                pulses = pulses.order_by("price")
+            elif sort == "price_desc":
+                pulses = pulses.order_by("-price")
+            else:
+                pulses = pulses.order_by("-created_at")
+
+            paginator = Paginator(pulses, int(per_page))
+            page_obj = paginator.get_page(page_number)
+
+            final_data = []
+
+            for pulse in page_obj:
+                first_image = pulse.images.first()
+
+                final_data.append(
+                    {
+                        "id": pulse.id,
+                        "type": pulse.pulse_type,
+                        "user": pulse.user.username,
+                        "user_avatar": (
+                            request.build_absolute_uri(
+                                pulse.user.profile_picture.url
+                            )
+                            if pulse.user.profile_picture
+                            else None
+                        ),
+                        "name": pulse.title,
+                        "price": (
+                            float(pulse.price)
+                            if pulse.price is not None
+                            else None
+                        ),
+                        "currency": pulse.currencyType,
+                        "timestamp": pulse.created_at.strftime(
+                            "%Y-%m-%d %H:%M"
+                        ),
+                        "image": (
+                            request.build_absolute_uri(
+                                first_image.image.url
+                            )
+                            if first_image
+                            else None
+                        ),
+                        "is_favorite": True,
+                    }
+                )
+
+            return Response(
+                {
+                    "success": True,
+                    "pulses": final_data,
+                    "has_next": page_obj.has_next(),
+                    "next_page": (
+                        page_obj.next_page_number()
+                        if page_obj.has_next()
+                        else None
+                    ),
+                    "current_page": page_obj.number,
+                    "total_pages": paginator.num_pages,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": str(e),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class PulseDetailRetrieve(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pulse_id):
+        try:
+            pulse = (
+                Pulse.objects
+                .select_related("user")
+                .prefetch_related("images", "rentals")
+                .get(id=pulse_id)
+            )
+
+            coords = (
+                list(pulse.location.coords)
+                if pulse.location
+                else [27.5766, 47.1585]
+            )
+
+            images = [
+                request.build_absolute_uri(img.image.url)
+                for img in pulse.images.all()
+                if img.image
+            ]
+
+            unavailable_ranges = [
+                {
+                    "start": rental.start_date.isoformat(),
+                    "end": rental.end_date.isoformat(),
+                    "status": rental.status,
+                    "renter_id": getattr(
+                        rental,
+                        "renter_id",
+                        None,
+                    ),
+                }
+                for rental in pulse.rentals.filter(
+                    status="confirmed"
+                )
+            ]
+
+            user_rating = (
+                PulseRating.objects
+                .filter(
+                    pulse=pulse,
+                    user=request.user,
+                )
+                .values_list("rating", flat=True)
+                .first()
+            )
+
+            avg_rating = (
+                PulseRating.objects
+                .filter(pulse=pulse)
+                .aggregate(avg=Avg("rating"))
+                .get("avg")
+            )
+
+            avg_rating = (
+                round(avg_rating, 1)
+                if avg_rating is not None
+                else "N/A"
+            )
+
+            has_trust_access = (
+                request.user.is_verified
+                and request.user.trust_score > 200
+            )
+
+            data = {
+                "id": pulse.id,
+                "type": pulse.pulse_type,
+                "user": pulse.user.username,
+                "user_id": pulse.user.id,
+                "user_avatar": (
+                    request.build_absolute_uri(
+                        pulse.user.profile_picture.url
+                    )
+                    if pulse.user.profile_picture
+                    else None
+                ),
+                "trustLevel": pulse.user.trust_level,
+                "trustRequired": pulse.trust_required,
+                "name": pulse.title,
+                "description": pulse.description,
+                "price": (
+                    float(pulse.price)
+                    if pulse.price is not None
+                    else None
+                ),
+                "currency": pulse.currencyType,
+                "location": coords,
+                "address": pulse.address,
+                "timestamp": (
+                    pulse.created_at.isoformat()
+                    if pulse.created_at
+                    else None
+                ),
+                "is_favorite": (
+                    FavoritePulse.objects
+                    .filter(
+                        pulse=pulse,
+                        user=request.user,
+                    )
+                    .exists()
+                ),
+                "images": images,
+                "user_rating": user_rating,
+                "reserved_periods": unavailable_ranges,
+                "unavailable_ranges": unavailable_ranges,
+                "has_trust_access": has_trust_access,
+                "rating": avg_rating,
+            }
+
+            return Response(
+                {
+                    "success": True,
+                    "pulse": data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Pulse.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Pulse not found",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": str(e),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 @login_required

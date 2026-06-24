@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'channels',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -144,7 +145,28 @@ CHANNEL_LAYERS = {
 }
 
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
 
+REST_FRAMEWORK = {
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "csrf_token": "3/second",
+        "login": "5/minute",
+        "register": "3/minute",
+        "password_reset": "3/hour",
+        "api": "100/minute",
+    },
+}
 
 DATABASES = {
     'default': {
