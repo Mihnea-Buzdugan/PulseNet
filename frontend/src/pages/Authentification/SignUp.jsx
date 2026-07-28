@@ -166,7 +166,9 @@ const SignUp = () => {
                         } else if (status === "needs_device_link") {
                             navigate('/link-device'); // your QR show/scan screen
                         } else if (status === "ready") {
-                            navigate('/');
+                           setTimeout(() => {
+                            window.location.href = '/';
+                        }, 0);
                         } else {
                             // needs_reupload edge case - decide how you want to handle this
                             navigate('/');

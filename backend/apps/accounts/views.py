@@ -979,131 +979,61 @@ class PulseList(APIView):
 
 
 
-class NearestPulses(APIView):
-    permission_classes = [IsAuthenticated]
+@csrf_protect
+@login_required
+@require_http_methods(["GET"])
+def get_nearest_pulses(request):
 
-    def get(self, request):
-        lat = request.query_params.get("lat")
-        lng = request.query_params.get("lng")
+    lat = request.GET.get("lat")
+    lng = request.GET.get("lng")
 
-        try:
-            if lat and lng:
-                ref_location = Point(
-                    float(lng),
-                    float(lat),
-                    srid=4326,
-                )
-            else:
-                ref_location = request.user.location
+    if lat and lng:
+        ref_location = Point(float(lng), float(lat), srid=4326)
+    else:
+        ref_location = request.user.location
 
-            if not ref_location:
-                return Response(
-                    {
-                        "success": False,
-                        "error": "Location required",
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+    if not ref_location:
+        return JsonResponse({"success": False, "error": "Location required"}, status=400)
 
-            radius_km = request.user.visibility_radius
+    radius_km = request.user.visibility_radius
+    user = request.user
+    pulses = (
+        Pulse.objects
+        .exclude(user=user)
+        .filter(location__dwithin=(ref_location, radius_km / 111.32))
+        .select_related("user")
+        .prefetch_related("images")
+        .annotate(distance=GisDistance("location", ref_location))
+        .order_by("distance")[:10]
+    )
 
-            pulses = (
-                Pulse.objects
-                .exclude(user=request.user)
-                .filter(
-                    location__dwithin=(
-                        ref_location,
-                        radius_km / 111.32,
-                    )
-                )
-                .select_related("user")
-                .prefetch_related("images")
-                .annotate(
-                    distance=GisDistance(
-                        "location",
-                        ref_location,
-                    )
-                )
-                .order_by("distance")[:10]
-            )
+    data = []
+    for p in pulses:
+        images = list(p.images.all())
+        image_url = request.build_absolute_uri(images[0].image.url) if images else None
 
-            data = []
+        data.append({
+            "id": p.id,
+            "type": p.pulse_type,
+            "user": p.user.username,
+            "name": p.title,
+            "price": float(p.price),
+            "pulse_type": p.pulse_type,
+            "description": p.description,
+            "popularity_score": p.popularity_score,
+            "total_reviews": p.total_reviews,
+            "currency": p.currencyType,
+            "timestamp": p.created_at.isoformat(),
+            "distance": round(p.distance.km, 2),
+            "lat": p.location.y if p.location else None,
+            "lng": p.location.x if p.location else None,
+            "image": image_url,
+        })
 
-            for pulse in pulses:
-                images = list(pulse.images.all())
-
-                image_url = (
-                    request.build_absolute_uri(
-                        images[0].image.url
-                    )
-                    if images
-                    else None
-                )
-
-                data.append(
-                    {
-                        "id": pulse.id,
-                        "type": pulse.pulse_type,
-                        "user": pulse.user.username,
-                        "name": pulse.title,
-                        "price": (
-                            float(pulse.price)
-                            if pulse.price is not None
-                            else None
-                        ),
-                        "pulse_type": pulse.pulse_type,
-                        "description": pulse.description,
-                        "popularity_score": pulse.popularity_score,
-                        "total_reviews": pulse.total_reviews,
-                        "currency": pulse.currencyType,
-                        "timestamp": (
-                            pulse.created_at.isoformat()
-                            if pulse.created_at
-                            else None
-                        ),
-                        "distance": round(
-                            pulse.distance.km,
-                            2,
-                        ),
-                        "lat": (
-                            pulse.location.y
-                            if pulse.location
-                            else None
-                        ),
-                        "lng": (
-                            pulse.location.x
-                            if pulse.location
-                            else None
-                        ),
-                        "image": image_url,
-                    }
-                )
-
-            return Response(
-                {
-                    "success": True,
-                    "pulses": data,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        except (TypeError, ValueError):
-            return Response(
-                {
-                    "success": False,
-                    "error": "Invalid coordinates",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        except Exception as e:
-            return Response(
-                {
-                    "success": False,
-                    "error": str(e),
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+    return JsonResponse({
+        "success": True,
+        "pulses": data
+    })
 
 class FavoritePulses(APIView):
     permission_classes = [IsAuthenticated]
