@@ -1,11 +1,11 @@
 /* --- MAIN NAVBAR CONTAINER --- */
 .navbar {
-    position: relative;
+    position: sticky; /* Switched to sticky so it stays visible while users scroll! */
     top: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 40px;
+    padding: 16px 40px;
     background: white;
     color: black;
     width: 100%;
@@ -24,14 +24,14 @@
 }
 
 .logo {
-    height: 45px;
+    height: 40px; /* Slightly scaled down from 45px for a cleaner profile */
     width: auto;
     margin-right: 10px;
     object-fit: contain;
 }
 
-.navbar .name {
-    font-size: 1.5rem;
+.name {
+    font-size: 1.4rem;
     font-weight: bold;
     white-space: nowrap;
 }
@@ -40,33 +40,34 @@
 .middleSection {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
     flex: 1;
     justify-content: center;
     max-width: 650px;
-    margin: 0 20px;
+    margin: 0 24px;
 }
 
 .searchContainer {
     position: relative;
     flex: 1;
-    min-width: 150px;
+    min-width: 120px; /* Safe starting point that can shrink gracefully */
 }
 
 .searchInput {
     width: 100%;
-    padding: 10px 18px;
+    padding: 8px 16px;
     border-radius: 20px;
     border: 1px solid #dbdbdb;
     background-color: #fafafa;
     outline: none;
     transition: all 0.2s ease;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    box-sizing: border-box;
 }
 
 .searchInput:focus {
     background-color: #fff;
-    border-color: var(--color-primary);
+    border-color: var(--color-primary, #ff8a65);
     box-shadow: 0 0 0 1px rgba(255, 138, 101, 0.2);
 }
 
@@ -106,11 +107,11 @@
 
 .dmButton:hover {
     transform: scale(1.1);
-    color: var(--color-primary);
+    color: var(--color-primary, #ff8a65);
 }
 
 .activeDm {
-    color: var(--color-primary);
+    color: var(--color-primary, #ff8a65);
 }
 
 .badge {
@@ -127,6 +128,7 @@
     line-height: 1;
     min-width: 12px;
     text-align: center;
+    pointer-events: none;
 }
 
 /* --- SEARCH DROPDOWN --- */
@@ -193,10 +195,11 @@
     opacity: 0.8;
 }
 
-.followBtn { background-color: var(--color-secondary); color: white; }
-.unfollowBtn { background-color: var(--color-danger); color: white; }
-.msgBtn { background-color: var(--color-primary);; color: white; }
+.followBtn { background-color: var(--color-secondary, #007bff); color: white; }
+.unfollowBtn { background-color: var(--color-danger, #dc3545); color: white; }
+.msgBtn { background-color: var(--color-primary, #ff8a65); color: white; }
 .pendingBtn { background-color: #0056b3; color: white; }
+
 /* --- RIGHT SECTION: DESKTOP NAV LINKS --- */
 .navLinks {
     display: flex;
@@ -213,10 +216,10 @@
 }
 
 .sus:hover {
-    color: var(--color-primary);
+    color: var(--color-primary, #ff8a65);
 }
 
-/* --- MOBILE & RESPONSIVE LOGIC --- */
+/* --- HAMBURGER BUTTON --- */
 .hamburger {
     display: none;
     cursor: pointer;
@@ -224,8 +227,11 @@
     border: none;
     background: transparent;
     padding: 5px;
+    color: #262626;
+    flex-shrink: 0;
 }
 
+/* --- MOBILE MENU --- */
 .mobileMenu {
     display: none;
     position: absolute;
@@ -234,55 +240,47 @@
     right: 0;
     background: white;
     flex-direction: column;
-    padding: 10px 0;
+    padding: 8px 0;
     border-top: 1px solid #efefef;
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-    z-index: 10;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+    z-index: 999;
 }
 
-.active { display: flex; }
-
-/* --- TABLET --- */
-@media (max-width: 900px) {
-    .navbar { padding: 10px 20px; }
-    .middleSection { margin: 0 15px; }
+/* Explicit selector mapping for CSS Modules active state toggle */
+.mobileMenu.active {
+    display: flex;
 }
 
-/* --- MOBILE --- */
-@media (max-width: 768px) {
-    .navLinks { display: none; }
-    .hamburger { display: block; }
-
-    .navbar .name { font-size: 1.2rem; }
+/* Modern stack styles for your mobile menu items */
+.mobileMenu .sus {
+    display: block;
+    padding: 14px 24px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #262626;
+    text-align: left;
+    border-bottom: 1px solid #fafafa;
+    transition: background 0.2s, color 0.2s;
+    box-sizing: border-box;
+    width: 100%;
 }
 
-/* --- SMALL MOBILE --- */
-@media (max-width: 500px) {
-    .navbar .name { display: none; }
+.mobileMenu .sus:hover {
+    background-color: #f9fafb;
+    color: var(--color-primary, #ff8a65);
+}
 
-    .middleSection {
-        margin: 0 10px;
-        gap: 10px;
-    }
-
-    .searchDropdown {
-
-        position: fixed;
-        left: 10px;
-        right: 10px;
-        top: 65px;
-    }
+.mobileMenu .sus:last-child {
+    border-bottom: none;
 }
 
 /* --- NOTIFICATIONS --- */
-/* --- NOTIFICATION WRAPPER --- */
 .notifWrapper {
     position: relative;
     display: flex;
     align-items: center;
 }
 
-/* --- BELL BUTTON --- */
 .notifButton {
     cursor: pointer;
     display: flex;
@@ -295,14 +293,13 @@
 .notifButton:hover,
 .activeNotif {
     transform: scale(1.12);
-    color: var(--color-primary);
+    color: var(--color-primary, #ff8a65);
 }
 
 .notifIcon {
     font-size: 25px;
 }
 
-/* --- DROPDOWN CONTAINER --- */
 .notifDropdown {
     position: absolute;
     top: calc(100% + 12px);
@@ -317,7 +314,6 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-
     animation: fadeNotif 0.15s ease;
 }
 
@@ -332,22 +328,11 @@
     }
 }
 
-/* --- HEADER --- */
-.notifHeader {
-    padding: 14px 16px;
-    font-weight: 600;
-    font-size: 14px;
-    border-bottom: 1px solid #f0f0f0;
-    background: #fafafa;
-}
-
-/* --- LIST --- */
 .notifList {
     max-height: 340px;
     overflow-y: auto;
 }
 
-/* --- ITEM --- */
 .notifItem {
     display: flex;
     justify-content: space-between;
@@ -362,7 +347,6 @@
     background-color: #f9fafb;
 }
 
-/* --- TEXT CONTENT --- */
 .notifContent {
     flex: 1;
 }
@@ -386,7 +370,6 @@
     color: #9ca3af;
 }
 
-/* --- DELETE BUTTON --- */
 .deleteNotifBtn {
     background: transparent;
     border: none;
@@ -403,7 +386,6 @@
     transform: scale(1.15);
 }
 
-/* --- EMPTY STATE --- */
 .emptyNotifs {
     padding: 24px;
     text-align: center;
@@ -411,25 +393,6 @@
     font-size: 13px;
 }
 
-/* --- BADGE --- */
-.badge {
-    position: absolute;
-    top: -6px;
-    right: -8px;
-    background-color: #ff3b30;
-    color: white;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 5px;
-    border-radius: 10px;
-    border: 2px solid white;
-    line-height: 1;
-    min-width: 14px;
-    text-align: center;
-    pointer-events: none;
-}
-
-/* --- SCROLLBAR STYLE --- */
 .notifList::-webkit-scrollbar {
     width: 6px;
 }
@@ -443,14 +406,94 @@
     background: #d1d5db;
 }
 
-/* --- MOBILE --- */
-@media (max-width: 500px) {
+
+/* ==========================================================================
+   MEDIA QUERIES (RESPONSIVE ENGINE)
+   ========================================================================== */
+
+/* --- TABLET AND SMALLER DESKTOP --- */
+@media (max-width: 900px) {
+    .navbar {
+        padding: 12px 24px;
+    }
+    .middleSection {
+        margin: 0 16px;
+        gap: 12px;
+    }
+}
+
+/* --- TRANSITION TO MOBILE (COLLAPSE NAVIGATION LINKS TO HAMBURGER) --- */
+@media (max-width: 768px) {
+    .navLinks {
+        display: none; /* Hides standard desktop links */
+    }
+    .hamburger {
+        display: block; /* Shows toggle trigger */
+    }
+    .logo {
+        height: 36px; /* Scales down logo container */
+    }
+    .name {
+        font-size: 1.25rem;
+    }
+}
+
+/* --- COMFORT MOBILE (PREVENT SQUEEZING OF SEARCH AND ACTION BUTTONS) --- */
+@media (max-width: 600px) {
+    .name {
+        display: none; /* Hides "PulseNet" early to leave room for critical interactive UI elements */
+    }
+    .middleSection {
+        margin: 0 8px;
+        gap: 10px;
+    }
+    .searchContainer {
+        min-width: 100px; /* Soft flex scaling */
+    }
+    .searchInput {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    .iconButtonsContainer {
+        gap: 12px;
+    }
+}
+
+/* --- MICRO VIEWPORT OPTIMIZATIONS (ULTRA CODESPACE SAFETY) --- */
+@media (max-width: 480px) {
+    .navbar {
+        padding: 10px 14px;
+    }
+    .logo {
+        height: 32px;
+        margin-right: 6px;
+    }
+    .middleSection {
+        margin: 0 4px;
+        gap: 8px;
+    }
+    .iconButtonsContainer {
+        gap: 10px;
+    }
+    .heartIcon {
+        font-size: 20px;
+    }
+    .notifIcon {
+        font-size: 22px;
+    }
+    .dmButton svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    /* Fixed full-screen overlay widths for dropdown structures on micro-screens */
+    .searchDropdown,
     .notifDropdown {
         position: fixed;
-        left: 10px;
-        right: 10px;
+        left: 12px;
+        right: 12px;
         width: auto;
-        top: 65px;
+        top: 56px; /* Positions perfectly underneath the sticky navbar boundary line */
         max-height: 60vh;
     }
 }

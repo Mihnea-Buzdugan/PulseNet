@@ -46,7 +46,7 @@ const Messages = ({ currentUser }) => {
     useEffect(() => {
         if (!currentUser?.id) return;
 
-        fetch("https://localhost/accounts/my-conversations/", {
+        fetch("/accounts/my-conversations/", {
             credentials: "include",
         })
             .then((res) => res.json())
@@ -60,8 +60,8 @@ const Messages = ({ currentUser }) => {
                             const contentObj = JSON.parse(convo.last_message);
                             if (contentObj.for_sender && contentObj.for_receiver) {
                                 const [myRes, receiverRes] = await Promise.all([
-                                    fetch(`https://localhost/accounts/message_keys/get/${currentUser.id}/`, { credentials: "include" }),
-                                    fetch(`https://localhost/accounts/message_keys/get/${convo.other_user_id}/`, { credentials: "include" }),
+                                    fetch(`/accounts/message_keys/get/${currentUser.id}/`, { credentials: "include" }),
+                                    fetch(`/accounts/message_keys/get/${convo.other_user_id}/`, { credentials: "include" }),
                                 ]);
 
                                 if (contentObj.for_sender && contentObj.for_receiver) {
@@ -105,9 +105,9 @@ const Messages = ({ currentUser }) => {
                     setKeysLoading(true);
                     try {
                         const [receiverRes, myRes] = await Promise.all([
-                            fetch(`https://localhost/accounts/message_keys/get/${selectedConvo.other_user_id}/`,
+                            fetch(`/accounts/message_keys/get/${selectedConvo.other_user_id}/`,
                                 { credentials: "include" }),
-                            fetch(`https://localhost/accounts/message_keys/get/${currentUser?.id}/`,
+                            fetch(`/accounts/message_keys/get/${currentUser?.id}/`,
                                 { credentials: "include" })
                         ]);
 
@@ -144,7 +144,7 @@ const Messages = ({ currentUser }) => {
 
             try {
                 const res = await fetch(
-                    `https://localhost/accounts/messages/history/${selectedConvo.type}/${selectedConvo.id}/`,
+                    `/accounts/messages/history/${selectedConvo.type}/${selectedConvo.id}/`,
                     { credentials: "include" }
                 );
                 const data = await res.json();
@@ -167,7 +167,8 @@ const Messages = ({ currentUser }) => {
             socketRef.current.close();
         }
 
-        const wsUrl = `wss://localhost/ws/chat/${selectedConvo.type}/${selectedConvo.id}/`;
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat/${selectedConvo.type}/${selectedConvo.id}/`;
         socketRef.current = new WebSocket(wsUrl);
 
         socketRef.current.onmessage = async (e) => {
@@ -283,7 +284,12 @@ const Messages = ({ currentUser }) => {
                             </div>
 
                             <div className={styles.sidebarHeader}>
-                                <h2>Messages</h2>
+                                <button
+                                    className={styles.followRequestsBtn}
+                                    onClick={() => navigate("/link-device")}
+                                >
+                                    Link Device
+                                </button>
 
                                 <button
                                     className={styles.followRequestsBtn}

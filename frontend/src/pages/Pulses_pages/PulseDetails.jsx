@@ -103,7 +103,7 @@ export default function PulseDetails() {
         setCommentsLoading(true);
         setCommentsError("");
         try {
-            const res = await fetch(`https://localhost/accounts/pulse/comments/${id}/?page=${page}`, {
+            const res = await fetch(`/accounts/pulse/comments/${id}/?page=${page}`, {
                 method: "GET",
                 credentials: "include",
                 headers: { "Accept": "application/json" },
@@ -147,7 +147,7 @@ export default function PulseDetails() {
         setIsPosting(true);
         setCommentsError("");
         try {
-            const res = await fetch(`https://localhost/accounts/pulse/comments/${id}/`, {
+            const res = await fetch(`/accounts/pulse/comments/${id}/`, {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -189,7 +189,7 @@ export default function PulseDetails() {
     const handleDeleteComment = async (commentId) => {
         const csrftoken = getCookie("csrftoken");
         try {
-            const res = await fetch(`https://localhost/accounts/pulse/comments/${commentId}/`, {
+            const res = await fetch(`/accounts/pulse/comments/${commentId}/`, {
                 method: "DELETE",
                 credentials: "include",
                 headers: { "X-CSRFToken": csrftoken },
@@ -213,7 +213,7 @@ export default function PulseDetails() {
         const csrftoken = getCookie("csrftoken");
         setIsSubmittingRating(true);
         try {
-            const res = await fetch(`https://localhost/accounts/pulse/ratings/${id}/`, {
+            const res = await fetch(`/accounts/pulse/ratings/${id}/`, {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -247,7 +247,7 @@ export default function PulseDetails() {
         let mounted = true;
         const csrfToken = getCookie("csrftoken");
 
-        fetch(`https://localhost/accounts/pulse/${id}/`, {
+        fetch(`/accounts/pulse/${id}/`, {
             method: "GET",
             credentials: "include",
             headers: { "X-CSRFToken": csrfToken },
@@ -347,7 +347,7 @@ export default function PulseDetails() {
         setFavAnim(true);
         try {
             const csrfToken = getCookie("csrftoken");
-            const response = await fetch(`https://localhost/accounts/add_to_favorites/${pulse.id}/`, {
+            const response = await fetch(`/accounts/add_to_favorites/${pulse.id}/`, {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
@@ -362,7 +362,7 @@ export default function PulseDetails() {
         if (!pulse) return;
         try {
             const csrfToken = getCookie("csrftoken");
-            const response = await fetch(`https://localhost/accounts/delete_from_favorites/${pulse.id}/`, {
+            const response = await fetch(`/accounts/delete_from_favorites/${pulse.id}/`, {
                 method: "DELETE",
                 credentials: "include",
                 headers: { "X-CSRFToken": csrfToken },
@@ -381,263 +381,254 @@ export default function PulseDetails() {
 
     return (
         <div className={styles.body}>
-            <div className={styles.mainContainer}>
-                <Navbar />
-                {pulse.trustLevel === "Dangerous" || pulse.trustLevel === "Scary" ? (
-                    <div className="bg-red-600 text-white px-4 py-2 rounded-md mb-4 flex items-center gap-2 shadow-md">
-                        <span>⚠️</span>
-                        <span>
-            Warning: This user has a low trust score.
-            Interact with caution.
-        </span>
-                    </div>
-                ) : null}
-                <div className={styles.page}>
-                    <div className={styles.container}>
+    <div className={styles.mainContainer}>
+        <Navbar />
+        {pulse.trustLevel === "Dangerous" || pulse.trustLevel === "Scary" ? (
+            <div className="bg-red-600 text-white px-4 py-2 rounded-md mb-4 flex items-center gap-2 shadow-md">
+                <span>⚠️</span>
+                <span>
+                    Warning: This user has a low trust score. Interact with caution.
+                </span>
+            </div>
+        ) : null}
+        
+        <div className={styles.page}>
+            <div className={styles.container}>
 
-                        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className={styles.left}>
-                            <div className={styles.header}>
-                                {pulse.user_avatar ? (
-                                    <img src={pulse.user_avatar} alt="avatar" className={styles.avatar} />
-                                ) : (
-                                    <div className={styles.avatarPlaceholder}>{pulse.user?.[0] ?? '?'}</div>
-                                )}
-                                <div>
-                                    <div className={styles.username}>{pulse.user}</div>
-                                    <div className={styles.timestamp}>{isoToLocalString(pulse.timestamp)}</div>
-                                </div>
-                            </div>
-
-                            <h1 className={styles.title}>{pulse.name}</h1>
-                            <p className={styles.description}>{pulse.description}</p>
-
-                            <div className={styles.badges}>
-                                <div className={styles.typeBadge}>{isService ? "Services" : "Objects"}</div>
-                                <div className={styles.priceBadge}>{pulse.price} {pulse.currency}</div>
-                            </div>
-
-
-                            <div className={styles.carousel}>
-                                {images.length > 0 ? (
-                                    <>
-                                        <img src={images[index]} className={styles.mainImage} alt="" />
-                                        <button onClick={prev} className={styles.navLeft}><ArrowLeft size={20} /></button>
-                                        <button onClick={next} className={styles.navRight}><ArrowRight size={20} /></button>
-                                        <div className={styles.thumbs}>
-                                            {images.map((img, i) => (
-                                                <img key={i} src={img} onClick={() => setIndex(i)}
-                                                     className={`${styles.thumb} ${i === index ? styles.activeThumb : ""}`} alt="" />
-                                            ))}
-                                        </div>
-                                    </>
-                                ) : <div className={styles.noImage}>No preview</div>}
-                            </div>
-
-
-                            <div className={styles.infoGrid}>
-                                <div><span>Posted</span><strong>{isoToLocalString(pulse.timestamp)}</strong></div>
-                                <div><span>Location</span><strong>{pulse.address || "Address not available"}</strong></div>
-                                <div><span>Rating</span><strong>{pulse.rating || "N/A"}/10</strong></div>
-                            </div>
-
-
-                            <div style={{ marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
-                                <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <span>Recenzii și Rating</span>
-                                    <button onClick={handleToggleComments} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#3B82A6' }}>
-                                        {showComments ? "Hide comments" : `Show comments${pulse.comments_count ? ` (${pulse.comments_count})` : ""}`}
-                                    </button>
-                                </h3>
-
-
-                                <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
-                                    <p style={{ marginBottom: '10px', fontSize: '14px', fontWeight: '600' }}>
-                                        Acordă o notă (1-10): {userRating > 0 ? userRating : ''}
-                                    </p>
-
-                                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '15px' }}>
-                                        {[...Array(10)].map((_, i) => {
-                                            const ratingValue = i + 1;
-                                            return (
-                                                <Star
-                                                    key={ratingValue}
-                                                    size={22}
-                                                    style={{ cursor: 'pointer', transition: '0.2s' }}
-                                                    fill={ratingValue <= (hoverRating || userRating) ? "#FFC107" : "none"}
-                                                    stroke={ratingValue <= (hoverRating || userRating) ? "#FFC107" : "#ccc"}
-                                                    onMouseEnter={() => setHoverRating(ratingValue)}
-                                                    onMouseLeave={() => setHoverRating(0)}
-                                                    onClick={() => setUserRating(ratingValue)}
-                                                />
-                                            );
-                                        })}
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                        <button
-                                            onClick={handleSubmitRating}
-                                            disabled={isSubmittingRating || userRating === 0}
-                                            style={{
-                                                background: isSubmittingRating || userRating === 0 ? 'rgba(62, 143, 87, 0.55)' : '#3E8F57',
-                                                color: 'white',
-                                                border: 'none',
-                                                padding: '10px 15px',
-                                                borderRadius: '8px',
-                                                cursor: isSubmittingRating || userRating === 0 ? 'default' : 'pointer'
-                                            }}
-                                        >
-                                            {isSubmittingRating ? "Submitting..." : "Submit Rating"}
-                                        </button>
-
-                                        <form onSubmit={handlePostComment} style={{ display: 'flex', gap: '10px', flex: 1 }}>
-                                            <input
-                                                type="text"
-                                                name="comment"
-                                                placeholder="Submit a comment..."
-                                                value={commentText}
-                                                onChange={(e) => setCommentText(e.target.value)}
-                                                className={styles.commentInput}
-                                                disabled={isPosting}
-                                            />
-                                            <button
-                                                type="submit"
-                                                disabled={isPosting}
-                                                className={styles.sendButton}
-                                            >
-                                                <Send size={18} />
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-
-
-                                {showComments && (
-                                    <div className={styles.commentsSection}>
-                                        {commentsLoading && (
-                                            <div className={styles.commentsLoading}>Loading comments...</div>
-                                        )}
-
-                                        {commentsError && (
-                                            <div className={styles.commentsError}>{commentsError}</div>
-                                        )}
-
-                                        {!commentsLoading && comments.length === 0 && (
-                                            <div className={styles.commentsEmpty}>No comments yet.</div>
-                                        )}
-
-                                        <div className={styles.commentsContainer}>
-                                            {comments.map((c) => (
-                                                <div
-                                                    key={c.id || `${c.user}-${c.pub_date}`}
-                                                    className={styles.commentsBox}
-                                                >
-                                                    <div className={styles.commentsHeader}>
-                                                        <strong className={styles.commentsUser}>
-                                                            {c.user || (c.user_username ?? c.user_name)}
-                                                        </strong>
-                                                        <small className={styles.commentsDate}>
-                                                            {c.date ?? c.pub_date ?? ""}
-                                                        </small>
-                                                    </div>
-
-                                                    <p className={styles.commentsContent}>{c.content}</p>
-
-                                                    {c.can_delete && (
-                                                        <button
-                                                            className={styles.commentsDeleteBtn}
-                                                            onClick={() => handleDeleteComment(c.id)}
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {commentsHasMore && (
-                                            <div className={styles.commentsLoadMoreWrap}>
-                                                <button
-                                                    onClick={handleLoadMoreComments}
-                                                    disabled={commentsLoading}
-                                                    className={styles.commentsLoadMoreBtn}
-                                                >
-                                                    {commentsLoading ? "Loading..." : "Load more"}
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                            </div>
-                        </motion.div>
-
-
-                        <div className={styles.rightColumn}>
-                            <motion.aside initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} className={styles.sidebar}>
-                                <div className={styles.sellerCard}>
-                                    <h3>Seller</h3>
-                                    <p>{pulse.user}</p>
-                                    <div>
-                                        <button className={styles.contactBtn} onClick={(e) => { e.stopPropagation(); navigate(`/direct-chat/${pulse.user_id}`, {
-                                            state: {
-                                                fromPulse: true,
-                                            }
-                                        }); }}>
-                                            <MessageSquare size={16} /> Contact
-                                        </button>
-                                        <button onClick={() => { pulse.is_favorite ? delete_favorite() : handleFavorite(); }}
-                                                className={`${styles.favoriteBtn} ${pulse.is_favorite ? styles.favoriteActive : styles.favoriteInactive} ${favAnim ? styles.favActive : ""}`}>
-                                            <Heart size={16} fill={pulse.is_favorite ? "currentColor" : "none"} />
-                                            {pulse.is_favorite ? "Favorited" : "Favorite"}
-                                        </button>
-                                    </div>
-                                    {(pulse.has_trust_access || !pulse.trustRequired) ? (
-                                        <button
-                                            className={styles.actionBtn}
-                                            onClick={() => navigate(`/transaction/${pulse.id}`)}
-                                        >
-                                            {isService ? "Book Service" : "Lend Item"}
-                                        </button>
-                                    ) : (
-                                        <div className={styles.lockedNotice}>
-                                            <LockKeyhole/> You need a verified account with enough trust to access this
-                                        </div>
-                                    )}
-                                </div>
-                            </motion.aside>
-
-
-                            <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className={styles.mapContainer}>
-                                <div className={styles.mapWrapper} style={{ minHeight: 280, height: 320 }}>
-                                    <Map key={`${coords[0]}-${coords[1]}-${pulse.id}`} ref={mapRef} center={coords} zoom={16}>
-                                        <MapMarker longitude={coords[0]} latitude={coords[1]}>
-                                            <MarkerContent />
-                                        </MapMarker>
-                                    </Map>
-                                </div>
-                            </motion.div>
-
-                            <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className={styles.calendarContainer} style={{ marginTop: 18 }}>
-                                <h4 style={{ margin: "8px 0" }}>Availability</h4>
-                                <FullCalendar
-                                    key={calendarEvents.length}
-                                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                                    initialView="dayGridMonth"
-                                    headerToolbar={{ left: "prev,next today", center: "title", right: "dayGridMonth" }}
-                                    height="auto"
-                                    events={calendarEvents}
-                                    display="background"
-                                />
-                                <div style={{ marginTop: 8, fontSize: 13 }}>
-                                    <span style={{ display: "inline-block", width: 12, height: 12, background: "rgba(255,70,70,0.6)", marginRight: 8, verticalAlign: "middle", borderRadius: 3 }} />
-                                    <span>Unavailable</span>
-                                </div>
-                            </motion.div>
+                {/* Left Column (Main Details) */}
+                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className={styles.left}>
+                    <div className={styles.header}>
+                        {pulse.user_avatar ? (
+                            <img src={pulse.user_avatar} alt="avatar" className={styles.avatar} />
+                        ) : (
+                            <div className={styles.avatarPlaceholder}>{pulse.user?.[0] ?? '?'}</div>
+                        )}
+                        <div>
+                            <div className={styles.username}>{pulse.user}</div>
+                            <div className={styles.timestamp}>{isoToLocalString(pulse.timestamp)}</div>
                         </div>
                     </div>
+
+                    <h1 className={styles.title}>{pulse.name}</h1>
+                    <p className={styles.description}>{pulse.description}</p>
+
+                    <div className={styles.badges}>
+                        <div className={styles.typeBadge}>{isService ? "Services" : "Objects"}</div>
+                        <div className={styles.priceBadge}>{pulse.price} {pulse.currency}</div>
+                    </div>
+
+                    {/* Image Carousel */}
+                    <div className={styles.carousel}>
+                        {images.length > 0 ? (
+                            <>
+                                <img src={images[index]} className={styles.mainImage} alt="" />
+                                <button onClick={prev} className={styles.navLeft}><ArrowLeft size={20} /></button>
+                                <button onClick={next} className={styles.navRight}><ArrowRight size={20} /></button>
+                                <div className={styles.thumbs}>
+                                    {images.map((img, i) => (
+                                        <img key={i} src={img} onClick={() => setIndex(i)}
+                                             className={`${styles.thumb} ${i === index ? styles.activeThumb : ""}`} alt="" />
+                                    ))}
+                                </div>
+                            </>
+                        ) : <div className={styles.noImage}>No preview</div>}
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className={styles.infoGrid}>
+                        <div><span>Posted</span><strong>{isoToLocalString(pulse.timestamp)}</strong></div>
+                        <div><span>Location</span><strong>{pulse.address || "Address not available"}</strong></div>
+                        <div><span>Rating</span><strong>{pulse.rating || "N/A"}/10</strong></div>
+                    </div>
+
+                    {/* Reviews & Rating Section */}
+                    <div className={styles.reviewsContainer}>
+                        <div className={styles.reviewsHeader}>
+                            <h3>Recenzii și Rating</h3>
+                            <button onClick={handleToggleComments} className={styles.toggleCommentsBtn}>
+                                {showComments ? "Hide comments" : `Show comments${pulse.comments_count ? ` (${pulse.comments_count})` : ""}`}
+                            </button>
+                        </div>
+
+                        <div className={styles.ratingInputBox}>
+                            <p className={styles.ratingLabel}>
+                                Acordă o notă (1-10): {userRating > 0 ? userRating : ''}
+                            </p>
+
+                            <div className={styles.starGrid}>
+                                {[...Array(10)].map((_, i) => {
+                                    const ratingValue = i + 1;
+                                    return (
+                                        <Star
+                                            key={ratingValue}
+                                            size={22}
+                                            className={styles.starIcon}
+                                            fill={ratingValue <= (hoverRating || userRating) ? "#FFC107" : "none"}
+                                            stroke={ratingValue <= (hoverRating || userRating) ? "#FFC107" : "#ccc"}
+                                            onMouseEnter={() => setHoverRating(ratingValue)}
+                                            onMouseLeave={() => setHoverRating(0)}
+                                            onClick={() => setUserRating(ratingValue)}
+                                        />
+                                    );
+                                })}
+                            </div>
+
+                            {/* Responsive Actions: Submit Rating & Comment Form */}
+                            <div className={styles.reviewActions}>
+                                <button
+                                    onClick={handleSubmitRating}
+                                    disabled={isSubmittingRating || userRating === 0}
+                                    className={styles.submitRatingBtn}
+                                >
+                                    {isSubmittingRating ? "Submitting..." : "Submit Rating"}
+                                </button>
+
+                                <form onSubmit={handlePostComment} className={styles.commentForm}>
+                                    <input
+                                        type="text"
+                                        name="comment"
+                                        placeholder="Submit a comment..."
+                                        value={commentText}
+                                        onChange={(e) => setCommentText(e.target.value)}
+                                        className={styles.commentInput}
+                                        disabled={isPosting}
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={isPosting}
+                                        className={styles.sendButton}
+                                    >
+                                        <Send size={18} />
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        {/* Comments List Section */}
+                        {showComments && (
+                            <div className={styles.commentsSection}>
+                                {commentsLoading && (
+                                    <div className={styles.commentsLoading}>Loading comments...</div>
+                                )}
+
+                                {commentsError && (
+                                    <div className={styles.commentsError}>{commentsError}</div>
+                                )}
+
+                                {!commentsLoading && comments.length === 0 && (
+                                    <div className={styles.commentsEmpty}>No comments yet.</div>
+                                )}
+
+                                <div className={styles.commentsContainer}>
+                                    {comments.map((c) => (
+                                        <div
+                                            key={c.id || `${c.user}-${c.pub_date}`}
+                                            className={styles.commentsBox}
+                                        >
+                                            <div className={styles.commentsHeader}>
+                                                <strong className={styles.commentsUser}>
+                                                    {c.user || (c.user_username ?? c.user_name)}
+                                                </strong>
+                                                <small className={styles.commentsDate}>
+                                                    {c.date ?? c.pub_date ?? ""}
+                                                </small>
+                                            </div>
+
+                                            <p className={styles.commentsContent}>{c.content}</p>
+
+                                            {c.can_delete && (
+                                                <button
+                                                    className={styles.commentsDeleteBtn}
+                                                    onClick={() => handleDeleteComment(c.id)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {commentsHasMore && (
+                                    <div className={styles.commentsLoadMoreWrap}>
+                                        <button
+                                            onClick={handleLoadMoreComments}
+                                            disabled={commentsLoading}
+                                            className={styles.commentsLoadMoreBtn}
+                                        >
+                                            {commentsLoading ? "Loading..." : "Load more"}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </motion.div>
+
+                {/* Right Column (Sidebar, Map, Calendar) */}
+                <div className={styles.rightColumn}>
+                    <motion.aside initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} className={styles.sidebar}>
+                        <div className={styles.sellerCard}>
+                            <h3>Seller</h3>
+                            <p>{pulse.user}</p>
+                            <div>
+                                <button className={styles.contactBtn} onClick={(e) => { e.stopPropagation(); navigate(`/direct-chat/${pulse.user_id}`, {
+                                    state: { fromPulse: true }
+                                }); }}>
+                                    <MessageSquare size={16} /> Contact
+                                </button>
+                                <button onClick={() => { pulse.is_favorite ? delete_favorite() : handleFavorite(); }}
+                                        className={`${styles.favoriteBtn} ${pulse.is_favorite ? styles.favoriteActive : styles.favoriteInactive} ${favAnim ? styles.favActive : ""}`}>
+                                    <Heart size={16} fill={pulse.is_favorite ? "currentColor" : "none"} />
+                                    {pulse.is_favorite ? "Favorited" : "Favorite"}
+                                </button>
+                            </div>
+                            {(pulse.has_trust_access || !pulse.trustRequired) ? (
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={() => navigate(`/transaction/${pulse.id}`)}
+                                >
+                                    {isService ? "Book Service" : "Lend Item"}
+                                </button>
+                            ) : (
+                                <div className={styles.lockedNotice}>
+                                    <LockKeyhole/> You need a verified account with enough trust to access this
+                                </div>
+                            )}
+                        </div>
+                    </motion.aside>
+
+                    <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className={styles.mapContainer}>
+                        <h3>Location</h3>
+                        <div className={styles.mapWrapper}>
+                            <Map key={`${coords[0]}-${coords[1]}-${pulse.id}`} ref={mapRef} center={coords} zoom={16}>
+                                <MapMarker longitude={coords[0]} latitude={coords[1]}>
+                                    <MarkerContent />
+                                </MapMarker>
+                            </Map>
+                        </div>
+                    </motion.div>
+
+                    <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className={styles.calendarContainer}>
+                        <h4>Availability</h4>
+                        <FullCalendar
+                            key={calendarEvents.length}
+                            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                            initialView="dayGridMonth"
+                            headerToolbar={{ left: "prev,next today", center: "title", right: "dayGridMonth" }}
+                            height="auto"
+                            events={calendarEvents}
+                            display="background"
+                        />
+                        <div className={styles.calendarLegend}>
+                            <span className={styles.legendColor} />
+                            <span>Unavailable</span>
+                        </div>
+                    </motion.div>
                 </div>
             </div>
-            <Footer />
         </div>
+    </div>
+    <Footer />
+</div>
     );
 }

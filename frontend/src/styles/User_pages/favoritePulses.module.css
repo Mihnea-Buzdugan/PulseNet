@@ -14,7 +14,7 @@
     min-height: 100vh;
 }
 
-/* Main container */
+/* Main containers */
 .firstContainer {
     max-width: 1300px;
     margin: 0 auto;
@@ -55,7 +55,7 @@
     font-weight: 500;
 }
 
-
+/* --- Filter Container (Highly Responsive) --- */
 .filterContainer {
     display: flex;
     flex-wrap: wrap;
@@ -87,7 +87,7 @@
 }
 
 .searchInput {
-    width: 90%;
+    width: 100%; /* Changed to 100% for consistent responsiveness */
     padding: 14px 15px 14px 50px;
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -122,15 +122,12 @@
     min-width: 150px;
 }
 
-.selectBox:hover {
+.selectBox:hover,
+.selectBox:focus {
     border-color: var(--color-border-focus);
     background: #f1f5f9;
 }
 
-.selectBox:active {
-    border-color: var(--color-border-focus);
-    background: #f1f5f9;
-}
 /* Grid & Cards */
 .grid {
     display: grid;
@@ -329,19 +326,19 @@
 .carouselOverlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.75);
+    background: rgba(0,0,0,0.8);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 999;
+    z-index: 2999;
     padding: 20px;
 }
 
 .carouselContent {
     display: flex;
     align-items: center;
-    gap: 15px;
-    max-width: 1000px;
+    gap: 20px;
+    max-width: 900px;
     width: 100%;
     background: #ffffff;
     border-radius: 20px;
@@ -355,6 +352,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
 }
 
 .carouselImageWrapper {
@@ -374,6 +372,7 @@
 
 .carouselBody {
     text-align: center;
+    width: 100%;
 }
 
 .carouselBody h2 {
@@ -460,10 +459,96 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* --- Responsive Media Queries --- */
+
+/* Responsive Tablets & Small Desktops */
+@media (max-width: 992px) {
+    .title {
+        font-size: 2.8rem;
+    }
+}
+
+/* Responsive Medium Devices (Tablets, e.g., iPad Portrait) */
+@media (max-width: 768px) {
+    .mainContainer {
+        padding: 20px 10px;
+    }
+
+    /* Stack Filter elements nicely */
+    .filterContainer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding: 15px;
+    }
+
+    .searchBox {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .dropdowns {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Dropdowns align side-by-side */
+        gap: 12px;
+    }
+
+    .selectBox {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* Carousel Lightbox Stack */
+    .carouselOverlay {
+        padding: 10px;
+    }
+
+    .carouselContent {
+        flex-direction: column-reverse; /* Reverses positions so arrows align at top or bottom */
+        gap: 15px;
+        max-height: 95vh;
+        overflow-y: auto;
+    }
+
+    .carouselNav {
+        padding: 8px 30px;
+        width: 45%;
+        text-align: center;
+    }
+    
+    /* Display navigation buttons in a row at the bottom of the container on mobile */
+    .carouselContent > .carouselNav {
+        display: inline-block;
+    }
+}
+
+/* Responsive Mobile Screens */
 @media (max-width: 480px) {
-
-    .firstContainer{
+    .firstContainer {
         padding: 0;
+    }
 
+    .title {
+        font-size: 2.2rem;
+    }
+
+    .subtitle {
+        font-size: 0.95rem;
+    }
+
+    /* Stack dropdowns vertically on very small screens */
+    .dropdowns {
+        grid-template-columns: 1fr; 
+    }
+
+    .paginationBar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pageBtn {
+        width: 100%;
+        text-align: center;
     }
 }

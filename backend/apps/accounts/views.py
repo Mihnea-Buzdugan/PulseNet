@@ -979,131 +979,61 @@ class PulseList(APIView):
 
 
 
-class NearestPulses(APIView):
-    permission_classes = [IsAuthenticated]
+@csrf_protect
+@login_required
+@require_http_methods(["GET"])
+def get_nearest_pulses(request):
 
-    def get(self, request):
-        lat = request.query_params.get("lat")
-        lng = request.query_params.get("lng")
+    lat = request.GET.get("lat")
+    lng = request.GET.get("lng")
 
-        try:
-            if lat and lng:
-                ref_location = Point(
-                    float(lng),
-                    float(lat),
-                    srid=4326,
-                )
-            else:
-                ref_location = request.user.location
+    if lat and lng:
+        ref_location = Point(float(lng), float(lat), srid=4326)
+    else:
+        ref_location = request.user.location
 
-            if not ref_location:
-                return Response(
-                    {
-                        "success": False,
-                        "error": "Location required",
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+    if not ref_location:
+        return JsonResponse({"success": False, "error": "Location required"}, status=400)
 
-            radius_km = request.user.visibility_radius
+    radius_km = request.user.visibility_radius
+    user = request.user
+    pulses = (
+        Pulse.objects
+        .exclude(user=user)
+        .filter(location__dwithin=(ref_location, radius_km / 111.32))
+        .select_related("user")
+        .prefetch_related("images")
+        .annotate(distance=GisDistance("location", ref_location))
+        .order_by("distance")[:10]
+    )
 
-            pulses = (
-                Pulse.objects
-                .exclude(user=request.user)
-                .filter(
-                    location__dwithin=(
-                        ref_location,
-                        radius_km / 111.32,
-                    )
-                )
-                .select_related("user")
-                .prefetch_related("images")
-                .annotate(
-                    distance=GisDistance(
-                        "location",
-                        ref_location,
-                    )
-                )
-                .order_by("distance")[:10]
-            )
+    data = []
+    for p in pulses:
+        images = list(p.images.all())
+        image_url = request.build_absolute_uri(images[0].image.url) if images else None
 
-            data = []
+        data.append({
+            "id": p.id,
+            "type": p.pulse_type,
+            "user": p.user.username,
+            "name": p.title,
+            "price": float(p.price),
+            "pulse_type": p.pulse_type,
+            "description": p.description,
+            "popularity_score": p.popularity_score,
+            "total_reviews": p.total_reviews,
+            "currency": p.currencyType,
+            "timestamp": p.created_at.isoformat(),
+            "distance": round(p.distance.km, 2),
+            "lat": p.location.y if p.location else None,
+            "lng": p.location.x if p.location else None,
+            "image": image_url,
+        })
 
-            for pulse in pulses:
-                images = list(pulse.images.all())
-
-                image_url = (
-                    request.build_absolute_uri(
-                        images[0].image.url
-                    )
-                    if images
-                    else None
-                )
-
-                data.append(
-                    {
-                        "id": pulse.id,
-                        "type": pulse.pulse_type,
-                        "user": pulse.user.username,
-                        "name": pulse.title,
-                        "price": (
-                            float(pulse.price)
-                            if pulse.price is not None
-                            else None
-                        ),
-                        "pulse_type": pulse.pulse_type,
-                        "description": pulse.description,
-                        "popularity_score": pulse.popularity_score,
-                        "total_reviews": pulse.total_reviews,
-                        "currency": pulse.currencyType,
-                        "timestamp": (
-                            pulse.created_at.isoformat()
-                            if pulse.created_at
-                            else None
-                        ),
-                        "distance": round(
-                            pulse.distance.km,
-                            2,
-                        ),
-                        "lat": (
-                            pulse.location.y
-                            if pulse.location
-                            else None
-                        ),
-                        "lng": (
-                            pulse.location.x
-                            if pulse.location
-                            else None
-                        ),
-                        "image": image_url,
-                    }
-                )
-
-            return Response(
-                {
-                    "success": True,
-                    "pulses": data,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        except (TypeError, ValueError):
-            return Response(
-                {
-                    "success": False,
-                    "error": "Invalid coordinates",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        except Exception as e:
-            return Response(
-                {
-                    "success": False,
-                    "error": str(e),
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+    return JsonResponse({
+        "success": True,
+        "pulses": data
+    })
 
 class FavoritePulses(APIView):
     permission_classes = [IsAuthenticated]
@@ -4135,3 +4065,156 @@ def ai_chat(request):
             f"Error: {str(e)}",
             status=500
         )
+
+
+# views.py
+from django.core.cache import cache  # or a dedicated model/table with TTL cleanup
+
+SESSION_TTL = 120  # seconds
+
+
+def _session_key(session_id):
+    return f"link:{session_id}"
+
+
+@require_POST
+@login_required
+def link_start(request):
+    """Called by whichever device is SHOWING the QR code."""
+    data = json.loads(request.body)
+    session_id = data["sessionId"]
+    role = data.get("role")  # "source" (has the key) or "sink" (needs the key)
+
+    if role not in ("source", "sink"):
+        return JsonResponse({"message": "Invalid role"}, status=400)
+
+    cache.set(_session_key(session_id), {
+        "user_id": request.user.id,
+        "status": "pending",
+        "initiatorRole": role,
+    }, timeout=SESSION_TTL)
+    return JsonResponse({"ok": True})
+
+
+@require_POST
+@login_required
+def link_respond(request):
+    """
+    Called once by whichever device SCANS the QR code.
+
+    - If the scanner already holds the private key, it acts as the source
+      and includes the encrypted payload right away -> session completes
+      in a single round trip.
+    - If the scanner does NOT hold the private key, it just registers its
+      ephemeral public key and waits (via polling) for the shower to
+      deliver the encrypted payload.
+    """
+    data = json.loads(request.body)
+    session_id = data["sessionId"]
+    key = _session_key(session_id)
+    session = cache.get(key)
+
+    if not session or session["user_id"] != request.user.id:
+        return JsonResponse({"message": "Invalid or expired session"}, status=400)
+
+    if session["status"] != "pending":
+        return JsonResponse({"message": "Session already used"}, status=400)
+
+    responder_pub_key = data["responderPubKey"]
+
+    if "encryptedPrivateKey" in data:
+        session.update({
+            "status": "completed",
+            "senderPubKey": responder_pub_key,
+            "encryptedPrivateKey": data["encryptedPrivateKey"],
+            "iv": data["iv"],
+        })
+        cache.set(key, session, timeout=SESSION_TTL)
+        return JsonResponse({"status": "completed"})
+
+    session.update({
+        "status": "awaiting_source",
+        "responderPubKey": responder_pub_key,
+    })
+    cache.set(key, session, timeout=SESSION_TTL)
+    return JsonResponse({"status": "awaiting_source"})
+
+
+@require_POST
+@login_required
+def link_deliver(request):
+    """
+    Called by the QR-shower when IT holds the private key and the scanner
+    has requested it (i.e. session status is "awaiting_source").
+    """
+    data = json.loads(request.body)
+    session_id = data["sessionId"]
+    key = _session_key(session_id)
+    session = cache.get(key)
+
+    if not session or session["user_id"] != request.user.id:
+        return JsonResponse({"message": "Invalid or expired session"}, status=400)
+
+    if session["status"] != "awaiting_source":
+        return JsonResponse({"message": "Session not awaiting delivery"}, status=400)
+
+    session.update({
+        "status": "completed",
+        "senderPubKey": data["senderPubKey"],
+        "encryptedPrivateKey": data["encryptedPrivateKey"],
+        "iv": data["iv"],
+    })
+    cache.set(key, session, timeout=SESSION_TTL)
+    return JsonResponse({"ok": True})
+
+
+@require_POST
+@login_required
+def link_fail(request):
+    """Either side can report linking is impossible (e.g. neither device has a key)."""
+    data = json.loads(request.body)
+    session_id = data["sessionId"]
+    key = _session_key(session_id)
+    session = cache.get(key)
+
+    if not session or session["user_id"] != request.user.id:
+        return JsonResponse({"message": "Invalid or expired session"}, status=400)
+
+    session.update({"status": "error", "error": data.get("message", "Linking failed")})
+    cache.set(key, session, timeout=SESSION_TTL)
+    return JsonResponse({"ok": True})
+
+
+@require_GET
+@login_required
+def link_poll(request):
+    session_id = request.GET.get("sessionId")
+    session = cache.get(_session_key(session_id))
+
+    if not session or session["user_id"] != request.user.id:
+        return JsonResponse({"status": "not_found"}, status=404)
+
+    status = session["status"]
+
+    if status == "completed":
+        result = {
+            "status": "completed",
+            "senderPubKey": session["senderPubKey"],
+            "encryptedPrivateKey": session["encryptedPrivateKey"],
+            "iv": session["iv"],
+        }
+        cache.delete(_session_key(session_id))  # one-time use
+        return JsonResponse(result)
+
+    if status == "awaiting_source":
+        return JsonResponse({
+            "status": "awaiting_source",
+            "responderPubKey": session["responderPubKey"],
+        })
+
+    if status == "error":
+        error = session.get("error", "Linking failed")
+        cache.delete(_session_key(session_id))
+        return JsonResponse({"status": "error", "message": error})
+
+    return JsonResponse({"status": "pending"})

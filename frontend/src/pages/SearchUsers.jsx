@@ -26,7 +26,7 @@ export default function SearchUsers() {
         setLoading(true);
         try {
             const res = await fetch(
-                `https://localhost/accounts/search-users/?q=${encodeURIComponent(query)}`,
+                `/accounts/search-users/?q=${encodeURIComponent(query)}`,
                 { credentials: "include" }
             );
 
@@ -51,7 +51,7 @@ export default function SearchUsers() {
     const followUser = async (userId) => {
         const csrf = getCookie("csrftoken");
 
-        await fetch(`https://localhost/accounts/follow/${userId}/`, {
+        await fetch(`/accounts/follow/${userId}/`, {
             method: "POST",
             credentials: "include",
             headers: { "X-CSRFToken": csrf },
@@ -74,7 +74,7 @@ export default function SearchUsers() {
     const unfollowUser = async (userId) => {
         const csrf = getCookie("csrftoken");
 
-        await fetch(`https://localhost/accounts/unfollow/${userId}/`, {
+        await fetch(`/accounts/unfollow/${userId}/`, {
             method: "POST",
             credentials: "include",
             headers: { "X-CSRFToken": csrf },

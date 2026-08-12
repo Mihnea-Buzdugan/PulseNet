@@ -72,7 +72,8 @@ export default function UrgentRequests() {
     const socketRef = useRef(null);
     useEffect(() => {
 
-        socketRef.current = new WebSocket("wss://localhost/ws/requests/");
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        socketRef.current = new WebSocket(`${wsProtocol}//${window.location.host}/ws/requests/`);
 
         socketRef.current.onopen = () => {
             console.log("Connected to Request WebSocket");
@@ -142,7 +143,7 @@ export default function UrgentRequests() {
                 max_price: maxPrice,
             });
 
-            const res = await fetch(`https://localhost/accounts/list-all-requests/?${params}`);
+            const res = await fetch(`/accounts/list-all-requests/?${params}`);
             if (!res.ok) throw new Error("Failed to load requests");
 
             const data = await res.json();

@@ -30,7 +30,7 @@ const Pulses = React.lazy(()=> import('./pages/Pulses_pages/Pulses.jsx'));
 const RequestOffer = React.lazy(() => import('./pages/Requests/RequestOffer'));
 const Contact = React.lazy(() => import('./pages/User_pages/Contact.jsx'));
 const AIChat = React.lazy(() => import('./pages/AIChat'));
-
+const LinkDevice = React.lazy(() => import('./pages/Authentification/LinkDevice.jsx'));
 const NotificationHandler = ({ currentUser }) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -38,7 +38,8 @@ const NotificationHandler = ({ currentUser }) => {
     useEffect(() => {
         if (!currentUser?.id) return;
 
-        const wsUrl = `wss://localhost/ws/notifications/`;
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/notifications/`;
         const socket = new WebSocket(wsUrl);
 
         socket.onmessage = (e) => {
@@ -391,7 +392,7 @@ function App() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const fetchUser = () => {
-        fetch('https://localhost/accounts/user/', { credentials: 'include' })
+        fetch('/accounts/user/', { credentials: 'include' })
             .then(response => {
                 if (!response.ok) throw new Error("Unauthorized");
                 return response.json();
@@ -503,6 +504,7 @@ function App() {
                         <Route path="/request/:id" element={<RequestDetails />} />
                         <Route path="/offer/:requestId" element={<RequestOffer />} />
                         <Route path="/ai-chat" element={<AIChat />} />
+                        <Route path="/link-device" element={<LinkDevice />} />
 
                         <Route path="/admin-page" element={<AdminRoute><Admin /></AdminRoute>} />
                     </Route>

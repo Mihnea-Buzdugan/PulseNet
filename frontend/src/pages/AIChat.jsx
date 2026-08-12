@@ -43,7 +43,7 @@ export default function AIChat() {
         const csrfToken = getCookie("csrftoken");
 
         try {
-            const res = await fetch("https://localhost/accounts/ai_chat/", {
+            const res = await fetch("/accounts/ai_chat/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -75,7 +75,7 @@
 
 /* BUTTON */
 .followRequestsBtn {
-    padding: 8px 18px;
+    padding: 8px 20px;
     border-radius: 999px;
     border: none;
     background: var(--color-secondary);
@@ -442,7 +442,7 @@
         left: 0;
         top: 0;
         height: 100%;
-        width: 75%;
+        width: 80%;
         transform: translateX(-100%);
         z-index: 2000;
         background: white;
@@ -472,6 +472,10 @@
     .inputArea {
         padding: 10px;
     }
+
+    .followRequestsBtn{
+        padding: 6px 18px;
+    }
 }
 
 /* VERY SMALL SCREENS */
@@ -499,3 +503,4 @@
 
     }
 }
+

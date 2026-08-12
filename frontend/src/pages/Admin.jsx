@@ -117,11 +117,11 @@ const Admin = () => {
 
 
             if (itemType === 'pulse') {
-                url = `https://localhost/accounts/delete-pulse/${item.id}/`;
+                url = `/accounts/delete-pulse/${item.id}/`;
             } else if (itemType === 'alert') {
-                url = `https://localhost/accounts/delete-alert/${item.id}/`;
+                url = `/accounts/delete-alert/${item.id}/`;
             } else if (itemType === 'urgent_request') {
-                url = `https://localhost/accounts/delete-urgent-request/${item.id}/`;
+                url = `/accounts/delete-urgent-request/${item.id}/`;
             }
 
             const response = await fetch(url, {
@@ -176,16 +176,16 @@ const Admin = () => {
             let url = '';
 
             if (itemType === 'rental_signal') {
-                url = `https://localhost/accounts/delete-rental-signal/${item.id}/`;
+                url = `/accounts/delete-rental-signal/${item.id}/`;
             }
             else if (itemType === 'rental_feedback' || itemType === 'pulse_feedback') {
 
 
                 const backendType = item.type === 'rental' ? 'request' : 'pulse';
-                url = `https://localhost/accounts/delete-rental-feedback/${item.id}/?type=${backendType}`;
+                url = `/accounts/delete-rental-feedback/${item.id}/?type=${backendType}`;
             }
             else if (itemType === 'contact' || itemType === 'user_contact') {
-                url = `https://localhost/accounts/delete-user-contact/${item.id}/`;
+                url = `/accounts/delete-user-contact/${item.id}/`;
             }
 
             const response = await fetch(url, {
@@ -233,7 +233,7 @@ const Admin = () => {
 
     const handleResolveSignal = async (signalId, message) => {
         try {
-            const response = await fetch(`https://localhost/accounts/resolve-rental-signal/${signalId}/`, {
+            const response = await fetch(`/accounts/resolve-rental-signal/${signalId}/`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -281,13 +281,13 @@ const Admin = () => {
             setLoadingData(true);
             try {
                 if (activeTab === 'reports' && reports.length === 0) {
-                    const res = await fetch(`https://localhost/accounts/admin_alert_reports/`, {
+                    const res = await fetch(`/accounts/admin_alert_reports/`, {
                         credentials: "include",
                     });
                     const data = await res.json();
                     if (data.reports) setReports(data.reports);
                 } else if (activeTab === 'flagged' && flaggedData.pulses.length === 0) {
-                    const res = await fetch(`https://localhost/accounts/flagged_posts/`, {
+                    const res = await fetch(`/accounts/flagged_posts/`, {
                         credentials: "include",
                     });
                     const data = await res.json();
@@ -298,7 +298,7 @@ const Admin = () => {
                     feedbackData.rental_feedbacks.length === 0 &&
                     feedbackData.user_contacts.length === 0
                 ) {
-                    const res = await fetch(`https://localhost/accounts/feedbacks/`, {
+                    const res = await fetch(`/accounts/feedbacks/`, {
                         credentials: "include",
                     });
                     const data = await res.json();
@@ -337,7 +337,7 @@ const Admin = () => {
         const timeout = setTimeout(async () => {
             try {
                 const res = await fetch(
-                    `https://localhost/accounts/search-users/?q=${encodeURIComponent(query)}`,
+                    `/accounts/search-users/?q=${encodeURIComponent(query)}`,
                     { credentials: "include" }
                 );
                 const data = await res.json();
@@ -355,7 +355,7 @@ const Admin = () => {
     const handleDeleteReport = async (reportId) => {
 
         try {
-            const response = await fetch(`https://localhost/accounts/delete_report/${reportId}/`, {
+            const response = await fetch(`/accounts/delete_report/${reportId}/`, {
                 method: "DELETE",
                 credentials: "include",
                 headers: {
@@ -402,7 +402,7 @@ const Admin = () => {
         setBanError('');
 
         try {
-            const response = await fetch(`https://localhost/accounts/ban-user/${selectedUserToBan.id}/`, {
+            const response = await fetch(`/accounts/ban-user/${selectedUserToBan.id}/`, {
                 method: 'POST',
                 credentials: "include",
                 headers: {
@@ -440,7 +440,7 @@ const Admin = () => {
 
         try {
             const response = await fetch(
-                `https://localhost/accounts/unban-user/${selectedUserToUnban.id}/`,
+                `/accounts/unban-user/${selectedUserToUnban.id}/`,
                 {
                     method: 'POST',
                     credentials: "include",

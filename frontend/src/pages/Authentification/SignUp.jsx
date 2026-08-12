@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
 import {GoogleLogin} from "@react-oauth/google";
-import {initializeE2EE} from "@/utils/cryptoUtils";
+import { getE2EEStatus, generateAndUploadKeypair } from "@/utils/cryptoUtils";
 
 function getCookie(name) {
     let cookieValue = null;
@@ -39,7 +39,7 @@ const SignUp = () => {
         if (csrfFetched.current) return;
         csrfFetched.current = true;
 
-        fetch('https://localhost/accounts/csrf-token/', {
+        fetch('/accounts/csrf-token/', {
             method: 'GET',
             credentials: 'include',
         })
@@ -91,7 +91,7 @@ const SignUp = () => {
         };
 
         try {
-            const response = await fetch('https://localhost/accounts/signup/', {
+            const response = await fetch('/accounts/signup/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -102,16 +102,27 @@ const SignUp = () => {
             });
 
             if (response.ok) {
-                const expirationTime = new Date();
-
-                await initializeE2EE();
-                expirationTime.setHours(expirationTime.getHours() + 6);
-                localStorage.setItem('auth-token', 'true');
-                localStorage.setItem('token-expiration', expirationTime.toString());
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 0);
-            } else {
+                            const data = await response.json();
+                            
+                            const status = await getE2EEStatus();
+            
+                            const expirationTime = new Date();
+                            expirationTime.setHours(expirationTime.getHours() + 6);
+                            localStorage.setItem('auth-token', 'true');
+                            localStorage.setItem('token-expiration', expirationTime.toString());
+            
+                            if (status === "new_user") {
+                            await generateAndUploadKeypair();
+                            navigate('/');
+                            } else if (status === "needs_device_link") {
+                                navigate('/link-device'); // your QR show/scan screen
+                            } else if (status === "ready") {
+                                navigate('/');
+                            } else {
+                                // needs_reupload edge case - decide how you want to handle this
+                                navigate('/');
+                            }
+                        } else {
                 const errorData = await response.json();
                 alert('Error: ' + errorData.message);
             }
@@ -131,7 +142,7 @@ const SignUp = () => {
             return;
         }
 
-        const resp = await fetch('https://localhost/accounts/google_login/', {
+        const resp = await fetch('/accounts/google_login/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -141,17 +152,28 @@ const SignUp = () => {
             body: JSON.stringify({ google_token: googleToken })
         });
         if (resp.ok) {
-            const data = await resp.json();
-            console.log(data);
-            await initializeE2EE();
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 0);
-            const exp = new Date();
-            exp.setHours(exp.getHours() + 6);
-            localStorage.setItem('auth-token', 'true');
-            localStorage.setItem('token-expiration', exp.toString());
-        } else {
+                    const data = await resp.json();
+                    const status = await getE2EEStatus();
+        
+                    const exp = new Date();
+                    exp.setHours(exp.getHours() + 6);
+                    localStorage.setItem('auth-token', 'true');
+                    localStorage.setItem('token-expiration', exp.toString());
+                    console.log("E2EE Status: ", status);
+                    if (status === "new_user") {
+                        await generateAndUploadKeypair();
+                        navigate('/');
+                        } else if (status === "needs_device_link") {
+                            navigate('/link-device'); // your QR show/scan screen
+                        } else if (status === "ready") {
+                           setTimeout(() => {
+                            window.location.href = '/';
+                        }, 0);
+                        } else {
+                            // needs_reupload edge case - decide how you want to handle this
+                            navigate('/');
+                        }
+                } else {
             const err = await resp.json();
             alert(err.message);
         }

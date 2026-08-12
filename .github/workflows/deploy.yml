@@ -1,0 +1,27 @@
+name: Deploy to Oracle Linux VM
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow only when pushing to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}      
+          key: ${{ secrets.SSH_PRIVATE_KEY }}   
+          port: ${{ secrets.VM_PORT || 22 }}    
+          script: |
+            cd /home/opc/PulseNet
+            git pull origin main
+            docker compose down
+            docker compose up -d

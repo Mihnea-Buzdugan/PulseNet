@@ -95,7 +95,7 @@ export default function Index() {
                 const lng = pos.coords.longitude;
                 setUserLocation({ lat, lng });
 
-                fetch("https://localhost/accounts/update_location/", {
+                fetch("/accounts/update_location/", {
                     method: "POST",
                     credentials: "include",
                     headers: {
@@ -114,7 +114,7 @@ export default function Index() {
 
     // fetch visibility radius from profile
     useEffect(() => {
-        fetch("https://localhost/accounts/profile/", {
+        fetch("/accounts/profile/", {
             method: "GET",
             credentials: "include",
         })
@@ -263,7 +263,7 @@ export default function Index() {
             const fetchWeather = async () => {
 
                 try {
-                    const res = await fetch(`https://localhost/accounts/alerts/weather?lat=${userLocation.lat}&lon=${userLocation.lng}`);
+                    const res = await fetch(`/accounts/alerts/weather?lat=${userLocation.lat}&lon=${userLocation.lng}`);
 
                     if (res.ok) {
                         const data = await res.json();
@@ -291,7 +291,7 @@ export default function Index() {
                 ? `&lat=${userLocation.lat}&lng=${userLocation.lng}`
                 : "";
             const res = await fetch(
-                `https://localhost/accounts/get_latest_pulses/?page=${pageNum}${locationParams}`,
+                `/accounts/get_latest_pulses/?page=${pageNum}${locationParams}`,
                 { method: "GET", credentials: "include" }
             );
             const data = await res.json();
@@ -318,7 +318,7 @@ export default function Index() {
         if (!userLocation) return;
         try {
             const res = await fetch(
-                `https://localhost/accounts/get_nearest_pulses/?lat=${userLocation.lat}&lng=${userLocation.lng}`,
+                `/accounts/get_nearest_pulses/?lat=${userLocation.lat}&lng=${userLocation.lng}`,
                 { method: "GET", credentials: "include" }
             );
             const data = await res.json();
@@ -338,7 +338,7 @@ export default function Index() {
     const fetchUrgentRequests = async () => {
         try {
             const res = await fetch(
-                `https://localhost/accounts/urgent-requests/`,
+                `/accounts/urgent-requests/`,
                 { method: "GET", credentials: "include" }
             );
             const data = await res.json();
@@ -354,7 +354,7 @@ export default function Index() {
 
     // fetch admin-posted weather alerts
     useEffect(() => {
-        fetch("https://localhost/accounts/alerts/?category=weather", {
+        fetch("/accounts/alerts/?category=weather", {
             credentials: "include",
         })
             .then((r) => r.json())

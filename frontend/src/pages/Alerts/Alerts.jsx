@@ -137,7 +137,7 @@ export default function Alerts() {
     const socketRef = useRef(null);
 
     useEffect(() => {
-        fetch("https://localhost/accounts/alerts/", { credentials: "include" })
+        fetch("/accounts/alerts/", { credentials: "include" })
             .then((res) => res.json())
             .then((data) => {
                 if (data.success) setAlerts(data.alerts || []);
@@ -146,7 +146,8 @@ export default function Alerts() {
     }, []);
 
     useEffect(() => {
-        const socketUrl = `wss://localhost/ws/alerts/`;
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socketUrl = `${wsProtocol}//${window.location.host}/ws/alerts/`;
         socketRef.current = new WebSocket(socketUrl);
 
         socketRef.current.onmessage = (event) => {

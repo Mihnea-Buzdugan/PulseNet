@@ -88,7 +88,7 @@ export default function PulseTransaction() {
         let mounted = true;
         const fetchPulse = async () => {
             try {
-                const res = await fetch(`https://localhost/accounts/pulse/${pulseId}/`, {
+                const res = await fetch(`/accounts/pulse/${pulseId}/`, {
                     method: "GET",
                     credentials: "include",
                 });
@@ -146,7 +146,7 @@ export default function PulseTransaction() {
         const fetchUser = async () => {
             try {
 
-                const res = await fetch("https://localhost/accounts/user/", {
+                const res = await fetch("/accounts/user/", {
                     method: "GET",
                     credentials: "include",
                 });
@@ -338,7 +338,7 @@ export default function PulseTransaction() {
                 proposed_price: Number(proposedPrice),
             };
 
-            const res = await fetch("https://localhost/accounts/create_pulse_rental/", {
+            const res = await fetch("/accounts/create_pulse_rental/", {
                 method: "POST",
                 credentials: "include",
                 headers: {

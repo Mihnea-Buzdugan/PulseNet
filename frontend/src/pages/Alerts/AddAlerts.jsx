@@ -147,7 +147,7 @@ export default function AddAlerts() {
                 data.append("images", file);
             });
 
-            const response = await fetch("https://localhost/accounts/alerts/create/", {
+            const response = await fetch("/accounts/alerts/create/", {
                 method: "POST",
                 headers: {
                     "X-CSRFToken": getCookie("csrftoken"),

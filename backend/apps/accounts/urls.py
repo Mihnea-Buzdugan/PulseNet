@@ -25,7 +25,7 @@ urlpatterns = [
     path("list-all-pulses/", views.PulseList.as_view(), name="list_all_pulses"),
     path("update_pulse/<int:pulse_id>/", views.PulseDetailView.as_view(), name="update_pulse"),
     path('remove_pulse/<int:pulse_id>/', views.PulseDetailView.as_view(), name='remove_pulse'),
-    path("get_nearest_pulses/", views.NearestPulses.as_view(), name="get_nearest_pulses"),
+    path("get_nearest_pulses/", views.get_nearest_pulses, name="get_nearest_pulses"),
     path('pulse/<int:pulse_id>/', views.PulseDetailRetrieve.as_view(), name='get_pulse_by_id'),
     path('pulse/comments/<int:pulse_id>/', views.get_pulse_comments, name='get_pulse_comments'),
     path('pulse/ratings/<int:pulse_id>/', views.add_pulse_rating, name='add_pulse_rating'),
@@ -97,4 +97,9 @@ urlpatterns = [
     path("resolve-rental-signal/<int:id>/", views.resolve_rental_signal, name='resolve_rental_signal'),
 
     path("ai_chat/", views.ai_chat, name="ai_chat"),
+    path("message_keys/link/start/", views.link_start, name="link_start"),
+    path("message_keys/link/respond/", views.link_respond, name="link_respond"),
+    path("message_keys/link/deliver/", views.link_deliver, name="link_deliver"),
+    path("message_keys/link/fail/", views.link_fail, name="link_fail"),
+    path("message_keys/link/poll/", views.link_poll, name="link_poll"),
 ]

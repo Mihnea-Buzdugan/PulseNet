@@ -48,7 +48,7 @@ const DirectChat = ({ currentUser }) => {
 
             try {
                 const response = await fetch(
-                    `https://localhost/accounts/direct_conversations/create/${id}/`,
+                    `/accounts/direct_conversations/create/${id}/`,
                     {
                         method: 'POST',
                         headers: {
@@ -63,7 +63,7 @@ const DirectChat = ({ currentUser }) => {
                 if (response.ok) {
                     setConversationId(data.conversation_id);
 
-                    const keyRes = await fetch(`https://localhost/accounts/message_keys/get/${id}/`, {
+                    const keyRes = await fetch(`/accounts/message_keys/get/${id}/`, {
                         credentials: 'include',
                     });
 
@@ -73,7 +73,7 @@ const DirectChat = ({ currentUser }) => {
                     } else {
                         console.error("Message Key error: ", response.error);
                     }
-                    const myKeyRes = await fetch(`https://localhost/accounts/message_keys/get/${currentUser.id}/`, {
+                    const myKeyRes = await fetch(`/accounts/message_keys/get/${currentUser.id}/`, {
                         credentials: 'include'
                     });
                     if (myKeyRes.ok) {
@@ -123,7 +123,7 @@ const DirectChat = ({ currentUser }) => {
         if (!conversationId) return;
         const fetchHistory = async () => {
             try {
-                const response = await fetch(`https://localhost/accounts/messages/history/direct/${conversationId}/`, {
+                const response = await fetch(`/accounts/messages/history/direct/${conversationId}/`, {
                     credentials: 'include'
                 });
                 const data = await response.json();
@@ -143,7 +143,8 @@ const DirectChat = ({ currentUser }) => {
 
     useEffect(() => {
         if (!conversationId) return;
-        const wsUrl = `wss://localhost/ws/chat/direct/${conversationId}/`;
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat/direct/${conversationId}/`;
         socketRef.current = new WebSocket(wsUrl);
         socketRef.current.onmessage = async (e) => {
             const data = JSON.parse(e.data);

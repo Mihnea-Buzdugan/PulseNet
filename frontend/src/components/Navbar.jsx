@@ -60,12 +60,12 @@ function Navbar() {
         if (!isAuthenticated) return;
         try {
 
-            const userRes = await fetch('https://localhost/accounts/user/', { credentials: 'include' });
+            const userRes = await fetch('/accounts/user/', { credentials: 'include' });
             const userData = await userRes.json();
             setUser(userData);
 
 
-            const notifRes = await fetch('https://localhost/accounts/notifications/', { credentials: 'include' });
+            const notifRes = await fetch('/accounts/notifications/', { credentials: 'include' });
             const notifData = await notifRes.json();
             setNotifications(notifData.notifications || []);
         } catch (err) {
@@ -97,7 +97,7 @@ function Navbar() {
         const timeout = setTimeout(async () => {
             try {
                 const res = await fetch(
-                    `https://localhost/accounts/search-users/?q=${encodeURIComponent(query)}`,
+                    `/accounts/search-users/?q=${encodeURIComponent(query)}`,
                     { credentials: "include" }
                 );
                 const data = await res.json();
@@ -129,12 +129,12 @@ function Navbar() {
 
 
     const handleLogout = async () => {
-        await fetch('https://localhost/accounts/logout/', { method: 'POST', credentials: 'include' });
+        await fetch('/accounts/logout/', { method: 'POST', credentials: 'include' });
         localStorage.removeItem('auth-token');
         localStorage.removeItem('token-expiration');
         clearUserIdCache();
         setIsAuthenticated(false);
-        navigate('/Login');
+        navigate('/login');
     };
 
     const toggleNotifications = async () => {
@@ -146,7 +146,7 @@ function Navbar() {
         if (nextState && unreadNotifCount > 0) {
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
             try {
-                await fetch('https://localhost/accounts/notifications/mark-read/', {
+                await fetch('/accounts/notifications/mark-read/', {
                     method: 'POST',
                     headers: { 'X-CSRFToken': getCookie('csrftoken') },
                     credentials: 'include'
@@ -173,7 +173,7 @@ function Navbar() {
 
     const deleteNotification = async (id) => {
         try {
-            await fetch(`https://localhost/accounts/delete_notification/${id}/`, {
+            await fetch(`/accounts/delete_notification/${id}/`, {
                 method: "DELETE",
                 headers: { 'X-CSRFToken': getCookie('csrftoken') },
                 credentials: 'include'
@@ -189,7 +189,7 @@ function Navbar() {
     const handleUserAction = async (e, targetUser, action) => {
         e.stopPropagation();
         const csrf = getCookie("csrftoken");
-        const url = `https://localhost/accounts/${action}/${targetUser.id}/`;
+        const url = `/accounts/${action}/${targetUser.id}/`;
 
         try {
             await fetch(url, {

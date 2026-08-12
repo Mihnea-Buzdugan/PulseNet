@@ -53,7 +53,8 @@ export default function Pulses() {
 
     const socketRef = useRef(null);
     useEffect(() => {
-        socketRef.current = new WebSocket("wss://localhost/ws/pulses/");
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        socketRef.current = new WebSocket(`${wsProtocol}//${window.location.host}/ws/pulses/`);
 
         socketRef.current.onopen = () => {
             console.log("Connected to Pulse WebSocket");
@@ -129,7 +130,7 @@ export default function Pulses() {
                 max_price: maxPrice,
             });
 
-            const res = await fetch(`https://localhost/accounts/list-all-pulses/?${params}`);
+            const res = await fetch(`/accounts/list-all-pulses/?${params}`);
             if (!res.ok) throw new Error("Failed to load pulses");
 
             const data = await res.json();

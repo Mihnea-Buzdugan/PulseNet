@@ -277,10 +277,10 @@ export default function Profile() {
 
             if (feedbackItem.pulse_title) {
 
-                endpoint = `https://localhost/accounts/pulse_rental_feedback/${feedbackItem.id}/`;
+                endpoint = `/accounts/pulse_rental_feedback/${feedbackItem.id}/`;
             } else if (feedbackItem.request_title) {
 
-                endpoint = `https://localhost/accounts/request_rental_feedback/${feedbackItem.id}/`;
+                endpoint = `/accounts/request_rental_feedback/${feedbackItem.id}/`;
             } else {
                 console.warn("Unknown feedback item type:", feedbackItem);
                 return;
@@ -347,7 +347,7 @@ export default function Profile() {
 
     useEffect(() => {
         const csrfToken = getCookie("csrftoken");
-        fetch("https://localhost/accounts/profile/", {
+        fetch("/accounts/profile/", {
             method: "GET",
             credentials: "include",
         })
@@ -381,7 +381,7 @@ export default function Profile() {
 
             try {
 
-                const offersRes = await fetch("https://localhost/accounts/pulse_rentals/", {
+                const offersRes = await fetch("/accounts/pulse_rentals/", {
                     method: "GET",
                     credentials: "include",
                 });
@@ -394,7 +394,7 @@ export default function Profile() {
                 }
 
 
-                const proposalsRes = await fetch("https://localhost/accounts/pulse_own_proposals/", {
+                const proposalsRes = await fetch("/accounts/pulse_own_proposals/", {
                     method: "GET",
                     credentials: "include",
                 });
@@ -420,7 +420,7 @@ export default function Profile() {
         const fetchOffers = async () => {
             try {
 
-                const resReceived = await fetch("https://localhost/accounts/request-offers/received/", {
+                const resReceived = await fetch("/accounts/request-offers/received/", {
                     method: "GET",
                     credentials: "include",
                     });
@@ -428,7 +428,7 @@ export default function Profile() {
                 setReceivedRequestOffers(dataReceived);
 
 
-                const resSent = await fetch("https://localhost/accounts/own-request-offers/", {
+                const resSent = await fetch("/accounts/own-request-offers/", {
                     method: "GET",
                     credentials: "include",
                     });
@@ -482,7 +482,7 @@ export default function Profile() {
     const handleSave = async () => {
         const csrfToken = getCookie("csrftoken");
         try {
-            const response = await fetch("https://localhost/accounts/update_profile/", {
+            const response = await fetch("/accounts/update_profile/", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -534,7 +534,7 @@ export default function Profile() {
         setPreview(objectUrl);
         setUser((prev) => (prev ? { ...prev, profilePicture: objectUrl } : prev));
 
-        const uploadUrl = "https://localhost/accounts/upload_profile_picture/";
+        const uploadUrl = "/accounts/upload_profile_picture/";
         const csrfToken = getCookie("csrftoken");
         const form = new FormData();
         form.append("profile_picture", file);
@@ -577,7 +577,7 @@ export default function Profile() {
 
     const handleDeleteProfilePicture = async () => {
         try {
-            const response = await fetch("https://localhost/accounts/delete_profile_picture/", {
+            const response = await fetch("/accounts/delete_profile_picture/", {
                 method: "DELETE",
                 credentials: "include",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
@@ -688,7 +688,7 @@ export default function Profile() {
             newImages.forEach((file) => formData.append("images", file));
 
             const res = await fetch(
-                `https://localhost/accounts/update_pulse/${editingPulse.id}/`,
+                `/accounts/update_pulse/${editingPulse.id}/`,
                 {
                     method: "PATCH",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },
@@ -739,7 +739,7 @@ export default function Profile() {
             newImages.forEach((file) => formData.append("images", file));
 
             const res = await fetch(
-                `https://localhost/accounts/update_request/${editingRequest.id}/`,
+                `/accounts/update_request/${editingRequest.id}/`,
                 {
                     method: "POST",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },
@@ -774,7 +774,7 @@ export default function Profile() {
 
     const becomeVerified = async (id) => {
         const res = await fetch(
-            `https://localhost/accounts/become_verified/`,
+            `/accounts/become_verified/`,
             {
                 method: "PUT",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
@@ -804,7 +804,7 @@ export default function Profile() {
 
         try {
             const response = await fetch(
-                `https://localhost/accounts/remove_pulse/${deletePulseModal.id}/`,
+                `/accounts/remove_pulse/${deletePulseModal.id}/`,
                 {
                     method: "DELETE",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },
@@ -842,7 +842,7 @@ export default function Profile() {
     const handleAcceptOffer = async (id) => {
         // decide which endpoint to call based on whether id is in rentalProposals
         const isProposal = rentalProposals.some((p) => p.id === id);
-        const url = `https://localhost/accounts/pulse_rentals/${id}/`;
+        const url = `/accounts/pulse_rentals/${id}/`;
 
         try {
             const res = await fetch(url, {
@@ -876,7 +876,7 @@ export default function Profile() {
     const handleDeclineOffer = async (id) => {
         
         const isProposal = rentalProposals.some((p) => p.id === id);
-        const url = `https://localhost/accounts/pulse_rentals/${id}/`;
+        const url = `/accounts/pulse_rentals/${id}/`;
 
         try {
             const res = await fetch(url, {
@@ -911,7 +911,7 @@ export default function Profile() {
 
         try {
             const response = await fetch(
-                "https://localhost/accounts/signal_pulse_rental/", // your backend endpoint
+                "/accounts/signal_pulse_rental/", // your backend endpoint
                 {
                     method: "POST",
                     credentials: "include",
@@ -946,7 +946,7 @@ export default function Profile() {
         if (!id) return;
 
         try {
-            const response = await fetch(`https://localhost/accounts/pulse_rentals/${id}/`, {
+            const response = await fetch(`/accounts/pulse_rentals/${id}/`, {
                 method: "DELETE",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
                 credentials: "include",
@@ -990,7 +990,7 @@ export default function Profile() {
 
         const isProposal = rentalProposals.some((p) => p.id === id);
         try {
-            const res = await fetch(`https://localhost/accounts/pulse_rentals/${id}/`, {
+            const res = await fetch(`/accounts/pulse_rentals/${id}/`, {
                 method: "PATCH",
                 credentials: "include",
                 headers: {
@@ -1072,7 +1072,7 @@ export default function Profile() {
     const handleAcceptRequestOffer = async (id) => {
         const isSentByMe = sentRequestOffers.some((o) => o.id === id);
 
-        const url = `https://localhost/accounts/request-offers/${id}/`;
+        const url = `/accounts/request-offers/${id}/`;
 
         try {
             const res = await fetch(url, {
@@ -1104,7 +1104,7 @@ export default function Profile() {
 
     const handleDeclineRequestOffer = async (id) => {
         const isSentByMe = sentRequestOffers.some((o) => o.id === id);
-        const url = `https://localhost/accounts/request-offers/${id}/`;
+        const url = `/accounts/request-offers/${id}/`;
 
         try {
             const res = await fetch(url, {
@@ -1143,7 +1143,7 @@ export default function Profile() {
 
         const isSentByMe = sentRequestOffers.some((o) => o.id === id);
         try {
-            const res = await fetch(`https://localhost/accounts/request-offers/${id}/`, {
+            const res = await fetch(`/accounts/request-offers/${id}/`, {
                 method: "PATCH",
                 credentials: "include",
                 headers: {
@@ -1179,7 +1179,7 @@ export default function Profile() {
 
     const handleDeleteRequestOffer = async (id) => {
         try {
-            const response = await fetch(`https://localhost/accounts/request-offers/${id}/`, {
+            const response = await fetch(`/accounts/request-offers/${id}/`, {
                 method: "DELETE",
                 headers: { "X-CSRFToken": getCookie("csrftoken") },
                 credentials: "include",
@@ -1245,7 +1245,7 @@ export default function Profile() {
 
         try {
             const response = await fetch(
-                `https://localhost/accounts/remove_request/${deleteRequestModal.id}/`,
+                `/accounts/remove_request/${deleteRequestModal.id}/`,
                 {
                     method: "DELETE",
                     headers: { "X-CSRFToken": getCookie("csrftoken") },

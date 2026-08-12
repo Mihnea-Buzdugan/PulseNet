@@ -116,7 +116,7 @@ const ContactPage = () => {
                 phone_number: finalPhoneNumber
             };
 
-            const response = await fetch('https://localhost/accounts/contact/create/', {
+            const response = await fetch('/accounts/contact/create/', {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

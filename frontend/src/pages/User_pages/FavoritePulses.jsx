@@ -73,7 +73,7 @@ export default function FavoritePulses() {
                 const qs = buildQuery(params);
 
                 const response = await fetch(
-                    `https://localhost/accounts/favorites/${qs}`,
+                    `/accounts/favorites/${qs}`,
                     {
                         method: "GET",
                         credentials: "include",

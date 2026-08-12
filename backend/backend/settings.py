@@ -27,15 +27,20 @@ SECRET_KEY = 'django-insecure-$+y&hjf1n-i6dqcg1_2x3x3%iux79)36hrtj-bvya9i6%rql^f
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "backend",
+    ".ngrok-free.dev",
+]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    'https://localhost:5173',
-    'http://localhost:5173',
-    'https://192.168.100.79:5173',
+    "https://glitter-setback-dares.ngrok-free.dev",
+    "http://localhost:5173",
+    "https://localhost:5173",
 ]
 
 
@@ -44,9 +49,9 @@ CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'None'
 CSRF_TRUSTED_ORIGINS = [
+    "https://glitter-setback-dares.ngrok-free.dev",
     "http://localhost:5173",
     "https://localhost:5173",
-    "https://192.168.100.79:5173",
 ]
 
 SESSION_COOKIE_NAME = "session"
@@ -95,7 +100,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-LOGIN_REDIRECT_URL = 'https://localhost:5173/home'
+LOGIN_REDIRECT_URL = "https://glitter-setback-dares.ngrok-free.dev/home"
 SITE_ID = 1
 
 
@@ -124,7 +129,7 @@ SOCIALACCOUNT_PROVIDERS = {
             'secret':os.environ.get('secret_Google'),
             'key': '',
         },
-    'REDIRECT_URI': 'https://localhost/accounts/google/login/callback/',
+    'REDIRECT_URI': 'https://glitter-setback-dares.ngrok-free.dev/accounts/google/login/callback/',
     }
 }
 ACCOUNT_AUTHENTICATION_METHOD = "email"

@@ -175,7 +175,7 @@ export default function Index() {
 
                 setUserLocation({ lat, lng });
 
-                fetch("https://localhost/accounts/update_location/", {
+                fetch("/accounts/update_location/", {
                     method: "POST",
                     credentials: "include",
                     headers: {
@@ -201,7 +201,8 @@ export default function Index() {
     }, []);
 
     useEffect(() => {
-        pulseSocketRef.current = new WebSocket("wss://localhost/ws/pulses/");
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        pulseSocketRef.current = new WebSocket(`${wsProtocol}//${window.location.host}/ws/pulses/`);
 
         pulseSocketRef.current.onopen = () => {
             console.log("Connected to Pulse WebSocket");
@@ -257,7 +258,8 @@ export default function Index() {
 
     useEffect(() => {
 
-        requestSocketRef.current = new WebSocket("wss://localhost/ws/requests/");
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        requestSocketRef.current = new WebSocket(`${wsProtocol}//${window.location.host}/ws/requests/`);
 
         requestSocketRef.current.onopen = () => {
             console.log("Connected to Request WebSocket");
@@ -316,7 +318,7 @@ export default function Index() {
         try {
             setLoadingPulses(true);
             const res = await fetch(
-                `https://localhost/accounts/get_nearest_pulses/?lat=${userLocation.lat}&lng=${userLocation.lng}`,
+                `/accounts/get_nearest_pulses/?lat=${userLocation.lat}&lng=${userLocation.lng}`,
                 {
                     method: "GET",
                     credentials: "include",
@@ -341,7 +343,7 @@ export default function Index() {
     const fetchUrgentRequests = async () => {
         try {
             setLoadingRequests(true);
-            const res = await fetch("https://localhost/accounts/urgent-requests/", {
+            const res = await fetch("/accounts/urgent-requests/", {
                 method: "GET",
                 credentials: "include",
             });

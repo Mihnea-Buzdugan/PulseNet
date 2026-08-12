@@ -57,7 +57,7 @@ export default function Profile() {
 
     useEffect(() => {
         const csrfToken = getCookie('csrftoken');
-        fetch(`https://localhost/accounts/user_profile/${id}`, {
+        fetch(`/accounts/user_profile/${id}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ export default function Profile() {
         e.stopPropagation();
         const csrf = getCookie("csrftoken");
 
-        const url = `https://localhost/accounts/${action}/${targetUser.id}/`;
+        const url = `/accounts/${action}/${targetUser.id}/`;
 
         try {
             await fetch(url, {
